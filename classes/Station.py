@@ -21,3 +21,19 @@ class ChargingStation(object):
         self.host_dataset=pd.DataFrame(columns=['Car Object','Car Battery Capacity','Arrival Time','Arrival SOC',
                                         'Estimated Leave','Desired Leave SOC', 'Charging Cluster','Charging Unit',
                                         'Leave Time','Leave SOC','Charged Energy [kWh]'])
+    
+    
+    def implement_set_points(self,ts,tdelta,p_cu_refs):
+        """
+        Method to implement the reference set points in the charging units for tdelta starting by ts
+        """
+        #Implementation of controlled charging
+        for cc_id in self.clusters.keys():
+            for cu_id in self.clusters[cc_id].keys():
+                cu = self.cu[cu_id]
+                car= cu.connected_car
+                if car==None:
+                    cu.supplied_power[ts]=0
+                    cu.consumed_power[ts]=0
+                else:
+                    cu.supply(ts,tdelta,p_cu_refs[cc_id][cu_id])

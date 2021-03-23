@@ -40,7 +40,7 @@ class ChargingUnit(object):
     
     def calc_p_max(self,ts,tdelta):
         """
-        This function calculates maximum/minimum power that can be charged/discharged to/from EV at the given moment
+        This function calculates maximum power that can be charged to EV battery at the given moment
         """      
         ev= self.connected_car
         
@@ -57,7 +57,7 @@ class ChargingUnit(object):
         
     def calc_p_min(self,ts,tdelta):
         """
-        This function calculates maximum/minimum power that can be charged/discharged to/from EV at the given moment
+        This function calculates maximum power that can be discharged from EV battery at the given moment
         """      
         ev= self.connected_car
         

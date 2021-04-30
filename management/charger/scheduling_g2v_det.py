@@ -13,7 +13,7 @@ import time
 from pyomo.environ import SolverFactory
 from pyomo.core import *
 
-def optimal_schedule_v2g(solver,arrts,leavets,stepsize,p_ch,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeff):
+def optimal_schedule_g2v(solver,arrts,leavets,stepsize,p_ch,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeff):
     """
     arrts   : arrival time                      datetime.datetime
     leavets : estimated leave time              datetime.datetime

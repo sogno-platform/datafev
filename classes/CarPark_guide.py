@@ -245,10 +245,7 @@ class CarPark(object):
                     if car==None:
                         pass
                     else:
-                        completed=self.chargingmodules[j,k,n].supply(ts,p_cell_reference[j,k][n])
-                        if completed:
-                            dataid=self.car_data_packs[car]['dataid']
-                            self.host_dataset.loc[dataid,'Charging Completed']=ts+self.timer.dT
+                        self.chargingmodules[j,k,n].supply(ts,p_cell_reference[j,k][n])
                         
     def individual_scheduling(self,ts,optStepSize,optHorizon,car,optSolver,cheapest=False,priceadapt=False,smoothest=False):
         """

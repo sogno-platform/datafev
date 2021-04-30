@@ -18,6 +18,8 @@ class ChargingUnit(object):
         self.connection_dataset=pd.DataFrame(columns=['Car ID','Connection','Disconnection'])
         self.supplied_power={}
         self.consumed_power={}
+        #TODO 2: Save calculated schedule
+        
                 
     def connect(self,ts,car):      
         self.connected_car=car
@@ -71,6 +73,8 @@ class ChargingUnit(object):
             p_min=self.P_min*e_supply/e_delta_max #Modulate the power
             
         return p_min
+    
+    #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
     
     
 if __name__ == "__main__":

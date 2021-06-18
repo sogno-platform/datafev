@@ -84,7 +84,7 @@ class ChargingUnit(object):
     #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
     def generate_schedule(self, optsolver,now, t_delta, target_soc, est_leave, cost_coeff,v2g=False):
         """
-        This method calls optimal_schedule_g2v function from management
+        This method calls optimal_schedule_g2v function from management and generates schedules
         """
                 
         schedule_pow, schedule_soc = optimal_schedule_g2v(optsolver,
@@ -111,6 +111,7 @@ if __name__ == "__main__":
     
     from classes.Car import ElectricVehicle as EV
     from datetime import datetime, timedelta
+    from datetimerange import DateTimeRange
     import numpy as np
     import pandas as pd
     
@@ -118,8 +119,8 @@ if __name__ == "__main__":
     from pyomo.core import *
     
     
-    #solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-    solver=SolverFactory("gurobi")
+    solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+    #solver=SolverFactory("gurobi")
     history=pd.DataFrame(columns=['SOC','P_min','P_max','P'])
     
     cu_id           ="A001"
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     time_delta      =timedelta(minutes=60)
     
     ev_id           ="ev001"
-    ev_bCapacity    =55 #tesla
+    ev_bCapacity    =55 #zoe
     ev              =EV(ev_id,ev_bCapacity)
     ev.soc[time_connection]=0.4
      
@@ -150,19 +151,21 @@ if __name__ == "__main__":
     cu.generate_schedule(solver,time_connection, time_delta, fin_soc, leave, cost_coeff)
     cu.set_active_schedule(time_connection)
     
-    for t in range(24):
+    #time_range = DateTimeRange(time_connection, leave)
+    #for t in time_range.range(time_delta):
+    for t in range(8):
         ts=time_connection+t*time_delta
                       
         history.loc[ts,'SOC']=ev.soc[ts]
         
-        p=cu.schedule_pow[cu.active_schedule]
-        
+        #p=cu.schedule_pow[cu.set_active_schedule]
               
         p_min=cu.calc_p_min(ts,time_delta)
         p_max=cu.calc_p_max(ts,time_delta)
         history.loc[ts,'P_min']=p_min
         history.loc[ts,'P_max']=p_max
         
+        '''
         action=np.random.choice([-1,0,1],p=[0.1,0.2,0.7])
         if action==0:
             p=0
@@ -170,9 +173,10 @@ if __name__ == "__main__":
             p=p_min
         if action==1:
             p=p_max
-            
-        cu.supply(ts,time_delta,p)
-        history.loc[ts,'P']=p
+        '''
+        
+        cu.supply(ts,time_delta,cu.schedule_pow[cu.active_schedule_instance].get(t))
+        history.loc[ts,'P']=cu.schedule_pow[cu.active_schedule_instance].get(t)
             
     ts= time_connection+(t+1)*time_delta 
     cu.disconnect(ts)

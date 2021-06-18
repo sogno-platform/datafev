@@ -17,7 +17,8 @@ class ChargingUnit(object):
         self.connected_car =None
         self.connection_dataset=pd.DataFrame(columns=['Car ID','Connection','Disconnection'])
         self.supplied_power={}
-        self.consumed_power={}
+        self.consumed_p={}
+        self.consumed_q={}
         #TODO 2: Save calculated schedule
         
                 
@@ -35,9 +36,13 @@ class ChargingUnit(object):
         dataset_ind=(self.connection_dataset.index)
         self.connection_dataset.loc[dataset_ind,'Disconnection']=ts
     
+    def set_power_factor(self,pf):
+        self.pf=pf
+    
     def supply(self,ts,tdelta,p):
         self.supplied_power[ts]=p
-        self.consumed_power[ts]=p/self.eff if p>0 else p*self.eff
+        self.consumed_p[ts]=p/self.eff if p>0 else p*self.eff
+        
         self.connected_car.charge(ts,tdelta,p)
     
     def calc_p_max(self,ts,tdelta):

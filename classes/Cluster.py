@@ -21,7 +21,9 @@ class ChargerCluster(object):
     
         self.cu={}
         
-        self.net_import={}
+        self.net_p={}
+        self.net_q={}
+        
     
     def add_cu(self,charging_unit):
         """

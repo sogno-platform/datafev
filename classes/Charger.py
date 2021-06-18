@@ -5,8 +5,6 @@
 
 import pandas as pd
 from management.singlevehicle.scheduling_g2v_det import optimal_schedule_g2v
-from pyomo.environ import SolverFactory
-from pyomo.core import *
 
 class ChargingUnit(object):
     
@@ -22,6 +20,9 @@ class ChargingUnit(object):
         self.supplied_power={}
         self.consumed_p={}
         self.consumed_q={}
+        
+        self.schedule_pow={}
+        self.schedule_soc={}
                 
     def connect(self,ts,car):      
         self.connected_car=car
@@ -81,25 +82,28 @@ class ChargingUnit(object):
         return p_min
     
     #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
-    def optimized_charging(self, now, dT, fin_soc, leave, cost_coeff):
+    def generate_schedule(self, optsolver,now, t_delta, target_soc, est_leave, cost_coeff,v2g=False):
         """
         This method calls optimal_schedule_g2v function from management
         """
-        
-        # solver path
-        optsolver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-        
-        self.scheduled_p, self.scheduled_s = optimal_schedule_g2v(optsolver,
+                
+        schedule_pow, schedule_soc = optimal_schedule_g2v(optsolver,
                                                                   now,
-                                                                  leave,
-                                                                  dT,
+                                                                  est_leave,
+                                                                  t_delta,
                                                                   self.P_max,
                                                                   self.connected_car.bCapacity,
-                                                                  self.connected_car.soc[time_connection],
-                                                                  fin_soc,
+                                                                  self.connected_car.soc[now],
+                                                                  target_soc,
                                                                   self.connected_car.minSoC,
                                                                   self.connected_car.maxSoC,
                                                                   cost_coeff)
+        self.schedule_pow[now]=schedule_pow
+        self.schedule_soc[now]=schedule_soc
+    
+    def set_active_schedule(self,ts):
+        
+        self.active_schedule_instance=ts
         
     
     
@@ -110,6 +114,12 @@ if __name__ == "__main__":
     import numpy as np
     import pandas as pd
     
+    from pyomo.environ import SolverFactory
+    from pyomo.core import *
+    
+    
+    #solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+    solver=SolverFactory("gurobi")
     history=pd.DataFrame(columns=['SOC','P_min','P_max','P'])
     
     cu_id           ="A001"
@@ -119,28 +129,34 @@ if __name__ == "__main__":
     cu=ChargingUnit(cu_id,cu_power,cu_efficiency,cu_bidirectional)
     
     time_connection =datetime(2021,3,17,16)
-    time_delta      =timedelta(minutes=5)
+    time_delta      =timedelta(minutes=60)
     
     ev_id           ="ev001"
-    ev_bCapacity    =80 #tesla
+    ev_bCapacity    =55 #tesla
     ev              =EV(ev_id,ev_bCapacity)
     ev.soc[time_connection]=0.4
      
     cu.connect(time_connection,ev)
     
     # required inputs for optimized charging
-    now = datetime(2020,5,15,8)
-    dT = timedelta(minutes=15)
     fin_soc = 0.8
-    leave  = datetime(2020,5,15,14)        
-    cost_coeff = pd.Series(np.array([1,1,1,0,0,0,0]),index=pd.date_range(start=now,end=leave,freq=timedelta(hours=1)))
+    leave  = time_connection+time_delta*8        
+    opt_times=pd.date_range(start=time_connection,end=leave,freq=time_delta)
+    zero_time=int(len(opt_times)/2)
+    one_time =len(opt_times)-zero_time
+    cost    =np.append(np.zeros(zero_time),np.ones(one_time))
+    cost_coeff = pd.Series(cost,index=opt_times)
     
-    cu.optimized_charging(now, dT, fin_soc, leave, cost_coeff)
+    cu.generate_schedule(solver,time_connection, time_delta, fin_soc, leave, cost_coeff)
+    cu.set_active_schedule(time_connection)
     
     for t in range(24):
         ts=time_connection+t*time_delta
                       
         history.loc[ts,'SOC']=ev.soc[ts]
+        
+        p=cu.schedule_pow[cu.active_schedule]
+        
               
         p_min=cu.calc_p_min(ts,time_delta)
         p_max=cu.calc_p_max(ts,time_delta)

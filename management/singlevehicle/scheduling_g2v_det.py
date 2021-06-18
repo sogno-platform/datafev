@@ -97,8 +97,7 @@ if __name__ == "__main__":
     cost_coeff_2=pd.Series(np.array([0,0,1,1,1,0,0]),index=pd.date_range(start=now,end=leave,freq=timedelta(hours=1)))
     cost_coeff_3=pd.Series(np.array([0,0,0,1,1,1,0]),index=pd.date_range(start=now,end=leave,freq=timedelta(hours=1)))
     
-    optsolver=SolverFactory("gurobi")
-    
+    optsolver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
     schedule1,soc1=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_1)
     schedule2,soc2=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_2)
     schedule3,soc3=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_3)

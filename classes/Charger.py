@@ -4,6 +4,9 @@
 """
 
 import pandas as pd
+from management.singlevehicle.scheduling_g2v_det import optimal_schedule_g2v
+from pyomo.environ import SolverFactory
+from pyomo.core import *
 
 class ChargingUnit(object):
     
@@ -19,8 +22,6 @@ class ChargingUnit(object):
         self.supplied_power={}
         self.consumed_p={}
         self.consumed_q={}
-        #TODO 2: Save calculated schedule
-        
                 
     def connect(self,ts,car):      
         self.connected_car=car
@@ -80,6 +81,26 @@ class ChargingUnit(object):
         return p_min
     
     #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
+    def optimized_charging(self, now, dT, fin_soc, leave, cost_coeff):
+        """
+        This method calls optimal_schedule_g2v function from management
+        """
+        
+        # solver path
+        optsolver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+        
+        self.scheduled_p, self.scheduled_s = optimal_schedule_g2v(optsolver,
+                                                                  now,
+                                                                  leave,
+                                                                  dT,
+                                                                  self.P_max,
+                                                                  self.connected_car.bCapacity,
+                                                                  self.connected_car.soc[time_connection],
+                                                                  fin_soc,
+                                                                  self.connected_car.minSoC,
+                                                                  self.connected_car.maxSoC,
+                                                                  cost_coeff)
+        
     
     
 if __name__ == "__main__":
@@ -106,6 +127,15 @@ if __name__ == "__main__":
     ev.soc[time_connection]=0.4
      
     cu.connect(time_connection,ev)
+    
+    # required inputs for optimized charging
+    now = datetime(2020,5,15,8)
+    dT = timedelta(minutes=15)
+    fin_soc = 0.8
+    leave  = datetime(2020,5,15,14)        
+    cost_coeff = pd.Series(np.array([1,1,1,0,0,0,0]),index=pd.date_range(start=now,end=leave,freq=timedelta(hours=1)))
+    
+    cu.optimized_charging(now, dT, fin_soc, leave, cost_coeff)
     
     for t in range(24):
         ts=time_connection+t*time_delta

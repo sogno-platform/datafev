@@ -78,10 +78,10 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
     from pyomo.core import *
     
-    solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-    #solver=SolverFactory("gurobi")
+    #solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+    solver=SolverFactory("gurobi")
     
-    cu_power        =11
+    cu_power        =22
     cu_efficiency   =1.0
     cu_bidirectional=True
     cu_id1          ="A001"
@@ -99,43 +99,47 @@ if __name__ == "__main__":
     sim_start       =datetime(2021,3,17,15,30)
     time_delta      =timedelta(minutes=5)
     ev_desired_soc  =1.0
-    ev_estimat_dep  =datetime(2021,3,17,16,30)
-    ev_bCapacity    =80 #tesla
+    ev_estimat_dep  =datetime(2021,3,17,17,30)
+    ev_bCapacity    =22 #tesla
     
     cost_coeff=pd.Series(np.random.randint(low=-1, high=2, size=25),index=pd.date_range(start=sim_start,end=datetime(2021,3,17,17,30),freq=timedelta(minutes=5)))
     #print(cost_coeff)
     
+    dsc_time=datetime(2021,3,17,17,30)
+    
     ev1_connection  =datetime(2021,3,17,16,0)
-    ev1_disconnect  =datetime(2021,3,17,16,25)
+    ev1_disconnect  =dsc_time-timedelta(hours=1)
     ev1_soc         =0.5
     ev1_id          ="ev001"
     
     ev2_connection  =datetime(2021,3,17,16,5)
-    ev2_disconnect  =datetime(2021,3,17,16,35)
+    ev2_disconnect  =dsc_time
     ev2_soc         =0.9
     ev2_id          ="ev002"    
     
     ev3_connection  =datetime(2021,3,17,16,10)
-    ev3_disconnect  =datetime(2021,3,17,16,30)
+    ev3_disconnect  =dsc_time
     ev3_soc         =0.7
     ev3_id          ="ev003"
     
     ev4_connection  =datetime(2021,3,17,16,40)
-    ev4_disconnect  =datetime(2021,3,17,17)
+    ev4_disconnect  =dsc_time
     ev4_soc         =0.7
     ev4_id          ="ev004"
     
     
     for t in range(25):
         ts=sim_start+t*time_delta
-        
+        print(ts)
         #Arrivals
         if ts==ev1_connection:
+            
             car1=EV(ev1_id,ev_bCapacity)
             car1.soc[ts]=ev1_soc
             cc.enter_car(ts,car1,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car1,cu_id1)
-            car1.connected_cu.generate_schedule(solver,ev1_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            cost_coeff1=cost_coeff[ev1_connection:ev_estimat_dep]
+            car1.connected_cu.generate_schedule(solver,ev1_connection, time_delta, ev_desired_soc, ev1_disconnect, cost_coeff1,True)
             car1.connected_cu.set_active_schedule(ev1_connection)
         
         if ts==ev2_connection:
@@ -143,7 +147,8 @@ if __name__ == "__main__":
             car2.soc[ts]=ev2_soc
             cc.enter_car(ts,car2,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car2,cu_id2)
-            car2.connected_cu.generate_schedule(solver,ev2_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            cost_coeff2=cost_coeff[ev2_connection:ev_estimat_dep]
+            car2.connected_cu.generate_schedule(solver,ev2_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff2,True)
             car2.connected_cu.set_active_schedule(ev2_connection)
             
         if ts==ev3_connection:
@@ -151,7 +156,8 @@ if __name__ == "__main__":
             car3.soc[ts]=ev3_soc
             cc.enter_car(ts,car3,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car3,cu_id3)
-            car3.connected_cu.generate_schedule(solver,ev3_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            cost_coeff3=cost_coeff[ev3_connection:ev_estimat_dep]
+            car3.connected_cu.generate_schedule(solver,ev3_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff3,True)
             car3.connected_cu.set_active_schedule(ev3_connection)
                  
         if ts==ev4_connection:
@@ -159,7 +165,8 @@ if __name__ == "__main__":
             car4.soc[ts]=ev4_soc
             cc.enter_car(ts,car4,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car4,cu_id1) 
-            car4.connected_cu.generate_schedule(solver,ev4_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            cost_coeff4=cost_coeff[ev4_connection:ev_estimat_dep]
+            car4.connected_cu.generate_schedule(solver,ev4_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff4,True)
             car4.connected_cu.set_active_schedule(ev4_connection)
         
         #Departures

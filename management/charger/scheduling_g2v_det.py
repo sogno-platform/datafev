@@ -99,9 +99,9 @@ if __name__ == "__main__":
     
     optsolver=SolverFactory("gurobi")
     
-    schedule1,soc1=optimal_schedule_v2g(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_1)
-    schedule2,soc2=optimal_schedule_v2g(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_2)
-    schedule3,soc3=optimal_schedule_v2g(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_3)
+    schedule1,soc1=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_1)
+    schedule2,soc2=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_2)
+    schedule3,soc3=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_3)
     
     sched1=pd.DataFrame(columns=['Pow','SoC','Cost'],index=schedule1.index)
     sched2=pd.DataFrame(columns=['Pow','SoC','Cost'],index=schedule1.index)

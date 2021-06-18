@@ -29,7 +29,7 @@ class ChargerCluster(object):
         """
         To add charging units to the cluster. This method is run before running the simulations.
         """
-        self.power_installed+=charging_unit.P_max
+        self.power_installed+=charging_unit.P_max_ch
         self.cu[charging_unit.id]=charging_unit
         
     
@@ -75,6 +75,11 @@ if __name__ == "__main__":
     from datetime import datetime, timedelta
     from classes.Charger import ChargingUnit as CU
     from classes.Car import ElectricVehicle as EV
+    from pyomo.environ import SolverFactory
+    from pyomo.core import *
+    
+    solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+    #solver=SolverFactory("gurobi")
     
     cu_power        =11
     cu_efficiency   =1.0
@@ -97,6 +102,9 @@ if __name__ == "__main__":
     ev_estimat_dep  =datetime(2021,3,17,16,30)
     ev_bCapacity    =80 #tesla
     
+    cost_coeff=pd.Series(np.random.randint(low=-1, high=2, size=25),index=pd.date_range(start=sim_start,end=datetime(2021,3,17,17,30),freq=timedelta(minutes=5)))
+    #print(cost_coeff)
+    
     ev1_connection  =datetime(2021,3,17,16,0)
     ev1_disconnect  =datetime(2021,3,17,16,25)
     ev1_soc         =0.5
@@ -118,7 +126,7 @@ if __name__ == "__main__":
     ev4_id          ="ev004"
     
     
-    for t in range(20):
+    for t in range(25):
         ts=sim_start+t*time_delta
         
         #Arrivals
@@ -127,24 +135,32 @@ if __name__ == "__main__":
             car1.soc[ts]=ev1_soc
             cc.enter_car(ts,car1,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car1,cu_id1)
+            car1.connected_cu.generate_schedule(solver,ev1_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            car1.connected_cu.set_active_schedule(ev1_connection)
         
         if ts==ev2_connection:
             car2=EV(ev2_id,ev_bCapacity)
             car2.soc[ts]=ev2_soc
             cc.enter_car(ts,car2,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car2,cu_id2)
+            car2.connected_cu.generate_schedule(solver,ev2_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            car2.connected_cu.set_active_schedule(ev2_connection)
             
         if ts==ev3_connection:
             car3=EV(ev3_id,ev_bCapacity)
             car3.soc[ts]=ev3_soc
             cc.enter_car(ts,car3,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car3,cu_id3)
+            car3.connected_cu.generate_schedule(solver,ev3_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            car3.connected_cu.set_active_schedule(ev3_connection)
                  
         if ts==ev4_connection:
             car4=EV(ev4_id,ev_bCapacity)
             car4.soc[ts]=ev4_soc
             cc.enter_car(ts,car4,ev_estimat_dep,ev_desired_soc)
-            cc.connect_car(ts,car4,cu_id1)  
+            cc.connect_car(ts,car4,cu_id1) 
+            car4.connected_cu.generate_schedule(solver,ev4_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff,True)
+            car4.connected_cu.set_active_schedule(ev4_connection)
         
         #Departures
         if ts==ev1_disconnect:
@@ -157,18 +173,18 @@ if __name__ == "__main__":
             cc.disconnect_car(ts,car4) 
             
         if ev1_connection<=ts<ev1_disconnect:
-            p_max1=car1.connected_cu.calc_p_max(ts,time_delta)
-            car1.connected_cu.supply(ts,time_delta,p_max1)          
+            p_real=car1.connected_cu.schedule_pow[car1.connected_cu.active_schedule_instance][ts]
+            car1.connected_cu.supply(ts,time_delta,p_real)          
         if ev2_connection<=ts<ev2_disconnect:
-            p_max2=car2.connected_cu.calc_p_max(ts,time_delta)
-            car2.connected_cu.supply(ts,time_delta,p_max2)
+            p_real=car2.connected_cu.schedule_pow[car2.connected_cu.active_schedule_instance][ts]
+            car2.connected_cu.supply(ts,time_delta,p_real) 
         if ev3_connection<=ts<ev3_disconnect:
-            p_max3=car3.connected_cu.calc_p_max(ts,time_delta)
-            car3.connected_cu.supply(ts,time_delta,p_max3) 
+            p_real=car3.connected_cu.schedule_pow[car3.connected_cu.active_schedule_instance][ts]
+            car3.connected_cu.supply(ts,time_delta,p_real)  
         if ev4_connection<=ts<ev4_disconnect:
-            p_max4=car4.connected_cu.calc_p_max(ts,time_delta)
-            car4.connected_cu.supply(ts,time_delta,p_max4) 
-     
+            p_real=car4.connected_cu.schedule_pow[car4.connected_cu.active_schedule_instance][ts]
+            car4.connected_cu.supply(ts,time_delta,p_real) 
+            
     print("A001 history:")
     print(cc.cu['A001'].connection_dataset)
     print()

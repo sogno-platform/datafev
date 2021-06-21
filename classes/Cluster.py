@@ -68,18 +68,48 @@ class ChargerCluster(object):
     
         car.cc_dataset_id=None
 		
-    def aggregate_profile(self,ts,t_delta,horizon):
-        
+    def loading_profile(self,ts,t_delta,horizon):
+        """
+        To retrieve the actual schedules of the charging units for the specified period 
+        """
         time_index=pd.date_range(start=ts,end=ts+horizon-t_delta,freq=t_delta)
-        profile=pd.Series(0,index=time_index)
+        cu_load=pd.DataFrame(index=time_index)
 		
-        for cu_id in sorted(self.cu.keys()):
-            cu=self.cu[cu_id]
-            sch_inst=cu.active_schedule_instance
-            cu_sch  =cu.schedule_pow[sch_inst].reindex(time_index,fill_value=0)
-            profile+=cu_sch
+        for cu in self.cu.values():  
             
-        return profile
+            if cu.connected_car==None:
+                cu_sch=pd.Series(0,index=time_index)
+            else:
+                sch_inst=cu.active_schedule_instance
+                cu_sch  =cu.schedule_pow[sch_inst].reindex(time_index,fill_value=0)
+            cu_load[cu.id]=cu_sch.copy()
+            
+        return cu_load
+    
+    def occupancy_profile(self,ts,t_delta,horizon):
+        """
+        To calculate the cluster occupancy for the specified period with the connection data
+        """
+        time_index=pd.date_range(start=ts,end=ts+horizon-t_delta,freq=t_delta)
+        cu_occupancy=pd.DataFrame()
+        
+        for cu in self.cu.values():    
+            cu_occ   =pd.Series(index=time_index,dtype=float)
+            
+            if cu.connected_car==None:
+                cu_occ[time_index]=0
+                
+            else:
+                est_leave=self.cc_dataset.loc[cu.connected_car.cc_dataset_id,'Estimated Leave']
+                for t in time_index:
+                    if t<est_leave:
+                        cu_occ[t]=1
+                    else:
+                        cu_occ[t]=0    
+            cu_occupancy[cu.id]=cu_occ.copy()
+            
+        return cu_occupancy
+
 
 if __name__ == "__main__":
     
@@ -111,111 +141,71 @@ if __name__ == "__main__":
     
     sim_start       =datetime(2021,3,17,16,00)
     time_delta      =timedelta(minutes=5)
-    ev_desired_soc  =1.0
-    ev_estimat_dep  =datetime(2021,3,17,18,00)
-    ev_bCapacity    =55 #tesla
-    
-    cost_coeff=pd.Series(np.random.randint(low=-1, high=2, size=25),index=pd.date_range(start=sim_start,end=ev_estimat_dep,freq=timedelta(minutes=5)))
-    #print(cost_coeff)
-    
-    dsc_time=datetime(2021,3,17,17,30)
-    
-    ev1_connection  =datetime(2021,3,17,16,0)
-    ev1_disconnect  =ev1_connection+timedelta(minutes=30)
-    ev1_soc         =0.5
-    ev1_id          ="ev001"
-    
-    ev2_connection  =datetime(2021,3,17,16,5)
-    ev2_disconnect  =ev2_connection+timedelta(hours=1)
-    ev2_soc         =0.9
-    ev2_id          ="ev002"    
-    
-    ev3_connection  =datetime(2021,3,17,16,10)
-    ev3_disconnect  =ev3_connection+timedelta(hours=1)
-    ev3_soc         =0.7
-    ev3_id          ="ev003"
-    
-    ev4_connection  =datetime(2021,3,17,16,40)
-    ev4_disconnect  =ev4_connection+timedelta(hours=1)
-    ev4_soc         =0.7
-    ev4_id          ="ev004"
+    sim_period      =pd.date_range(start=sim_start,end=sim_start+timedelta(hours=2),freq=time_delta)
+    cost_coeff=pd.Series(np.random.randint(low=-1, high=2, size=len(sim_period)),index=sim_period)
     
     
-    for t in range(25):
-        ts=sim_start+t*time_delta
-        print(ts)
-        if ts in [datetime(2021,3,17,16,20),datetime(2021,3,17,16,40),datetime(2021,3,17,17,00)]:
-            print("Schedule")
-            agg_sch=cc.aggregate_profile(ts,time_delta,timedelta(hours=1))
-            print(agg_sch)
+    inputs   = pd.ExcelFile('cluster_test.xlsx')
+    events   = pd.read_excel(inputs, 'Events')
+    
+    ev_dict  ={}
+    
+    for ts in sim_period:
         
-        #Arrivals
-        if ts==ev1_connection:
+        #######################################################################
+        #Managing the leaving EVs
+        leaving_now=events[events['Estimated Leave']==ts]                          #EVs leaving at this moment  
+        for _,i in leaving_now.iterrows():
+            evID=i['ev_id']
+            ev  =ev_dict[evID]
+            cc.disconnect_car(ts,ev)
+        #######################################################################
+               
+        #######################################################################
+        #Managing the incoming EVs
+        incoming_now=events[events['Arrival Time']==ts]                             #EVs entering at this moment 
+        cu_occupancy_actual =cc.occupancy_profile(ts,time_delta,time_delta).iloc[0] #Check the current occupancy profile
+        free_units   =(cu_occupancy_actual[cu_occupancy_actual==0].index).to_list() #All free CUs at this moment
+    
+        for _,i in incoming_now.iterrows():  
+            bcap=i['Battery Capacity (kWh)']
+            estL=i['Estimated Leave']
+            socA=i['Arrival SOC']
+            socT=i['Target SOC']
+            evID=i['ev_id'] 
             
-            car1=EV(ev1_id,ev_bCapacity)
-            car1.soc[ts]=ev1_soc
-            cc.enter_car(ts,car1,ev_estimat_dep,ev_desired_soc)
-            cc.connect_car(ts,car1,cu_id1)
-            cost_coeff1=cost_coeff[ev1_connection:ev_estimat_dep]
-            car1.connected_cu.generate_schedule(solver,ev1_connection, time_delta, ev_desired_soc, ev1_disconnect, cost_coeff1,True)
-            car1.connected_cu.set_active_schedule(ev1_connection)
+            ev  =EV(evID,bcap)                  #Initialize an EV 
+            ev.soc[ts]=socA                     #Assign its initial SOC
+            
+            cc.enter_car(ts,ev,estL,socT)       #Open an entry in the dataset for this EV
+            ev_dict[evID]=ev                    #All EVs in this simulation are stored in this dictionary such that they can be called to disconnect easily
+            
+            cu_id=np.random.choice(free_units)  #Select a random CU to connect the EV
+            cc.connect_car(ts,ev,cu_id)         #Connect the EV to the selected CU
+            free_units.remove(cu_id)            #Remve the CU from free_units sit
+            
+            ev.connected_cu.generate_schedule(solver,ts, time_delta, socT, estL, cost_coeff[ts:estL],True) #Scheduling
+            ev.connected_cu.set_active_schedule(ts)                                                        #Saving the schedule
+            #print("Schedule of",evID)
+            #print(cc.cu[cu_id].schedule_pow[cc.cu[cu_id].active_schedule_instance])
+        #######################################################################    
+            
+        #######################################################################
+        #Managing the chargin process
+        cu_occupancy_actual =cc.occupancy_profile(ts,time_delta,time_delta).iloc[0] #Check the current occupancy profile
+        occupied_units      =(cu_occupancy_actual[cu_occupancy_actual==1].index).to_list() #All CUs with connected EVs at this moment
         
-        if ts==ev2_connection:
-            car2=EV(ev2_id,ev_bCapacity)
-            car2.soc[ts]=ev2_soc
-            cc.enter_car(ts,car2,ev_estimat_dep,ev_desired_soc)
-            cc.connect_car(ts,car2,cu_id2)
-            cost_coeff2=cost_coeff[ev2_connection:ev_estimat_dep]
-            car2.connected_cu.generate_schedule(solver,ev2_connection, time_delta, ev_desired_soc, ev2_disconnect, cost_coeff2,True)
-            car2.connected_cu.set_active_schedule(ev2_connection)
+        for cu_id in occupied_units:
             
-        if ts==ev3_connection:
-            car3=EV(ev3_id,ev_bCapacity)
-            car3.soc[ts]=ev3_soc
-            cc.enter_car(ts,car3,ev_estimat_dep,ev_desired_soc)
-            cc.connect_car(ts,car3,cu_id3)
-            cost_coeff3=cost_coeff[ev3_connection:ev_estimat_dep]
-            car3.connected_cu.generate_schedule(solver,ev3_connection, time_delta, ev_desired_soc, ev3_disconnect, cost_coeff3,True)
-            car3.connected_cu.set_active_schedule(ev3_connection)
-                 
-        if ts==ev4_connection:
-            car4=EV(ev4_id,ev_bCapacity)
-            car4.soc[ts]=ev4_soc
-            cc.enter_car(ts,car4,ev_estimat_dep,ev_desired_soc)
-            cc.connect_car(ts,car4,cu_id1) 
-            cost_coeff4=cost_coeff[ev4_connection:ev_estimat_dep]
-            car4.connected_cu.generate_schedule(solver,ev4_connection, time_delta, ev_desired_soc, ev4_disconnect, cost_coeff4,True)
-            car4.connected_cu.set_active_schedule(ev4_connection)
+            cu=cc.cu[cu_id]
+            p_real=cu.schedule_pow[cu.active_schedule_instance][ts]             #Check the active schedule
+            cu.supply(ts,time_delta,p_real)                                     #Supply as much as specified by the schedule
+            
         
         
-        #Departures
-        if ts==ev1_disconnect:
-            cc.disconnect_car(ts,car1)
-        if ts==ev2_disconnect:
-            cc.disconnect_car(ts,car2)    
-        if ts==ev3_disconnect:
-            cc.disconnect_car(ts,car3) 
-        if ts==ev4_disconnect:
-            cc.disconnect_car(ts,car4) 
-            
-        if ev1_connection<=ts<ev1_disconnect:
-            p_real=car1.connected_cu.schedule_pow[car1.connected_cu.active_schedule_instance][ts]
-            car1.connected_cu.supply(ts,time_delta,p_real)          
-        if ev2_connection<=ts<ev2_disconnect:
-            p_real=car2.connected_cu.schedule_pow[car2.connected_cu.active_schedule_instance][ts]
-            car2.connected_cu.supply(ts,time_delta,p_real) 
-        if ev3_connection<=ts<ev3_disconnect:
-            p_real=car3.connected_cu.schedule_pow[car3.connected_cu.active_schedule_instance][ts]
-            car3.connected_cu.supply(ts,time_delta,p_real)  
-        if ev4_connection<=ts<ev4_disconnect:
-            p_real=car4.connected_cu.schedule_pow[car4.connected_cu.active_schedule_instance][ts]
-            car4.connected_cu.supply(ts,time_delta,p_real) 
-            
-    print("A001 history:")
-    print(cc.cu['A001'].connection_dataset)
-    print()
     print("Charger cluster history:")
-    print(cc.cc_dataset)
+    ds=cc.cc_dataset
+    print(ds)
     
     
     

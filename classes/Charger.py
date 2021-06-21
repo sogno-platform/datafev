@@ -108,10 +108,7 @@ class ChargingUnit(object):
         self.schedule_soc[now]=schedule_soc
     
     def set_active_schedule(self,ts):
-        
         self.active_schedule_instance=ts
-        
-    
     
 if __name__ == "__main__":
     

@@ -6,6 +6,7 @@ Created on Fri Mar 19 13:43:13 2021
 """
 
 import pandas as pd
+import numpy as np
 
 class ChargerCluster(object):
     
@@ -66,7 +67,19 @@ class ChargerCluster(object):
         self.cc_dataset.loc[car.cc_dataset_id,'Charged Energy [kWh]']=(car.soc[ts]-self.cc_dataset.loc[car.cc_dataset_id,'Arrival SOC'])*car.bCapacity/3600
     
         car.cc_dataset_id=None
-
+		
+    def aggregate_profile(self,ts,t_delta,horizon):
+        
+        time_index=pd.date_range(start=ts,end=ts+horizon-t_delta,freq=t_delta)
+        profile=pd.Series(0,index=time_index)
+		
+        for cu_id in sorted(self.cu.keys()):
+            cu=self.cu[cu_id]
+            sch_inst=cu.active_schedule_instance
+            cu_sch  =cu.schedule_pow[sch_inst].reindex(time_index,fill_value=0)
+            profile+=cu_sch
+            
+        return profile
 
 if __name__ == "__main__":
     
@@ -79,7 +92,7 @@ if __name__ == "__main__":
     from pyomo.core import *
     
     #solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-    solver=SolverFactory("gurobi")
+    solver=SolverFactory("cplex")
     
     cu_power        =22
     cu_efficiency   =1.0
@@ -91,39 +104,39 @@ if __name__ == "__main__":
     cu2=CU(cu_id2,cu_power,cu_efficiency,cu_bidirectional)
     cu3=CU(cu_id3,cu_power,cu_efficiency,cu_bidirectional)
     
-    cc              =ChargerCluster(110)
+    cc              =ChargerCluster(50)
     cc.add_cu(cu1)
     cc.add_cu(cu2)
     cc.add_cu(cu3)
     
-    sim_start       =datetime(2021,3,17,15,30)
+    sim_start       =datetime(2021,3,17,16,00)
     time_delta      =timedelta(minutes=5)
     ev_desired_soc  =1.0
-    ev_estimat_dep  =datetime(2021,3,17,17,30)
-    ev_bCapacity    =22 #tesla
+    ev_estimat_dep  =datetime(2021,3,17,18,00)
+    ev_bCapacity    =55 #tesla
     
-    cost_coeff=pd.Series(np.random.randint(low=-1, high=2, size=25),index=pd.date_range(start=sim_start,end=datetime(2021,3,17,17,30),freq=timedelta(minutes=5)))
+    cost_coeff=pd.Series(np.random.randint(low=-1, high=2, size=25),index=pd.date_range(start=sim_start,end=ev_estimat_dep,freq=timedelta(minutes=5)))
     #print(cost_coeff)
     
     dsc_time=datetime(2021,3,17,17,30)
     
     ev1_connection  =datetime(2021,3,17,16,0)
-    ev1_disconnect  =dsc_time-timedelta(hours=1)
+    ev1_disconnect  =ev1_connection+timedelta(minutes=30)
     ev1_soc         =0.5
     ev1_id          ="ev001"
     
     ev2_connection  =datetime(2021,3,17,16,5)
-    ev2_disconnect  =dsc_time
+    ev2_disconnect  =ev2_connection+timedelta(hours=1)
     ev2_soc         =0.9
     ev2_id          ="ev002"    
     
     ev3_connection  =datetime(2021,3,17,16,10)
-    ev3_disconnect  =dsc_time
+    ev3_disconnect  =ev3_connection+timedelta(hours=1)
     ev3_soc         =0.7
     ev3_id          ="ev003"
     
     ev4_connection  =datetime(2021,3,17,16,40)
-    ev4_disconnect  =dsc_time
+    ev4_disconnect  =ev4_connection+timedelta(hours=1)
     ev4_soc         =0.7
     ev4_id          ="ev004"
     
@@ -131,6 +144,11 @@ if __name__ == "__main__":
     for t in range(25):
         ts=sim_start+t*time_delta
         print(ts)
+        if ts in [datetime(2021,3,17,16,20),datetime(2021,3,17,16,40),datetime(2021,3,17,17,00)]:
+            print("Schedule")
+            agg_sch=cc.aggregate_profile(ts,time_delta,timedelta(hours=1))
+            print(agg_sch)
+        
         #Arrivals
         if ts==ev1_connection:
             
@@ -148,7 +166,7 @@ if __name__ == "__main__":
             cc.enter_car(ts,car2,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car2,cu_id2)
             cost_coeff2=cost_coeff[ev2_connection:ev_estimat_dep]
-            car2.connected_cu.generate_schedule(solver,ev2_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff2,True)
+            car2.connected_cu.generate_schedule(solver,ev2_connection, time_delta, ev_desired_soc, ev2_disconnect, cost_coeff2,True)
             car2.connected_cu.set_active_schedule(ev2_connection)
             
         if ts==ev3_connection:
@@ -157,7 +175,7 @@ if __name__ == "__main__":
             cc.enter_car(ts,car3,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car3,cu_id3)
             cost_coeff3=cost_coeff[ev3_connection:ev_estimat_dep]
-            car3.connected_cu.generate_schedule(solver,ev3_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff3,True)
+            car3.connected_cu.generate_schedule(solver,ev3_connection, time_delta, ev_desired_soc, ev3_disconnect, cost_coeff3,True)
             car3.connected_cu.set_active_schedule(ev3_connection)
                  
         if ts==ev4_connection:
@@ -166,8 +184,9 @@ if __name__ == "__main__":
             cc.enter_car(ts,car4,ev_estimat_dep,ev_desired_soc)
             cc.connect_car(ts,car4,cu_id1) 
             cost_coeff4=cost_coeff[ev4_connection:ev_estimat_dep]
-            car4.connected_cu.generate_schedule(solver,ev4_connection, time_delta, ev_desired_soc, ev_estimat_dep, cost_coeff4,True)
+            car4.connected_cu.generate_schedule(solver,ev4_connection, time_delta, ev_desired_soc, ev4_disconnect, cost_coeff4,True)
             car4.connected_cu.set_active_schedule(ev4_connection)
+        
         
         #Departures
         if ts==ev1_disconnect:

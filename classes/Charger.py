@@ -44,7 +44,7 @@ class ChargingUnit(object):
     
     def supply(self,ts,tdelta,p):
         self.supplied_power[ts]=p
-        self.consumed_p[ts]=p/self.eff if p>0 else p*self.eff
+        #self.consumed_p[ts]=p/self.eff if p>0 else p*self.eff
         
         self.connected_car.charge(ts,tdelta,p)
     
@@ -85,20 +85,24 @@ class ChargingUnit(object):
     #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
     def generate_schedule(self, optsolver,now, t_delta, target_soc, est_leave, cost_coeff,v2g=False):
         """
-        This method calls optimal_schedule_g2v function from management and generates schedules
+        This method calls optimal_schedule_g2v/v2g function from management and generates schedules
         """
-                
+        
+        current_soc  =self.connected_car.soc[now]
+        hyp_en_input=self.P_max_ch*((est_leave-now).seconds)                    #Maximum energy that could be supplied within the given time with the given charger rating if the battery capacity was unlimited
+        target_soc   =min(1,current_soc+hyp_en_input/self.connected_car.bCapacity)
+                    
         if v2g:
             schedule_pow, schedule_soc = optimal_schedule_v2g(optsolver,now,est_leave,t_delta,
                                                   self.P_max_ch,self.P_max_ds,
                                                   self.connected_car.bCapacity,
-                                                  self.connected_car.soc[now],target_soc,self.connected_car.minSoC,self.connected_car.maxSoC,
+                                                  current_soc,target_soc,self.connected_car.minSoC,self.connected_car.maxSoC,
                                                   cost_coeff)
         else:
             schedule_pow, schedule_soc = optimal_schedule_g2v(optsolver,now,est_leave,t_delta,
                                                               self.P_max_ch,
                                                               self.connected_car.bCapacity,
-                                                              self.connected_car.soc[now],target_soc,self.connected_car.minSoC,self.connected_car.maxSoC,
+                                                              current_soc,target_soc,self.connected_car.minSoC,self.connected_car.maxSoC,
                                                               cost_coeff)
         self.schedule_pow[now]=schedule_pow
         self.schedule_soc[now]=schedule_soc

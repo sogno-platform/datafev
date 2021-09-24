@@ -4,8 +4,6 @@
 """
 
 import pandas as pd
-from management.singlevehicle.scheduling_g2v_det import optimal_schedule_g2v
-from management.singlevehicle.scheduling_v2g_det import optimal_schedule_v2g
 
 class ChargingUnit(object):
     

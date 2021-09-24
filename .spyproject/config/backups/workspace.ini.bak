@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['management\\singlevehicle\\scheduling_g2v_det.py', 'classes\\Charger.py']
+recent_files = ['classes\\Charger.py', 'classes\\Cluster.py', 'management\\singlevehicle\\scheduling_g2v_det.py']
 

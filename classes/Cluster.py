@@ -153,8 +153,8 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
     from pyomo.core import *
     
-    #solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-    solver=SolverFactory("cplex")
+    solver=SolverFactory('glpk',executable="C:/Users/aytugy/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+    #solver=SolverFactory("cplex")
     
     cu_power        =22
     cu_efficiency   =1.0

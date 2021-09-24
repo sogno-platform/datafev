@@ -134,8 +134,8 @@ if __name__ == "__main__":
     from pyomo.core import *
     
     
-    #solver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-    solver=SolverFactory("gurobi")
+    solver=SolverFactory('glpk',executable="C:/Users/aytugy/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
+    #solver=SolverFactory("gurobi")
     history=pd.DataFrame(columns=['SOC','P_min','P_max','P'])
     
     cu_id           ="A001"

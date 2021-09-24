@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr 23 14:06:45 2021
+Created on Fri Apr 23 11:30:19 2021
 
 @author: egu
 """
@@ -13,12 +13,14 @@ import time
 from pyomo.environ import SolverFactory
 from pyomo.core import *
 
-def optimal_schedule_g2v(solver,arrts,leavets,stepsize,p_ch,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeff):
+
+def optimal_schedule_v2g(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeff,v2g=False):
     """
     arrts   : arrival time                      datetime.datetime
     leavets : estimated leave time              datetime.datetime
     stepsize: size of one time step             datetime.timedelta
     p_ch    : nominal charging power     (kW)   float
+    p_ds    : nominal charging power     (kW)   float
     ecap    : energy capacity of battery (kWs)  float   
     inisoc  : initial soc (0<inisoc<1)          float
     tarsoc  : target final soc   (0<inisoc<1)   float
@@ -40,10 +42,11 @@ def optimal_schedule_g2v(solver,arrts,leavets,stepsize,p_ch,ecap,inisoc,tarsoc,m
     model.dt    = stepsize.seconds          #Step size
     model.E     = ecap                      #Battery capacity in kWs
     model.P_CH  = p_ch                      #Maximum charging power in kW
+    model.P_DS  = p_ds if v2g==True else 0  #Maximum discharging power in kW
     model.price = obj_coeffic               #Energy price series
     model.SoC_F = tarsoc                    #SoC to be achieved at the end
     
-    model.p     = Var(model.T,within=NonNegativeReals,bounds=(0,model.P_CH))
+    model.p     = Var(model.T,bounds=(-model.P_DS,model.P_CH))
     model.SoC   = Var(model.T,within=NonNegativeReals,bounds=(minsoc,maxsoc))
     
     #CONSTRAINTS
@@ -86,6 +89,7 @@ if __name__ == "__main__":
     now=datetime(2020,5,15,8)
     dT =timedelta(minutes=15)
     P_c=11
+    P_d=11
     E  =55*3600
     ini_soc=0.2
     fin_soc=0.8
@@ -97,10 +101,11 @@ if __name__ == "__main__":
     cost_coeff_2=pd.Series(np.array([0,0,1,1,1,0,0]),index=pd.date_range(start=now,end=leave,freq=timedelta(hours=1)))
     cost_coeff_3=pd.Series(np.array([0,0,0,1,1,1,0]),index=pd.date_range(start=now,end=leave,freq=timedelta(hours=1)))
     
-    optsolver=SolverFactory('glpk',executable="C:/Users/AytugIrem/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
-    schedule1,soc1=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_1)
-    schedule2,soc2=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_2)
-    schedule3,soc3=optimal_schedule_g2v(optsolver,now,leave,dT,P_c,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_3)
+    optsolver=SolverFactory("gurobi")
+    
+    schedule1,soc1=optimal_schedule_v2g(optsolver,now,leave,dT,P_c,P_d,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_1)
+    schedule2,soc2=optimal_schedule_v2g(optsolver,now,leave,dT,P_c,P_d,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_2)
+    schedule3,soc3=optimal_schedule_v2g(optsolver,now,leave,dT,P_c,P_d,E,ini_soc,fin_soc,min_soc,max_soc,cost_coeff_3)
     
     sched1=pd.DataFrame(columns=['Pow','SoC','Cost'],index=schedule1.index)
     sched2=pd.DataFrame(columns=['Pow','SoC','Cost'],index=schedule1.index)
@@ -120,3 +125,8 @@ if __name__ == "__main__":
     sched3['SoC'] =soc3
     sched3['Cost']=cost_coeff_3.reindex(schedule1.index).fillna(method='ffill')
     sched3.plot(title="Schedule3")
+    
+    
+    
+    
+    

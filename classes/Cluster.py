@@ -10,14 +10,15 @@ import numpy as np
 
 class ChargerCluster(object):
     
-    def __init__(self,import_max,export_max=0):
+    def __init__(self,cluster_id,import_max,export_max=0):
         
+        self.id      =cluster_id
         self.power_import_max=import_max   #Maximum power that the cluster can withdraw from upstream
         self.power_export_max=export_max   #Maximum power that the cluster can inject to upstream
         
         self.power_installed =0            #Total installed power of the CUs in the cluster
               
-        self.cc_dataset=pd.DataFrame(columns=['Car ID','Car Battery Capacity','Arrival Time','Arrival SOC','Estimated Leave','Desired Leave SOC',
+        self.cc_dataset=pd.DataFrame(columns=['Car ID','Car Battery Capacity','Arrival Time','Arrival SOC','Estimated Leave','Desired Leave SOC', 'Feasible Target SOC',
                                               'Charging Unit','Leave Time','Leave SOC','Charged Energy [kWh]'])
     
         self.cu={}
@@ -41,6 +42,7 @@ class ChargerCluster(object):
        
         cc_dataset_id=len(self.cc_dataset)+1
         car.cc_dataset_id=cc_dataset_id
+        car.connected_cc =self
         
         self.cc_dataset.loc[cc_dataset_id,'Car ID']              =car.vehicle_id
         self.cc_dataset.loc[cc_dataset_id,'Car Battery Capacity']=car.bCapacity     
@@ -48,6 +50,7 @@ class ChargerCluster(object):
         self.cc_dataset.loc[cc_dataset_id,'Arrival SOC']          =car.soc[ts]
         self.cc_dataset.loc[cc_dataset_id,'Estimated Leave']      =estimated_leave
         self.cc_dataset.loc[cc_dataset_id,'Desired Leave SOC']    =desired_soc
+        self.cc_dataset.loc[cc_dataset_id,'Feasible Target SOC']  =car.fea_target_soc
         
     def connect_car(self,ts,car,cu_id):
         """
@@ -67,13 +70,23 @@ class ChargerCluster(object):
         self.cc_dataset.loc[car.cc_dataset_id,'Charged Energy [kWh]']=(car.soc[ts]-self.cc_dataset.loc[car.cc_dataset_id,'Arrival SOC'])*car.bCapacity/3600
     
         car.cc_dataset_id=None
-		
-    def loading_profile(self,ts,t_delta,horizon):
+        car.connected_cc =None
+        
+        
+    def pick_free_cu_random(self,ts,t_delta):
+        
+        cu_occupancy_actual =self.get_unit_occupancies(ts,t_delta,t_delta).iloc[0] #Check the current occupancy profile
+        free_units   =(cu_occupancy_actual[cu_occupancy_actual==0].index).to_list() #All free CUs at this moment
+        cu_id=np.random.choice(free_units)  #Select a random CU to connect the EV
+        
+        return cu_id
+        
+    def get_unit_schedules(self,ts,t_delta,horizon):
         """
         To retrieve the actual schedules of the charging units for the specified period 
         """
         time_index=pd.date_range(start=ts,end=ts+horizon-t_delta,freq=t_delta)
-        cu_load=pd.DataFrame(index=time_index)
+        cu_sch_df=pd.DataFrame(index=time_index)
 		
         for cu in self.cu.values():  
             
@@ -82,11 +95,32 @@ class ChargerCluster(object):
             else:
                 sch_inst=cu.active_schedule_instance
                 cu_sch  =cu.schedule_pow[sch_inst].reindex(time_index,fill_value=0)
-            cu_load[cu.id]=cu_sch.copy()
+            cu_sch_df[cu.id]=cu_sch.copy()
             
-        return cu_load
+        return cu_sch_df
     
-    def occupancy_profile(self,ts,t_delta,horizon):
+    def get_unit_soc_schedules(self,ts,t_delta,horizon):
+        """
+        To retrieve the actual schedules of the charging units for the specified period 
+        """
+        time_index=pd.date_range(start=ts,end=ts+horizon-t_delta,freq=t_delta)
+        cu_sch_df=pd.DataFrame(index=time_index)
+		
+        for cu in self.cu.values():  
+            
+            if cu.connected_car==None:
+                cu_sch=pd.Series(0,index=time_index)
+            else:
+                sch_inst=cu.active_schedule_instance
+                cu_sch  =cu.schedule_soc[sch_inst] #TODO: Interpolate
+            cu_sch_df[cu.id]=cu_sch.copy()
+            
+        cu_sch_df=cu_sch_df.fillna(method="ffill")
+            
+        return cu_sch_df    
+    
+    
+    def get_unit_occupancies(self,ts,t_delta,horizon):
         """
         To calculate the cluster occupancy for the specified period with the connection data
         """
@@ -113,8 +147,6 @@ class ChargerCluster(object):
 
 if __name__ == "__main__":
     
-    import pandas as pd
-    import numpy as np
     from datetime import datetime, timedelta
     from classes.Charger import ChargingUnit as CU
     from classes.Car import ElectricVehicle as EV
@@ -134,7 +166,7 @@ if __name__ == "__main__":
     cu2=CU(cu_id2,cu_power,cu_efficiency,cu_bidirectional)
     cu3=CU(cu_id3,cu_power,cu_efficiency,cu_bidirectional)
     
-    cc              =ChargerCluster(50)
+    cc              =ChargerCluster('cc_01',50)
     cc.add_cu(cu1)
     cc.add_cu(cu2)
     cc.add_cu(cu3)
@@ -164,7 +196,7 @@ if __name__ == "__main__":
         #######################################################################
         #Managing the incoming EVs
         incoming_now=events[events['Arrival Time']==ts]                             #EVs entering at this moment 
-        cu_occupancy_actual =cc.occupancy_profile(ts,time_delta,time_delta).iloc[0] #Check the current occupancy profile
+        cu_occupancy_actual =cc.get_unit_occupancies(ts,time_delta,time_delta).iloc[0] #Check the current occupancy profile
         free_units   =(cu_occupancy_actual[cu_occupancy_actual==0].index).to_list() #All free CUs at this moment
     
         for _,i in incoming_now.iterrows():  
@@ -192,7 +224,7 @@ if __name__ == "__main__":
             
         #######################################################################
         #Managing the chargin process
-        cu_occupancy_actual =cc.occupancy_profile(ts,time_delta,time_delta).iloc[0] #Check the current occupancy profile
+        cu_occupancy_actual =cc.get_unit_occupancies(ts,time_delta,time_delta).iloc[0] #Check the current occupancy profile
         occupied_units      =(cu_occupancy_actual[cu_occupancy_actual==1].index).to_list() #All CUs with connected EVs at this moment
         
         for cu_id in occupied_units:

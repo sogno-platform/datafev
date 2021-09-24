@@ -9,7 +9,6 @@ class ElectricVehicle(object):
         """
         This method initializes the car objects.
         """
-
         self.vehicle_id   = carID
         self.bCapacity    = bCapacity*3600     #kWh to kWs
         
@@ -32,7 +31,3 @@ class ElectricVehicle(object):
         p_in<0 discharging
         """  
         self.soc[ts+tdelta]=self.soc[ts]+p_in*tdelta.seconds/self.bCapacity
-#        if self.soc[ts]<0.99 and self.soc[ts+tdelta]>=0.99:
-#            return True
-#        else:
-#            return False

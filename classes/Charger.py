@@ -18,6 +18,7 @@ class ChargingUnit(object):
         
         self.connected_car =None
         self.connection_dataset=pd.DataFrame(columns=['Car ID','Connection','Disconnection'])
+        self.occupation={}
         self.supplied_power={}
         self.consumed_p={}
         self.consumed_q={}
@@ -44,9 +45,14 @@ class ChargingUnit(object):
     
     def supply(self,ts,tdelta,p):
         self.supplied_power[ts]=p
+        self.occupation[ts]=1
         #self.consumed_p[ts]=p/self.eff if p>0 else p*self.eff
         
         self.connected_car.charge(ts,tdelta,p)
+    
+    def idle(self,ts,tdelta):
+        self.supplied_power[ts]=0.0
+        self.occupation[ts]=0
     
     def calc_p_max_ch(self,ts,tdelta):
         """
@@ -82,6 +88,13 @@ class ChargingUnit(object):
             
         return p_max_ds
     
+    
+    def set_schedule(self,ts,schedule_pow,schedule_soc):
+        self.schedule_pow[ts]=schedule_pow
+        self.schedule_soc[ts]=schedule_soc
+        self.set_active_schedule(ts)
+        
+        
     #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
     def generate_schedule(self, optsolver,now, t_delta, target_soc, est_leave, cost_coeff,v2g=False):
         """

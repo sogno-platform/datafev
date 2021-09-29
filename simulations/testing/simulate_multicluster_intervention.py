@@ -92,6 +92,8 @@ inputs_fixed['battery_cap']=pd.Series(connections['battery_cap'])
 inputs_fixed['initial_soc']=pd.Series(connections['initial_soc'])
 inputs_fixed['desired_soc']=pd.Series(connections['desired_soc'])
 inputs_fixed['departure_time']=pd.Series(connections['departure_time'])
+
+
 print(inputs_fixed)
 print()
 

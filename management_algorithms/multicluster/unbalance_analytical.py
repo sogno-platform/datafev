@@ -11,6 +11,8 @@ def minimize_cluster_unabalance(actual_schedule,newcar_schedule,candidate_cluste
 
     unbt={}
     
+    #TODO: divide with cluster_cap
+    
     for c in candidate_clusters:
         
         newsys_schedule=actual_schedule.copy()
@@ -31,19 +33,6 @@ def minimize_cluster_unabalance(actual_schedule,newcar_schedule,candidate_cluste
     #print(tot_unb.idxmin())
     return tot_unb.idxmin()
 
-
-def minimize_cluster_capacity_violation(actual_schedule,newcar_schedule,candidate_clusters,cluster_cap):
-    
-    test_df=actual_schedule.copy()
-    for c in candidate_clusters:
-        test_df[c]+=newcar_schedule
-        
-        
-    loading    =test_df/cluster_cap
-    overloading=loading.applymap(lambda x:x-1 if x>1 else 0)
-    
-    #TODO: Add another check for assigning to the least (normalized) populated cluster
-    
         
         
         

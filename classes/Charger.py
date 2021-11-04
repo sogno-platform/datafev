@@ -15,7 +15,9 @@ class ChargingUnit(object):
         self.eff  =eff
         
         self.connected_car =None
-        self.connection_dataset=pd.DataFrame(columns=['Car ID','Connection','Disconnection'])
+        self.reserved_car  =None
+        self.connection_dataset =pd.DataFrame(columns=['Car ID','Connection','Disconnection'])
+        self.booking_dataset    =pd.DataFrame(columns=['Car ID','Booked At','From','To','Demand','Unbooked At'])
         self.occupation={}
         self.supplied_power={}
         self.consumed_p={}
@@ -37,6 +39,20 @@ class ChargingUnit(object):
         self.connected_car=None
         dataset_ind=(self.connection_dataset.index)
         self.connection_dataset.loc[dataset_ind,'Disconnection']=ts
+        
+    def book(self,ts,res_from,res_to,car,car_demand):
+        booking_id=len(self.booking_dataset)+1
+        
+        self.booking_dataset.loc[booking_id,'Car ID']   =car.vehicle_id
+        self.booking_dataset.loc[booking_id,'Booked At']=ts
+        self.booking_dataset.loc[booking_id,'From']     =res_from
+        self.booking_dataset.loc[booking_id,'To']       =res_to
+        self.booking_dataset.loc[booking_id,'Demand']   =car_demand
+        
+        return booking_id
+        
+    def unbook(self,ts,booking_id):
+        self.booking_dataset.loc[booking_id,'Unbooked At']=ts
     
     def set_power_factor(self,pf):
         self.pf=pf
@@ -51,72 +67,11 @@ class ChargingUnit(object):
     def idle(self,ts,tdelta):
         self.supplied_power[ts]=0.0
         self.occupation[ts]=0
-    
-    def calc_p_max_ch(self,ts,tdelta):
-        """
-        This function calculates maximum power that can be charged to EV battery at the given moment
-        """      
-        ev= self.connected_car
-        
-        dod        =ev.maxSoC- ev.soc[ts]        #Depth of discharge
-        e_demand   =dod*ev.bCapacity             #Energy required to fill the battery (dod--> kWs)
-        e_delta_max=self.P_max_ch*tdelta.seconds    #Upper limit of energy that can be provided with the given charger rating in in tdelta
-        
-        if e_delta_max<=e_demand: 
-            p_max_ch=self.P_max_ch                     #Charge with full power if EV battery can accept it
-        else:
-            p_max_ch=self.P_max_ch*e_demand/e_delta_max #Modulate the power
-            
-        return p_max_ch
-        
-    def calc_p_max_ds(self,ts,tdelta):
-        """
-        This function calculates maximum power that can be discharged from EV battery at the given moment
-        """      
-        ev= self.connected_car
-        
-        res_doc    =ev.soc[ts]-ev.minSoC         #Additional depth of discharge
-        e_supply   =res_doc*ev.bCapacity         #Dischare required to empty the battery (dod--> kWs)
-        e_delta_max=-self.P_max_ds*tdelta.seconds   #Upper limit of energy that can be discharged with the given charger rating in in tdelta
-        
-        if e_delta_max<=e_supply: 
-            p_max_ds=self.P_max_ds                      #Charge with full power if EV battery can accept it
-        else:
-            p_max_ds=self.P_max_ds*e_supply/e_delta_max #Modulate the power
-            
-        return p_max_ds
-    
-    
+         
     def set_schedule(self,ts,schedule_pow,schedule_soc):
         self.schedule_pow[ts]=schedule_pow
         self.schedule_soc[ts]=schedule_soc
         self.set_active_schedule(ts)
-        
-        
-    #TODO1: Write a method that calls scheduling_g2v or scheduling_v2g
-    def generate_schedule(self, optsolver,now, t_delta, target_soc, est_leave, cost_coeff,v2g=False):
-        """
-        This method calls optimal_schedule_g2v/v2g function from management and generates schedules
-        """
-        
-        current_soc  =self.connected_car.soc[now]
-        hyp_en_input=self.P_max_ch*((est_leave-now).seconds)                    #Maximum energy that could be supplied within the given time with the given charger rating if the battery capacity was unlimited
-        target_soc   =min(1,current_soc+hyp_en_input/self.connected_car.bCapacity)
-                    
-        if v2g:
-            schedule_pow, schedule_soc = optimal_schedule_v2g(optsolver,now,est_leave,t_delta,
-                                                  self.P_max_ch,self.P_max_ds,
-                                                  self.connected_car.bCapacity,
-                                                  current_soc,target_soc,self.connected_car.minSoC,self.connected_car.maxSoC,
-                                                  cost_coeff)
-        else:
-            schedule_pow, schedule_soc = optimal_schedule_g2v(optsolver,now,est_leave,t_delta,
-                                                              self.P_max_ch,
-                                                              self.connected_car.bCapacity,
-                                                              current_soc,target_soc,self.connected_car.minSoC,self.connected_car.maxSoC,
-                                                              cost_coeff)
-        self.schedule_pow[now]=schedule_pow
-        self.schedule_soc[now]=schedule_soc
     
     def set_active_schedule(self,ts):
         self.active_schedule_instance=ts
@@ -124,17 +79,11 @@ class ChargingUnit(object):
 if __name__ == "__main__":
     
     from classes.Car import ElectricVehicle as EV
+    from management_functions.single_cu.min_max import calc_p_max_ch
     from datetime import datetime, timedelta
     import numpy as np
-    import pandas as pd
     
-    from pyomo.environ import SolverFactory
-    from pyomo.core import *
-    
-    
-    solver=SolverFactory('glpk',executable="C:/Users/aytugy/anaconda3/pkgs/glpk-4.65-h8ffe710_1004/Library/bin/glpsol")
     #solver=SolverFactory("gurobi")
-    history=pd.DataFrame(columns=['SOC','P_min','P_max','P'])
     
     cu_id           ="A001"
     cu_power        =11
@@ -142,47 +91,51 @@ if __name__ == "__main__":
     cu_bidirectional=True
     cu=ChargingUnit(cu_id,cu_power,cu_efficiency,cu_bidirectional)
     
-    time_connection =datetime(2021,3,17,16)
-    time_delta      =timedelta(minutes=60)
-    
     ev_id           ="ev001"
     ev_bCapacity    =55 #zoe
     ev              =EV(ev_id,ev_bCapacity)
-    ev.soc[time_connection]=0.4
-     
-    cu.connect(time_connection,ev)
+      
+    booking1_at  =datetime(2021,3,17,15)
+    booking1_fro =datetime(2021,3,17,16)
+    booking1_to  =datetime(2021,3,17,18)
+    booking1_dem =22
     
-    # required inputs for optimized charging
-    fin_soc = 0.8
-    leave  = time_connection+time_delta*8        
-    opt_times=pd.date_range(start=time_connection,end=leave,freq=time_delta)
-    zero_time=int(len(opt_times)/2)
-    one_time =len(opt_times)-zero_time
-    cost    =np.append(np.ones(zero_time),np.zeros(one_time))
-    cost_coeff = pd.Series(cost,index=opt_times)
+    booking2_at  =booking1_at+timedelta(minutes=30)
+    booking2_fro =booking1_fro+timedelta(minutes=30)
+    booking2_to  =booking1_to+timedelta(minutes=30)
+    booking2_dem =booking1_dem
     
-    cu.generate_schedule(solver,time_connection, time_delta, fin_soc, leave, cost_coeff,True)
-    cu.set_active_schedule(time_connection)
     
-    nb_of_ts = int((leave-time_connection)/time_delta)
-    for t in range(nb_of_ts):
-        ts=time_connection+t*time_delta
-                      
-        history.loc[ts,'SOC']=ev.soc[ts]
+    connection_at   =datetime(2021,3,17,17)
+    disconnection_at=datetime(2021,3,17,19)
+    
+    sim_start  =booking1_at
+    sim_ts     =timedelta(minutes=5)
+
+    nb_of_ts = int((disconnection_at-booking1_at)/sim_ts)
+    for t in range(nb_of_ts+1):
+        ts=sim_start+t*sim_ts
         
-        p_max_ds=cu.calc_p_max_ds(ts,time_delta)
-        p_max_ch=cu.calc_p_max_ch(ts,time_delta)
-        history.loc[ts,'P_min']=-p_max_ds
-        history.loc[ts,'P_max']=p_max_ch
-        
-        p_real=cu.schedule_pow[cu.active_schedule_instance][t]
-        cu.supply(ts,time_delta,p_real)
-        history.loc[ts,'P']=p_real
+        if ts==booking1_at:
+            booking1_id=cu.book(ts,booking1_fro,booking1_to,ev,booking1_dem)
             
-    ts= time_connection+(t+1)*time_delta 
-    cu.disconnect(ts)
-        
-    print(history)
+        if ts==booking2_at:
+            cu.unbook(ts,booking1_id)
+            booking2_id=cu.book(ts,booking2_fro,booking2_to,ev,booking2_dem)
+    
+        if ts==connection_at:
+            ev.soc[ts]=0.4
+            cu.connect(ts,ev)
+            
+        if ts==disconnection_at:
+            ev.connected_cu.disconnect(ts)
+            cu.unbook(ts,booking2_id)
+            
+        if cu.connected_car!=None:
+            p=calc_p_max_ch(cu,ts,sim_ts)
+            cu.supply(ts,sim_ts,p)
+            
+            
         
             
         

@@ -70,6 +70,7 @@ class ChargingStation(object):
         """
         Method to calculate dynamic cost coefficient that will be used in individual scheduling
         """
+
         cc_schedules  =self.get_cluster_schedules(ts,t_delta,horizon)        
         cs_schedule   =cc_schedules.sum(axis=1)
         

@@ -1,5 +1,6 @@
 import pandas as pd
 from management_algorithms.multicluster.intervention import short_term_rescheduling
+from management_algorithms.cluster.decentralized_intervention import decentralized_short_term_rescheduling
 
 def optimal_intervention_v1g(cs, ts, t_delta, horizon, solver):
     opt_horizon_t_steps = pd.date_range(start=ts, end=ts + horizon, freq=t_delta)
@@ -59,6 +60,67 @@ def optimal_intervention_v1g(cs, ts, t_delta, horizon, solver):
                 else:
                     cu.idle(ts, t_delta)
 
+    else:
+        for cc_id in cs.clusters.keys():
+            for cu_id in cs.clusters[cc_id].cu.keys():
+                cu = cs.clusters[cc_id].cu[cu_id]
+                cu.idle(ts, t_delta)
+
+def optimal_intervention_v1g_decentralized(cs, ts, t_delta, horizon, solver):
+    opt_horizon_t_steps = pd.date_range(start=ts, end=ts + horizon, freq=t_delta)
+    occ = cs.get_cluster_occupations(ts, t_delta, t_delta)
+    # if any connected vehicle needs to be charged in first datetime index
+    if occ.iloc[0].sum() > 0:
+        reference_soc = {}
+        battery_cap = {}
+        departure_ti = {}
+        initial_soc = {}
+        desired_soc = {}
+        location = {}
+
+        for cc_id, cc in cs.clusters.items():
+
+            for cu_id, cu in cc.cu.items():
+                connected_car = cu.connected_car
+    
+                if connected_car != None:
+                    ev_id = connected_car.vehicle_id
+                    location[ev_id] = cu_id
+                    battery_cap[ev_id] = connected_car.bCapacity
+                    departure_ti[ev_id] = connected_car.estimated_leave
+                    initial_soc[ev_id] = connected_car.soc[ts]
+    
+                    sch_inst = cu.active_schedule_instance
+                    cu_sch = cu.schedule_soc[sch_inst]  # TODO: Interpolate
+                    cu_sch = cu_sch.reindex(opt_horizon_t_steps)
+                    cu_sch = cu_sch.fillna(method="ffill")
+    
+                    reference_soc[ev_id] = cu_sch
+                    desired_soc[ev_id] = reference_soc[ev_id][ts + horizon]
+                    
+            data = {}
+            data['opt_horizon'] = opt_horizon_t_steps
+            data['opt_step'] = t_delta       
+            data['chrunit_cap'] = cc.cu_capacities
+            data['cluster_cap'] = cc.power_import_max
+
+            connections = {}
+            connections['battery_cap'] = battery_cap
+            connections['reference_soc'] = reference_soc
+            connections['departure_time'] = departure_ti
+            connections['initial_soc'] = initial_soc
+            connections['desired_soc'] = desired_soc
+            connections['location'] = location
+                
+            set_points = decentralized_short_term_rescheduling(data, connections, solver)
+
+            for cu_id in cc.cu.keys():
+                cu = cc.cu[cu_id]
+                if cu.connected_car != None:
+                    cu.supply(ts, t_delta, set_points[cu_id])
+                else:
+                    cu.idle(ts, t_delta)
+        
     else:
         for cc_id in cs.clusters.keys():
             for cu_id in cs.clusters[cc_id].cu.keys():

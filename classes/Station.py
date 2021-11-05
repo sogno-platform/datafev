@@ -12,7 +12,8 @@ import numpy as np
 
 class ChargingStation(object):
     
-    def __init__(self):
+    def __init__(self,system_id="clustered_cs"):
+        self.id=system_id
         self.clusters={}
         
         self.cluster_consumption={} #Net power consumption of the clusters

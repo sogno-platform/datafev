@@ -35,15 +35,15 @@ def minimize_inter_cluster_unabalance(actual_schedule,newcar_schedule,candidate_
 def minimize_cluster_capacity_violation(actual_schedule,newcar_schedule,candidate_clusters,cluster_cap):
     
     # copy actual schedule with candidate cluster filtering 
-    newsys_schedule=actual_schedule[candidate_clusters]
+    newsys_schedule = actual_schedule[candidate_clusters]
     
     # create a dictionary in lenght of possible scenarios (number of clusters)
     # keys: scenario(cluster) id, values: scenario schedule df
     contestant_schedule = {}
     for cc_id in newsys_schedule.columns:
         contestant_schedule[cc_id]=newsys_schedule.copy()
-        #print(contestant_schedule[cc_id])
-        
+    
+    pd.options.mode.chained_assignment = None  # default='warn'
     # add new car schedule to each scenario (each time to different a cluster)
     for scenario_id, sch_df in contestant_schedule.items():
         for cc_id in sch_df.columns:
@@ -52,8 +52,7 @@ def minimize_cluster_capacity_violation(actual_schedule,newcar_schedule,candidat
                     for ts_ev, power in newcar_schedule.items():
                         if ts_cc == ts_ev:
                             sch_df.loc[ts_cc][cc_id] += newcar_schedule[ts_ev]
-    #print(contestant_schedule)
-    
+
     # create a dictionary which saves excess values
     # if contestant schedule exceeds cluster capacity save the difference, else 0
     # for that first copy dataframes
@@ -70,21 +69,19 @@ def minimize_cluster_capacity_violation(actual_schedule,newcar_schedule,candidat
         for cc_id in sch_df.columns:
             for ts_cc in sch_df.index:
                 if sch_df.loc[ts_cc][cc_id] > cluster_cap[cc_id]:
-                    excess_schedule[scenario_id].loc[ts_cc][cc_id] = sch_df.iloc[ts_cc][cc_id] - cluster_cap[cc_id]
+                    excess_schedule[scenario_id].loc[ts_cc][cc_id] = sch_df.loc[ts_cc][cc_id] - cluster_cap[cc_id]
                 else:
                     excess_schedule[scenario_id].loc[ts_cc][cc_id] = 0
-    #print(excess_schedule)
-    
+
     # store total exess values in a dictionary
     excess_dict = {}
     for scenario_id, sch_df in excess_schedule.items():
         excess_dict[scenario_id] = sch_df.to_numpy().sum()
-    #print(excess_dict)
     
     # min value
     min_value_cc_id = min(excess_dict, key=excess_dict.get)
     min_value = excess_dict[min_value_cc_id]
-    
+
     # if there are more than one minimum values in the excess dict,
     # choose the one with min affect on cluster's occupancy   
     min_value_counter = 0
@@ -102,22 +99,21 @@ def minimize_cluster_capacity_violation(actual_schedule,newcar_schedule,candidat
                 cc_total_power_dict[cc_id] = cluster_cap[cc_id]
         # convert to series
         cc_total_power_ser = pd.Series(cc_total_power_dict)
-        #print(cc_total_power_ser)
         
         # store total occupied power of clusters in a pandas series
-        cc_occupied_power_ser = newsys_schedule.sum(axis=0)
-        #print(cc_occupied_power_ser)#
-        
-        # adding new car schedule average power to total occupied power of clusters
-        #print(newcar_schedule.mean())
-        cc_occupied_power_ser += newcar_schedule.mean()
+        cc_energy_ser = newsys_schedule.sum(axis=0)
         #print(cc_occupied_power_ser)
         
+        # adding new car schedule average power to total occupied power of clusters
+        cc_energy_ser += newcar_schedule.sum()
+        
         # calculate occupancy rate of a cluster
-        occupancy_rate = cc_occupied_power_ser / cc_total_power_ser
-        #print(occupancy_rate)
+        #TO-DO: zaman araligina gore bolum tarafini genisletmen lazim
+        occupancy_rate = cc_energy_ser / cc_total_power_ser
         
         return occupancy_rate.idxmin()
+
+
 
         
         

@@ -35,4 +35,4 @@ def choose_among_menu_type1(ev,ev_demand,parking_duration,menu):
     
     selected_offer,reserved_demand=ip_tmp_o_tme(ev_p_max_ac1,ev_p_max_ac3,ev_p_max_dc,ev_demand,parking_duration,menu)
      
-    return selected_offer,reserved_demand
+    return reserved_demand,menu.loc[selected_offer,'Price']

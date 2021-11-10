@@ -12,6 +12,7 @@ class ChargerCluster(object):
     
     def __init__(self,cluster_id,import_max,export_max=0):
         
+        self.type    ='CC'
         self.id      =cluster_id
         self.power_import_max=import_max   #Maximum power that the cluster can withdraw from upstream
         self.power_export_max=export_max   #Maximum power that the cluster can inject to upstream

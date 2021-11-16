@@ -76,7 +76,7 @@ class ReservationLedger(object):
         res_ending_by  =self.end_by(end) 
         return res_starting_by&res_ending_by
     
-    def retrieve_reseration(self,vehicle_id,host_id,start,end):
+    def retrieve_reservation(self,vehicle_id,host_id,start,end):
         res_between_entities=self.between_entities(vehicle_id,host_id)
         res_for_period      =self.for_period(start,end)   
         res_id   =(self.table.loc[res_between_entities&res_for_period]).index[0] #TODO:Add Exception

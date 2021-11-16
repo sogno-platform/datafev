@@ -9,7 +9,7 @@ def optimal_allocation_min_unbalance(cs, ts, time_delta, opt_horizon, ev_schedul
     candidate_clusters = cluster_occupation_actual[cluster_occupation_actual < cs.cu_numbers].index
 
     if len(candidate_clusters) > 0:
-        optimal_cluster = minimize_inter_cluster_unabalance(cc_schedules, ev_schedule, candidate_clusters,cs.cc_capacities)
+        optimal_cluster = minimize_inter_cluster_unabalance(cc_schedules, ev_schedule, candidate_clusters,cs.cc_installed_capacities)
     else:
         optimal_cluster = None
 

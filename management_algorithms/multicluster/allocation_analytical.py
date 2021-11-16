@@ -7,14 +7,14 @@ Created on Tue Jul  6 11:52:12 2021
 
 import pandas as pd
 
-def minimize_inter_cluster_unabalance(actual_schedule,newcar_schedule,candidate_clusters,cluster_cap):
+def minimize_inter_cluster_unabalance(actual_schedule,newcar_schedule,candidate_clusters,cluster_installed_cap):
 
     unbt={}
     
     for c in candidate_clusters:
         
-        newsys_schedule=actual_schedule.copy()/cluster_cap[c]
-        newsys_schedule[c]+=newcar_schedule/cluster_cap[c]
+        newsys_schedule=actual_schedule.copy()/cluster_installed_cap
+        newsys_schedule[c]+=newcar_schedule/cluster_installed_cap[c]
                 
         unb_=0
         for t in newsys_schedule.index:
@@ -28,7 +28,6 @@ def minimize_inter_cluster_unabalance(actual_schedule,newcar_schedule,candidate_
         
     tot_unb=pd.Series(unbt)
 
-    #print(tot_unb.idxmin())
     return tot_unb.idxmin()
 
         

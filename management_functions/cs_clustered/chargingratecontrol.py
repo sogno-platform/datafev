@@ -1,6 +1,7 @@
 import pandas as pd
 from management_algorithms.multicluster.intervention import short_term_rescheduling
 from management_algorithms.cluster.decentralized_intervention import decentralized_short_term_rescheduling
+from management_functions.cu.min_max import calc_p_max_ch
 
 def optimal_intervention_v1g(cs, ts, t_delta, horizon, solver):
     opt_horizon_t_steps = pd.date_range(start=ts, end=ts + horizon, freq=t_delta)
@@ -138,7 +139,7 @@ def simple_intervention_v1g(cs, ts, t_delta):
             for cu_id, cu in cc.cu.items():
                 car = cu.connected_car
                 if car != None:
-                    P_Ref_CU[cu_id] = cu.calc_p_max_ch(ts, t_delta)
+                    P_Ref_CU[cu_id] = calc_p_max_ch(cu,ts, t_delta)
                 else:
                     P_Ref_CU[cu_id] = 0.0
 

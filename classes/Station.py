@@ -45,6 +45,9 @@ class ChargingStation(object):
             
         self.cu_numbers   =pd.Series(number_dict)
         self.cs_capacity  =sum(self.cc_capacities.values())
+        
+        self.cc_installed_capacities=pd.DataFrame(self.cu_capacities).sum()
+        self.cs_installed_capacity  =self.cc_installed_capacities.sum()
         #self.cu_indices   =cu_ids
         
     def set_tou_price(self,series,resolution):

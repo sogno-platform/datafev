@@ -15,7 +15,7 @@ from pyomo.core import *
 import pyomo.kernel as pmo
 
 
-def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeffs):
+def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,costcoeffs):
     """
     This function optimizes 
     1) the allocation of an incoming EV to a cluster
@@ -24,15 +24,17 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     
     Inputs
     ---------------------------------------------------------------------------
-    arrts    : arrival time                      datetime.datetime
-    leavets  : estimated leave time              datetime.datetime
-    stepsize : size of one time step             datetime.timedelta
-    p_ch     : nominal charging power     (kW)   float
-    p_ds     : nominal charging power     (kW)   float
-    ecap     : energy capacity of battery (kWs)  float   
-    inisoc   : initial soc (0<inisoc<1)          float
-    tarsoc   : target final soc   (0<inisoc<1)   float
-    costcoefs: price signals (Eur/MWh)           dictionary of pandas series
+    arrts    : arrival time                             datetime.datetime
+    leavets  : estimated leave time                     datetime.datetime
+    stepsize : size of one time step                    datetime.timedelta
+    p_ch     : nominal charging power     (kW)          float
+    p_ds     : nominal charging power     (kW)          float
+    ecap     : energy capacity of battery (kWs)         float   
+    inisoc   : initial soc (0<inisoc<1)                 float
+    tarsoc   : target final soc   (0<inisoc<1)          float
+    crtsoc   : target soc at crttime                    float
+    crttime  : critical time s.t. s(srttime)> crtsoc    datetime.datetime
+    costcoefs: price signals (Eur/MWh)                  dictionary of pandas series
     ---------------------------------------------------------------------------
     
     Outputs
@@ -46,13 +48,21 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     duration=pd.date_range(start=arrts,end=leavets,freq=stepsize)    #Date range for the whole stay duration in the charging park
     opt_horizon=range(len(duration))
     
+    conf_period={}
+    for t in opt_horizon:
+        if duration[t]<crttime:
+            conf_period[t]=0
+        else:
+            conf_period[t]=1
+            
     candidate_clusters=costcoeffs.keys()
     coefficients        ={}      
     for cc in candidate_clusters:
         cc_coef=costcoeffs[cc].reindex(duration)
         cc_coef=cc_coef.fillna(method='ffill')
-        coefficients[cc]=cc_coef.values     
+        coefficients[cc]=cc_coef.values  
             
+        
     ####################Constructing the optimization model####################
     model       = ConcreteModel()
     
@@ -65,6 +75,8 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     model.P_DS  = p_ds                      #Maximum discharging power in kW
     model.W     = coefficients              #Time-variant cost coefficients of clusters
     model.SoC_F = tarsoc                    #SoC to be achieved at the end
+    model.conf  = conf_period               #Confidence period where SOC must be larger than crtsoc
+    model.SoC_R = crtsoc                    #The minimim SOC must be ensured in the confidence period  
          
     model.x     = Var(model.C,within=pmo.Binary)
     model.p     = Var(model.T,bounds=(-model.P_DS,model.P_CH))                 #Power to be supplied at time step t
@@ -83,6 +95,10 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
             return model.SoC[t] ==model.SoC_F
     model.socconst=Constraint(model.T,rule=storageConservation)
     
+    def socconfidence(model,t):
+        return model.SoC[t]>=model.SoC_R*model.conf[t]
+    model.socconfi=Constraint(model.T,rule=socconfidence)
+
     def supplyrule(model):
         return model.p[max(model.T)]==0.0
     model.supconst=Constraint(rule=supplyrule)

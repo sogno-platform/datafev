@@ -30,3 +30,11 @@ def optimal_allocation_min_violation(cs, ts, time_delta, opt_horizon, ev_schedul
         optimal_cluster = None
     
     return optimal_cluster
+
+def optimal_allocation_cluster_cost_diff(cs,ts,time_delta,opt_horizon,ev_schedule):
+    
+    cluster_cost_series=dynamicpricing_analytical()
+    
+    optimal_costdif_cluster()
+    
+    return optimal_cluster,p_ref,s_ref

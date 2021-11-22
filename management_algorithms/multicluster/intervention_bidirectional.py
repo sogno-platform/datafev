@@ -24,7 +24,8 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
     P_CC_neg_max  =powerlimits['P_CC_neg_max']
     P_CS_pos_max  =powerlimits['P_CS_pos_max']
     P_CS_neg_max  =powerlimits['P_CS_neg_max']
-           
+    P_IC_unb_max  =powerlimits['P_IC_unb_max'] if 'P_IC_unb_max' in powerlimits.keys() else None
+     
     P_EV_pos_max  =connections['P_EV_pos_max']
     P_EV_neg_max  =connections['P_EV_neg_max']
     eta_ch        =connections['charge_eff']
@@ -62,6 +63,7 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
     model.P_CC_neg=P_CC_neg_max      #Maximum power that can be exported by a cluster
     model.P_CS_pos=P_CS_pos_max      #Maximum power that can be imported by the system
     model.P_CS_neg=P_CS_neg_max      #Maximum power that can be exported by the system
+    model.P_IC_unb=P_IC_unb_max      #Maximum inter-cluster unbalance
     
     #Charging efficiency 
     model.eff_ch  =eta_ch            #Charging efficiency
@@ -125,6 +127,11 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
         return model.p_cc[c,t]>=-model.P_CC_neg[c][t]
     model.ccpowcap_neg =Constraint(model.C,model.T,rule=cluster_neg_limit_dynamic)
     
+    def cluster_unbalance_limit(model,c1,c2,t):
+        return model.p_cc[c1,t]<=model.p_cc[c2,t]+model.P_IC_unb[c1,c2][t]
+    if model.P_IC_unb!=None:  
+        model.inter_clust  =Constraint(model.C,model.C,model.T,rule=cluster_unbalance_limit)
+        
     def station_pos_limit_dynamic(model,t):             #Import constraint for CS
         return model.p_cs[t]<=model.P_CS_pos[t]
     model.cspowcap_pos=Constraint(model.T,rule=station_pos_limit_dynamic)
@@ -170,5 +177,5 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
                 p_ref_pos[v][t]=model.p_ev_pos[v,t]()
             s_ref[v][t]=model.s[v,t]()
             
-    return p_ref,s_ref,p_ref_pos,p_ref_neg
+    return p_ref,s_ref#,p_ref_pos,p_ref_neg
 

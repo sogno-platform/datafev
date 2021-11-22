@@ -31,6 +31,8 @@ inisoc  =0.6
 tarsoc  =0.8
 minsoc  =0.2
 maxsoc  =1.0
+crtsoc  =0.8
+crttime =datetime(2020,1,6,8,50)
 
 color_code={'CC1':'r','CC2':'b'}
 
@@ -46,12 +48,12 @@ for trial in range(1,6):
     costcoeff_df =pd.concat(costcoeffs,axis=1)
     
     st1=time.time()
-    p_ref_v1g,s_ref_v1g,c_ref_v1g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v1g,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeffs)
+    p_ref_v1g,s_ref_v1g,c_ref_v1g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v1g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,costcoeffs)
     en1=time.time()
     print("Computation time V1G:",en1-st1)
     
     st2=time.time()
-    p_ref_v2g,s_ref_v2g,c_ref_v2g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,costcoeffs)
+    p_ref_v2g,s_ref_v2g,c_ref_v2g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,costcoeffs)
     en2=time.time()
     print("Computation time V2G:",en2-st2)
     

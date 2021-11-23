@@ -22,12 +22,11 @@ def short_term_rescheduling(parkdata,connections,solver):
     cun_cap  =parkdata['chrunit_cap']
     cls_cap  =parkdata['cluster_cap']
     sta_cap  =parkdata['station_cap']
-            
+    
     battery_cap   =connections['battery_cap']
-    refsoc        =connections['reference_soc']
+    tarsoc        =connections['target_soc'] 
     departure_time=connections['departure_time']
     inisoc        =connections['initial_soc']
-    dessoc        =connections['desired_soc']
     location      =connections['location']
     ev_connected_here={} 
     for a in location.keys():
@@ -56,32 +55,37 @@ def short_term_rescheduling(parkdata,connections,solver):
     model.P_CS  =sta_cap        #Maximum station power
         
     #Reference parameters
-    model.iniSoC   =inisoc   #SoC when the optimization starts
-    model.desSoC   =dessoc   #Desired SOC of EVs
-    model.refSoC   =refsoc   #Refernce SOC trajectory
+    model.s_ini    =inisoc   #SoC when the optimization starts
+    model.s_ref    =tarsoc   #Target SOC
         
     #Variables
-    model.p_ev  =Var(model.A,model.T,within=NonNegativeReals)                   #Charging power to the car a
+    model.p_ev  =Var(model.A,model.T,within=Reals)                              #Charging power to the car a
     model.p_cc  =Var(model.C,model.T,within=NonNegativeReals)                   #Power flows into the cluster c
     model.p_cs  =Var(model.T,within=NonNegativeReals)                           #Total system power  
-    model.SoC   =Var(model.A,model.Tp,bounds=(0,1)) 
-    model.dev   =Var(model.A,model.Tp,within=Reals)
+    model.s   =Var(model.A,model.Tp,bounds=(0,1)) 
                            
     #CONSTRAINTS
     def storageConservation(model,a,t):    #SOC of EV batteries will change with respect to the charged power and battery energy capacity
         if t==min(horizon):
-            return model.SoC[a,t]==model.iniSoC[a]
+            return model.s[a,t]==model.s_ini[a]
         else:
-            return model.SoC[a,t]==(model.SoC[a,t - deltaT] + model.p_ev[a,t - deltaT]/battery_cap[a] *model.deltaSec)
-    model.socconst=Constraint(model.A,model.Tp,rule=storageConservation)
+            return model.s[a,t]==(model.s[a,t - 1] + model.p_ev[a,t - 1]/battery_cap[a] *model.deltaSec)
+    model.sconst=Constraint(model.A,model.Tp,rule=storageConservation)
     
     def chargepowerlimit(model,a,t):   #Cars can only be charged until the departure
         if t<departure_time[a]:
             return model.p_ev[a,t]<=model.P_CU[location[a][0]][location[a][1]]
         else:
             return model.p_ev[a,t]==0
-    model.carpowconst=Constraint(model.A,model.T,rule=chargepowerlimit)
-            
+    model.carpowconst_pos=Constraint(model.A,model.T,rule=chargepowerlimit)
+    
+    def dischargepowerlimit(model,a,t):   #Cars can only be charged until the departure
+        if t<departure_time[a]:
+            return model.p_ev[a,t]>=-model.P_CU[location[a][0]][location[a][1]]
+        else:
+            return model.p_ev[a,t]==0
+    model.carpowconst_neg=Constraint(model.A,model.T,rule=dischargepowerlimit)
+    
     def ccpower(model,c,t):          #Constraint for arm power: Summation of the powers charging cells of an arm
         return model.p_cc[c,t]==sum(ev_connected_here[a,c]*model.p_ev[a,t] for a in model.A)
     model.ccpowtotal=Constraint(model.C,model.T,rule=ccpower)
@@ -100,15 +104,18 @@ def short_term_rescheduling(parkdata,connections,solver):
     
     def reftrack(model,a,t):
         if t<departure_time[a]: 
-            return model.dev[a,t]==model.refSoC[a][t]-model.SoC[a,t]
+            return model.dev[a,t]==model.refSoC[a][t]-model.s[a,t]
         else:
-            return model.dev[a,t]==model.desSoC[a]-model.SoC[a,t]
-    model.refcon =Constraint(model.A,model.Tp,rule=reftrack)
+            return model.dev[a,t]==model.desSoC[a]-model.s[a,t]
+    #model.refcon =Constraint(model.A,model.Tp,rule=reftrack)
       
     #OBJECTIVE FUNCTION
     def obj_rule(model):  
         #return sum(model.dev[a,t]*model.dev[a,t] for a,t in product(model.A,model.T))
-        return sum(model.dev[a,max(horizon)]*model.dev[a,max(horizon)] for a in model.A)
+        #return sum(model.dev[a,max(horizon)]*model.dev[a,max(horizon)] for a in model.A)
+        return sum((model.s_ref[a]-model.s[a,max(horizon)])*
+                   (model.s_ref[a]-model.s[a,max(horizon)]) 
+                   for a in model.A)
     model.obj=Objective(rule=obj_rule, sense = minimize)
     
     ###########################################################################         

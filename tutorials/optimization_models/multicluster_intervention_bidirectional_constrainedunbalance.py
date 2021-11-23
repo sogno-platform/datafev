@@ -22,7 +22,8 @@ np.random.seed(1)
 
 parkdata={}                             
 parkdata['clusters']=['CC1','CC2']     #System has only two clusters   
-parkdata['opt_horizon'] =list(range(13)) #1 hour   
+parkdata['opt_horizon'] =list(range(13)) #1 hour
+parkdata['con_horizon'] =list(range(13)) #1 hour   
 parkdata['opt_step']=timedelta(minutes=5) #5 minutes 
 
 powlimits={}

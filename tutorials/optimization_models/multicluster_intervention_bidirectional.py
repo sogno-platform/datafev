@@ -16,11 +16,23 @@ import matplotlib.pyplot as plt
 
 from management_algorithms.multicluster.intervention_bidirectional import short_term_rescheduling_bidirectional
 
+ch_eff=0.95
+ds_eff=0.95
+def p_out(x): 
+   if x>0:
+       return x/ch_eff
+   if x==0:
+       return 0
+   if x<0:
+       return x*ds_eff
+   
+
 solver=SolverFactory("cplex")
 
 parkdata={}                             
 parkdata['clusters']=['CC1','CC2']     #System has only two clusters   
-parkdata['opt_horizon'] =list(range(13)) #1 hour   
+parkdata['opt_horizon'] =list(range(13)) #1 hour 
+parkdata['con_horizon'] =parkdata['opt_horizon']   
 parkdata['opt_step']=timedelta(minutes=5) #5 minutes 
 
 powlimits={}
@@ -78,10 +90,10 @@ for case in [case1,case2]:
     c2_df=pd.DataFrame(columns=['min','max','opt'])
     c1_df['max']=pd.Series(powlimits['P_CC_pos_max']['CC1'])
     c1_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC1'])
-    c1_df['opt']=p_ref_df['v11']+p_ref_df['v12']
+    c1_df['opt']=p_ref_df['v11'].apply(p_out)+p_ref_df['v12'].apply(p_out)
     c2_df['max']=c2_pos_max=pd.Series(powlimits['P_CC_pos_max']['CC2'])
     c2_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC2'])        
-    c2_df['opt']=p_ref_df['v21']+p_ref_df['v22']
+    c2_df['opt']=p_ref_df['v21'].apply(p_out)+p_ref_df['v22'].apply(p_out)
     
     fig1,axs1=plt.subplots(3,2,sharex=True,sharey='row')
     axs1[2,0].sharey=False
@@ -100,8 +112,8 @@ for case in [case1,case2]:
     s_ref_df[['v11_ref','v12_ref']].plot(ax=axs1[2,0],color=['b','g'],linestyle='dashed')
     s_ref_df[['v21_ref','v22_ref']].plot(ax=axs1[2,1],color=['b','g'],linestyle='dashed')
           
-    axs1[0,0].set_title("Cluster 1 Aggregate")
-    axs1[0,1].set_title("Cluster 2 Aggregate")
+    axs1[0,0].set_title("Cluster 1")
+    axs1[0,1].set_title("Cluster 2")
     axs1[1,0].set_title('Cluster 1 Power')
     axs1[1,1].set_title('Cluster 2 Power')
     axs1[2,0].set_title('Cluster 1 SOC')

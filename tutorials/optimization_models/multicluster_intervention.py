@@ -38,7 +38,7 @@ number_of_cu_total=number_of_cu_per_cluster*number_of_clusters
 
 parkdata={}
 parkdata['clusters']=list(range(number_of_clusters))
-parkdata['opt_horizon']=horizon
+parkdata['opt_horizon']=list(range(len(horizon)))
 parkdata['opt_step']   =sim_res
 parkdata['station_cap']=number_of_cu_total*P_CU*(1-U)
 parkdata['cluster_cap']={}
@@ -51,7 +51,7 @@ connections['battery_cap']   ={}
 connections['reference_soc'] ={}
 connections['departure_time']={}
 connections['initial_soc']   ={}
-connections['desired_soc']   ={}
+connections['target_soc']   ={}
 connections['location']      ={}
 
 schedules={}
@@ -80,11 +80,10 @@ for cc in range(number_of_clusters):
         color        ='g' #'r' if cu==1 else 'g'
 
         connections['battery_cap'][ev_id]   =b_ca
-        connections['departure_time'][ev_id]=dep_time
+        connections['departure_time'][ev_id]=int((dep_time-sim_start)/sim_res)
         connections['initial_soc'][ev_id]   =ini_soc
-        connections['desired_soc'][ev_id]   =fin_soc
+        connections['target_soc'][ev_id]    =fin_soc
         connections['location'][ev_id]      =(cc,cu)
-        connections['reference_soc'][ev_id] =s_ref
 
         s_ref.plot(ax=ax[cu],color=color)
         ax[cu].title.set_text('SOC Reference of '+ev_id)
@@ -100,7 +99,7 @@ inputs_ref_socs=pd.DataFrame(connections['reference_soc'],columns=connections['r
 inputs_fixed   =pd.DataFrame(index=connections['reference_soc'].keys())
 inputs_fixed['battery_cap']=pd.Series(connections['battery_cap'])
 inputs_fixed['initial_soc']=pd.Series(connections['initial_soc'])
-inputs_fixed['desired_soc']=pd.Series(connections['desired_soc'])
+inputs_fixed['target_soc']=pd.Series(connections['target_soc'])
 inputs_fixed['departure_time']=pd.Series(connections['departure_time'])
 
 print(inputs_fixed)

@@ -18,6 +18,7 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
     ################################Data formatting############################
     clusters =parkdata['clusters']
     horizon  =parkdata['opt_horizon']
+    horizonC =parkdata['con_horizon']
     deltaT   =parkdata['opt_step']
     
     P_CC_pos_max  =powerlimits['P_CC_pos_max']
@@ -165,17 +166,17 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
     s_ref={}
     for v in model.V:
         c,n=location[v]
-        #opt_ref[c,n]=model.p_ev[v,min(horizon)]()
         p_ref[v]={}
         p_ref_pos[v]={}
         p_ref_neg[v]={}
         s_ref[v]={}
-        for t in model.Tp:
+        for t in horizonC:
             if t<max(horizon): 
                 p_ref[v][t]=model.p_ev[v,t]()
                 p_ref_neg[v][t]=model.p_ev_neg[v,t]()
                 p_ref_pos[v][t]=model.p_ev_pos[v,t]()
             s_ref[v][t]=model.s[v,t]()
             
-    return p_ref,s_ref#,p_ref_pos,p_ref_neg
+    return p_ref,s_ref
+
 

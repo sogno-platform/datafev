@@ -9,9 +9,9 @@ def optimal_intervention_v1g(cs, ts, t_delta, horizon, solver):
     if occ.iloc[0].sum() > 0:
 
         parkdata = {}
-        parkdata['clusters'] = [*sorted(cs.clusters.keys())]
-        parkdata['opt_horizon'] = opt_horizon_t_steps
-        parkdata['opt_step'] = t_delta
+        parkdata['clusters']    = [*sorted(cs.clusters.keys())]
+        parkdata['opt_horizon'] = list(range(len(opt_horizon_t_steps)))
+        parkdata['opt_step']    = t_delta
         parkdata['chrunit_cap'] = cs.cu_capacities
         parkdata['cluster_cap'] = cs.cc_capacities
         parkdata['station_cap'] = cs.cs_capacity
@@ -32,7 +32,7 @@ def optimal_intervention_v1g(cs, ts, t_delta, horizon, solver):
                     ev_id = connected_car.vehicle_id
                     location[ev_id] = (cc_id, cu_id)
                     battery_cap[ev_id] = connected_car.bCapacity
-                    departure_ti[ev_id] = connected_car.estimated_leave
+                    departure_ti[ev_id] = (connected_car.estimated_leave-ts)/t_delta
                     initial_soc[ev_id] = connected_car.soc[ts]
 
                     sch_inst = cu.active_schedule_instance
@@ -45,10 +45,9 @@ def optimal_intervention_v1g(cs, ts, t_delta, horizon, solver):
 
         connections = {}
         connections['battery_cap'] = battery_cap
-        connections['reference_soc'] = reference_soc
         connections['departure_time'] = departure_ti
         connections['initial_soc'] = initial_soc
-        connections['desired_soc'] = desired_soc
+        connections['target_soc'] = desired_soc
         connections['location'] = location
 
         set_points = short_term_rescheduling(parkdata, connections, solver)

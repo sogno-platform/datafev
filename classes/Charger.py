@@ -7,9 +7,10 @@ import pandas as pd
 
 class ChargingUnit(object):
     
-    def __init__(self,cu_id,p_max,eff=1.0,bidirectional=True):
+    def __init__(self,cu_id,p_max,ctype='ac1',eff=1.0,bidirectional=True):
         
-        self.type='CU'
+        self.type ='CU'
+        self.ctype=ctype
         self.id   =cu_id
         self.P_max_ch=p_max
         self.P_max_ds=p_max if bidirectional==True else 0.0

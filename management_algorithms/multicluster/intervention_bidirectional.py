@@ -166,16 +166,16 @@ def short_term_rescheduling_bidirectional(parkdata,powerlimits,connections,solve
     s_ref={}
     for v in model.V:
         c,n=location[v]
-        p_ref[v]={}
-        p_ref_pos[v]={}
-        p_ref_neg[v]={}
-        s_ref[v]={}
+        p_ref[c,n]={}
+        p_ref_pos[c,n]={}
+        p_ref_neg[c,n]={}
+        s_ref[c,n]={}
         for t in horizonC:
             if t<max(horizon): 
-                p_ref[v][t]=model.p_ev[v,t]()
-                p_ref_neg[v][t]=model.p_ev_neg[v,t]()
-                p_ref_pos[v][t]=model.p_ev_pos[v,t]()
-            s_ref[v][t]=model.s[v,t]()
+                p_ref[c,n][t]=model.p_ev[v,t]()
+                p_ref_neg[c,n][t]=model.p_ev_neg[v,t]()
+                p_ref_pos[c,n][t]=model.p_ev_pos[v,t]()
+            s_ref[c,n][t]=model.s[v,t]()
             
     return p_ref,s_ref
 

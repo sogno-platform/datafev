@@ -60,7 +60,7 @@ class ChargingUnit(object):
         self.pf=pf
     
     def supply(self,ts,tdelta,p):
-        self.supplied_power[ts]=p
+        self.supplied_power[ts]=p/self.eff if p>0 else p*self.eff
         self.occupation[ts]=1
         #self.consumed_p[ts]=p/self.eff if p>0 else p*self.eff
         

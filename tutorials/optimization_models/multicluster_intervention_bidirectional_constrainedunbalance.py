@@ -75,8 +75,13 @@ for case in [case1,case2]:
     if case==case2:
         p_ref,s_ref=short_term_rescheduling_bidirectional(parkdata,powlimits_unbconstrained,connections,solver)
         
-    p_ref_df=pd.DataFrame(p_ref)
-    s_ref_df=pd.DataFrame(s_ref)
+    p_ref_={}
+    s_ref_={}
+    for v in ['v11','v12','v21','v22']:
+        p_ref_[v]=p_ref[connections['location'][v]]
+        s_ref_[v]=s_ref[connections['location'][v]]      
+    p_ref_df=pd.DataFrame(p_ref_)
+    s_ref_df=pd.DataFrame(s_ref_)
     s_ref_df['v11_ref']=connections['target_soc']['v11']
     s_ref_df['v12_ref']=connections['target_soc']['v12']
     s_ref_df['v21_ref']=connections['target_soc']['v21']

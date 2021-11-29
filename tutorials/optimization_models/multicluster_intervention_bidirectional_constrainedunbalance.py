@@ -16,8 +16,19 @@ import matplotlib.pyplot as plt
 
 from management_algorithms.multicluster.intervention_bidirectional import short_term_rescheduling_bidirectional
 
+ch_eff=0.95
+ds_eff=0.95
+def p_out(x): 
+   if x>0:
+       return x/ch_eff
+   if x==0:
+       return 0
+   if x<0:
+       return x*ds_eff
+   
+
 solver=SolverFactory("cplex")
-color_top={'max':'r','min':'k','opt':'g'}
+color_top={'min':'w','max':'r','opt':'k'}
 np.random.seed(1)
 
 parkdata={}                             
@@ -27,10 +38,10 @@ parkdata['con_horizon'] =list(range(13)) #1 hour
 parkdata['opt_step']=timedelta(minutes=5) #5 minutes 
 
 powlimits={}
-powlimits['P_CC_pos_max']={'CC1':dict(enumerate(np.ones(12)*55)),'CC2':dict(enumerate(np.ones(12)*55))}     #The clusters are allowed to import half as the installed capacity 
-powlimits['P_CC_neg_max']={'CC1':dict(enumerate(np.ones(12)*55)),'CC2':dict(enumerate(np.ones(12)*55))}     #The clusters are allowed to export half as the installed capacity 
-powlimits['P_CS_pos_max']=dict(enumerate(np.ones(12)*110))                                                   #Aggregate import of the station is limited by 44kW  
-powlimits['P_CS_neg_max']=dict(enumerate(np.ones(12)*110))                                                   #Aggregate export of the station is limited by 44kW
+powlimits['P_CC_pos_max']={'CC1':dict(enumerate(np.ones(12)*44)),'CC2':dict(enumerate(np.ones(12)*44))}     #The clusters are allowed to import half as the installed capacity 
+powlimits['P_CC_neg_max']={'CC1':dict(enumerate(np.ones(12)*44)),'CC2':dict(enumerate(np.ones(12)*44))}     #The clusters are allowed to export half as the installed capacity 
+powlimits['P_CS_pos_max']=dict(enumerate(np.ones(12)*88))                                                   #Aggregate import of the station is limited by 44kW  
+powlimits['P_CS_neg_max']=dict(enumerate(np.ones(12)*88))                                                   #Aggregate export of the station is limited by 44kW
 
 powlimits_unbconstrained=powlimits.copy()
 powlimits_unbconstrained['P_IC_unb_max']={}
@@ -51,13 +62,13 @@ connections['departure_time']={}
 connections['initial_soc']={}
 connections['location']={}
 for v in ['v11','v12','v21','v22']: 
-    connections['P_EV_pos_max'][v]  =22
+    connections['P_EV_pos_max'][v]  =22*ch_eff
     connections['P_EV_neg_max'][v]  =22
     connections['battery_cap'][v]   =55*3600
     connections['initial_soc'][v]   =np.random.uniform(low=0.2,high=0.6)
     connections['target_soc'][v]    =connections['initial_soc'][v]+0.4
-    connections['charge_eff'][v]    =1.00
-    connections['discharge_eff'][v] =1.00
+    connections['charge_eff'][v]    =ch_eff
+    connections['discharge_eff'][v] =ch_eff
     connections['departure_time'][v]=6 if v=='v12' else 15
 connections['location']['v11']      =('CC1',1)
 connections['location']['v12']      =('CC1',2)
@@ -67,6 +78,9 @@ connections['location']['v22']      =('CC2',2)
 
 case1='Unbalance unconstrained'
 case2='Unbalance constrained'
+
+#unbalance=pd.DataFrame(columns=['Unbalance Limit',case1,case2])
+#unbalance['Unbalance Limit']=pd.Series(powlimits_unbconstrained['P_IC_unb_max'][c1,c2]).iloc[:-1]
 
 for case in [case1,case2]:
 
@@ -91,10 +105,12 @@ for case in [case1,case2]:
     c2_df=pd.DataFrame(columns=['min','max','opt'])
     c1_df['max']=pd.Series(powlimits['P_CC_pos_max']['CC1'])
     c1_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC1'])
-    c1_df['opt']=p_ref_df['v11']+p_ref_df['v12']
+    c1_df['opt']=p_ref_df['v11'].apply(p_out)+p_ref_df['v12'].apply(p_out)
     c2_df['max']=c2_pos_max=pd.Series(powlimits['P_CC_pos_max']['CC2'])
     c2_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC2'])        
-    c2_df['opt']=p_ref_df['v21']+p_ref_df['v22']
+    c2_df['opt']=p_ref_df['v21'].apply(p_out)+p_ref_df['v22'].apply(p_out)
+    
+    
     
     fig1,axs1=plt.subplots(3,2,sharex=True,sharey='row')
     axs1[2,0].sharey=False
@@ -121,3 +137,13 @@ for case in [case1,case2]:
     axs1[2,1].set_title('Cluster 2 SOC')
     axs1[2,0].set_xlabel('Time')
     axs1[2,1].set_xlabel('Time')
+    
+    
+    fig2,axs2=plt.subplots(1,1,sharex=True,sharey='row')
+    fig2.suptitle(case)
+    (c1_df['opt']-c2_df['opt']).plot(ax=axs2,label='Cluster1-Cluster2',color='r')
+    (pd.Series(powlimits_unbconstrained['P_IC_unb_max'][c1,c2]).iloc[:-1]).plot(ax=axs2,linestyle='dashed',color='k')
+    (-pd.Series(powlimits_unbconstrained['P_IC_unb_max'][c1,c2]).iloc[:-1]).plot(ax=axs2,linestyle='dashed',color='k')
+    axs2.legend()
+    axs2.set_ylim([-30,30])
+    axs2.set_ylabel("kW")

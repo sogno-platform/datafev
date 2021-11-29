@@ -37,9 +37,9 @@ parkdata['opt_step']=timedelta(minutes=5) #5 minutes
 
 powlimits={}
 powlimits['P_CC_pos_max']={'CC1':dict(enumerate(np.ones(12)*22)),'CC2':dict(enumerate(np.ones(12)*33))}     #The clusters are allowed to import half as the installed capacity 
-powlimits['P_CC_neg_max']={'CC1':dict(enumerate(np.ones(12)*22)),'CC2':dict(enumerate(np.ones(12)*33))}     #The clusters are allowed to export half as the installed capacity 
+powlimits['P_CC_neg_max']={'CC1':dict(enumerate(np.zeros(12))),'CC2':dict(enumerate(np.zeros(12)))}     #The clusters are allowed to export half as the installed capacity 
 powlimits['P_CS_pos_max']=dict(enumerate(np.ones(12)*44))                                                   #Aggregate import of the station is limited by 44kW  
-powlimits['P_CS_neg_max']=dict(enumerate(np.ones(12)*44))                                                   #Aggregate export of the station is limited by 44kW
+powlimits['P_CS_neg_max']=dict(enumerate(np.zeros(12)))                                                   #Aggregate export of the station is limited by 44kW
 
 connections={}
 connections['P_EV_pos_max']={}
@@ -66,7 +66,7 @@ connections['location']['v22']      =('CC2',2)
 case1='Charge/discharge efficiency=100%'
 case2='Charge/discharge efficiency= 95%'
 
-color_top={'max':'r','min':'k','opt':'g'}
+color_top={'min':'w','max':'r','opt':'k'}
 np.random.seed(1)
 
 for case in [case1,case2]:
@@ -91,8 +91,8 @@ for case in [case1,case2]:
     s_ref_df['v21_ref']=connections['target_soc']['v21']
     s_ref_df['v22_ref']=connections['target_soc']['v22']
       
-    c1_df=pd.DataFrame(columns=['min','max','opt'])
-    c2_df=pd.DataFrame(columns=['min','max','opt'])
+    c1_df=pd.DataFrame(columns=['max','opt'])
+    c2_df=pd.DataFrame(columns=['max','opt'])
     c1_df['max']=pd.Series(powlimits['P_CC_pos_max']['CC1'])
     c1_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC1'])
     c1_df['opt']=p_ref_df['v11'].apply(p_out)+p_ref_df['v12'].apply(p_out)

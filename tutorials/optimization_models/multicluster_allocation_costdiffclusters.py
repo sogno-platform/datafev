@@ -27,6 +27,8 @@ p_ds_v1g=0
 p_ds_v2g=22 
 
 ecap    =55*3600
+eneg1   =0
+eneg2   =10*3600
 inisoc  =0.6
 tarsoc  =0.8
 minsoc  =0.2
@@ -48,12 +50,12 @@ for trial in range(1,6):
     costcoeff_df =pd.concat(costcoeffs,axis=1)
     
     st1=time.time()
-    p_ref_v1g,s_ref_v1g,c_ref_v1g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v1g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,costcoeffs)
+    p_ref_v1g,s_ref_v1g,c_ref_v1g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,eneg1,costcoeffs)
     en1=time.time()
     print("Computation time V1G:",en1-st1)
     
     st2=time.time()
-    p_ref_v2g,s_ref_v2g,c_ref_v2g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,costcoeffs)
+    p_ref_v2g,s_ref_v2g,c_ref_v2g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,eneg2,costcoeffs)
     en2=time.time()
     print("Computation time V2G:",en2-st2)
     

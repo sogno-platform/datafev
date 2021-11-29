@@ -15,7 +15,7 @@ from pyomo.core import *
 import pyomo.kernel as pmo
 
 
-def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,costcoeffs):
+def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,v2g_max,costcoeffs):
     """
     This function optimizes 
     1) the allocation of an incoming EV to a cluster
@@ -34,6 +34,7 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     tarsoc   : target final soc   (0<inisoc<1)          float
     crtsoc   : target soc at crttime                    float
     crttime  : critical time s.t. s(srttime)> crtsoc    datetime.datetime
+    v2g_max  : maximum allowed V2G discharge (kWs)      float
     costcoefs: price signals (Eur/MWh)                  dictionary of pandas series
     ---------------------------------------------------------------------------
     
@@ -76,12 +77,16 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     model.W     = coefficients              #Time-variant cost coefficients of clusters
     model.SoC_F = tarsoc                    #SoC to be achieved at the end
     model.conf  = conf_period               #Confidence period where SOC must be larger than crtsoc
-    model.SoC_R = crtsoc                    #The minimim SOC must be ensured in the confidence period  
+    model.SoC_R = crtsoc                    #Minimim SOC must be ensured in the confidence period  
+    model.E_neg_max=v2g_max                 #Maximum energy that can be discharged V2G 
          
-    model.x     = Var(model.C,within=pmo.Binary)
-    model.p     = Var(model.T,bounds=(-model.P_DS,model.P_CH))                 #Power to be supplied at time step t
-    model.pc    = Var(model.C,model.T,within=Reals,bounds=(-model.P_DS,model.P_CH))                            #Power to be supplied at time step t if it is in cluster c 
-    model.SoC   = Var(model.T,within=NonNegativeReals,bounds=(minsoc,maxsoc))  #SOC to be achieved  at time step t
+    model.xc    = Var(model.C,within=pmo.Binary)                                        #Binary variable having 1 if v is allocated to c
+    model.xp    = Var(model.T,within=pmo.Binary)                                        #Binary variable having 1/0 if v is charged/discharged at t 
+    model.p     = Var(model.T,within=Reals)                                             #Net charge power at t
+    model.p_pos = Var(model.T,within=NonNegativeReals)                                  #Charge power at t
+    model.p_neg = Var(model.T,within=NonNegativeReals)                                  #Discharge power at t
+    model.pc    = Var(model.C,model.T,within=Reals,bounds=(-model.P_DS,model.P_CH))     #Net charge power at t if it is in cluster c 
+    model.SoC   = Var(model.T,within=NonNegativeReals,bounds=(minsoc,maxsoc))           #SOC to be achieved  at time step t
     
     #CONSTRAINTS
     def initialsoc(model):
@@ -104,20 +109,36 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     model.supconst=Constraint(rule=supplyrule)
        
     def combinatorics0(model):       #EV can assigned to only one cluster
-        return sum(model.x[c] for c in model.C)==1
+        return sum(model.xc[c] for c in model.C)==1
     model.comb0const=Constraint(rule=combinatorics0)
     
-    def combinatorics11(model,c,t):
-        return -model.P_DS*model.x[c]<=model.pc[c,t]
+    def combinatorics11(model,c,t):  
+        return -model.P_DS*model.xc[c]<=model.pc[c,t]
     model.comb11const=Constraint(model.C,model.T,rule=combinatorics11)
     
     def combinatorics12(model,c,t):
-        return model.pc[c,t]<=model.P_CH*model.x[c]
+        return model.pc[c,t]<=model.P_CH*model.xc[c]
     model.comb12const=Constraint(model.C,model.T,rule=combinatorics12)
        
     def combinatorics2(model,t):
         return model.p[t]==sum(model.pc[c,t] for c in model.C)
     model.comb2const=Constraint(model.T,rule=combinatorics2)
+    
+    def netcharging(model,t):
+        return model.p[t]==model.p_pos[t]-model.p_neg[t]
+    model.netchr=Constraint(model.T,rule=netcharging)
+    
+    def combinatorics3_pos(model,t):
+        return model.p_pos[t]<=model.xp[t]*model.P_CH
+    model.comb3pconst=Constraint(model.T,rule=combinatorics3_pos)
+    
+    def combinatorics3_neg(model,t):
+        return model.p_neg[t]<=(1-model.xp[t])*model.P_DS
+    model.comb3nconst=Constraint(model.T,rule=combinatorics3_neg)
+    
+    def v2g_limit(model):
+        return sum(model.p_neg[t]*model.dt for t in model.T)<=model.E_neg_max
+    model.v2gconst   =Constraint(rule=v2g_limit)
     
     #OBJECTIVE FUNCTION
     def obj_rule(model):  
@@ -138,7 +159,7 @@ def optimal_costdif_cluster(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,
     
     #model.x.pprint()
     for c in model.C:
-        if model.x[c]()==1:
+        if model.xc[c]()==1:
             target_cc=c
             
     return schedule,soc,target_cc

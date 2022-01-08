@@ -14,7 +14,7 @@ from pyomo.core import *
 from datetime import datetime,timedelta
 import matplotlib.pyplot as plt
 
-from management_algorithms.multicluster.allocation_optimization import optimal_costdif_cluster
+from algorithms.allocation.cluster_dlp_based import minimize_cost_in_dlp
 
 solver  =SolverFactory("cplex")
 arrts   =datetime(2020,1,6,8,00)
@@ -23,7 +23,6 @@ stepsize=timedelta(minutes=5)
 opt_hori=pd.date_range(start=arrts,end=leavets,freq=stepsize)
 
 p_ch    =22
-p_ds_v1g=0
 p_ds_v2g=22 
 
 ecap    =55*3600
@@ -35,6 +34,8 @@ minsoc  =0.2
 maxsoc  =1.0
 crtsoc  =0.8
 crttime =datetime(2020,1,6,8,50)
+arbrate1 =0.0
+arbrate2 =0.1
 
 color_code={'CC1':'r','CC2':'b'}
 
@@ -50,12 +51,12 @@ for trial in range(1,6):
     costcoeff_df =pd.concat(costcoeffs,axis=1)
     
     st1=time.time()
-    p_ref_v1g,s_ref_v1g,c_ref_v1g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,eneg1,costcoeffs)
+    p_ref_v1g,s_ref_v1g,c_ref_v1g=minimize_cost_in_dlp(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,eneg2,costcoeffs,arbrate1)
     en1=time.time()
     print("Computation time V1G:",en1-st1)
     
     st2=time.time()
-    p_ref_v2g,s_ref_v2g,c_ref_v2g=optimal_costdif_cluster(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,eneg2,costcoeffs)
+    p_ref_v2g,s_ref_v2g,c_ref_v2g=minimize_cost_in_dlp(solver,arrts,leavets,stepsize/5,p_ch,p_ds_v2g,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,eneg2,costcoeffs,arbrate2)
     en2=time.time()
     print("Computation time V2G:",en2-st2)
     
@@ -66,14 +67,14 @@ for trial in range(1,6):
     costcoeff_df.reindex(p_ref_v1g.index,method='ffill').plot(ax=axs[0],color=['r','b'])
     axs[0].set_ylabel('Eur/kWh')
     
-    axs[1].set_title("V1G Allocation to "+c_ref_v1g)
+    axs[1].set_title("Arbrate "+str(arbrate1)+" allocation to "+c_ref_v1g)
     p_ref_v1g.plot(ax=axs[1],color=color_code[c_ref_v1g])
     axs1_=axs[1].twinx()
     s_ref_v1g.plot(ax=axs1_,color=color_code[c_ref_v1g],linestyle='dashed')
     axs[1].set_ylabel('Charging Schedule')
     axs1_.set_ylabel('SOC Reference')
     
-    axs[2].set_title("V2G Allocation to "+c_ref_v2g)
+    axs[2].set_title("Arbrate "+str(arbrate2)+" allocation to "+c_ref_v2g)
     p_ref_v2g.plot(ax=axs[2],color=color_code[c_ref_v2g])
     axs2_=axs[2].twinx()
     s_ref_v2g.plot(ax=axs2_,color=color_code[c_ref_v2g],linestyle='dashed')

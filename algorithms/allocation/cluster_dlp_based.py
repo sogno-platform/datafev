@@ -15,7 +15,7 @@ from pyomo.core import *
 import pyomo.kernel as pmo
 
 
-def minimize_cost_in_dlp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,v2g_max,costcoeffs,arbrate):
+def minimize_cost_in_dlp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,v2x_max,costcoeffs,arbrate):
     """
     This function optimizes 
     1) the allocation of an incoming EV to a cluster
@@ -34,7 +34,7 @@ def minimize_cost_in_dlp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tar
     tarsoc   : target final soc   (0<inisoc<1)                                                  float
     crtsoc   : target soc at crttime                                                            float
     crttime  : critical time s.t. s(srttime)> crtsoc                                            datetime.datetime
-    v2g_max  : maximum allowed V2G discharge (kWs)                                              float
+    v2x_max  : maximum allowed V2G discharge (kWs)                                              float
     costcoefs: price signals (Eur/MWh)                                                          dictionary of pandas series
     arbrate  : arbitrage rate (0<arbrate<1)                                                     float
     ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ def minimize_cost_in_dlp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tar
     model.SoC_F = tarsoc                    #SoC to be achieved at the end
     model.conf  = conf_period               #Confidence period where SOC must be larger than crtsoc
     model.SoC_R = crtsoc                    #Minimim SOC must be ensured in the confidence period  
-    model.E_neg_max=v2g_max                 #Maximum energy that can be discharged V2G 
+    model.E_v2x_max=v2x_max                 #Maximum energy that can be discharged V2G 
     model.a     = arbrate                   #Arbitrage coefficient  
          
     model.xc    = Var(model.C,within=pmo.Binary)                                        #Binary variable having 1 if v is allocated to c
@@ -148,7 +148,7 @@ def minimize_cost_in_dlp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tar
     model.comb32nconst=Constraint(model.T,rule=combinatorics32_neg)
       
     def v2g_limit(model):
-        return sum(model.p_neg[t]*model.dt for t in model.T)<=model.E_neg_max
+        return sum(model.p_neg[t]*model.dt for t in model.T)<=model.E_v2x_max
     model.v2gconst   =Constraint(rule=v2g_limit)
     
     #OBJECTIVE FUNCTION

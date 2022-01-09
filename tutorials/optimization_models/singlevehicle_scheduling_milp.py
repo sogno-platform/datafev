@@ -40,7 +40,7 @@ for trial in range(1,6):
     print("Trial",trial)
     costcoeffs=pd.Series(np.random.uniform(low=-0.1, high=0.5,size=len(opt_hori)),index=opt_hori)
     
-    p_ref_v1g,s_ref_v1g=minimize_charging_cost_milp(solver,arrts,leavets,stepsize,p_ch,p_ch,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,v2x_lim1,costcoeffs,arbrate)
+    p_ref_v1g,s_ref_v1g=minimize_charging_cost_milp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,v2x_lim1,costcoeffs,arbrate)
     p_ref_v2g,s_ref_v2g=minimize_charging_cost_milp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,leavets,v2x_lim2,costcoeffs,arbrate)
 
     fig,axs=plt.subplots(3,1,sharex=True)

@@ -45,13 +45,9 @@ def schedule_optimization_allocation_random(solver, cs, ev, ts, t_delta, deptime
     fea_dep_soc  = min(depsoc, ev_soc + hyp_ene_dep / ev.bCapacity)     #Feasible SOC that could be achieved at departure time 
     fea_crt_soc  = min(crtsoc, ev_soc + hyp_ene_crt / ev.bCapacity)     #Feasible SOC that could be achieved at departure time
 
-    ev.estimated_leave = deptime
-    ev.fea_target_soc  = fea_dep_soc
-    ev.v2x_allowance   = v2x_allow*3600  
-    
     #Schedule optimization
     tou_price     = cs.tou_price.loc[ts:deptime]
-    p_ref, s_ref  = minimize_charging_cost_milp(solver,ts,deptime,t_delta,p_ch,p_ds,ev.bCapacity,ev_soc,fea_dep_soc,ev.minSoC, ev.maxSoC,fea_crt_soc,crttime,ev.v2x_allowance,tou_price,arbitrage_coeff)
+    p_ref, s_ref  = minimize_charging_cost_milp(solver,ts,deptime,t_delta,p_ch,p_ds,ev.bCapacity,ev_soc,fea_dep_soc,ev.minSoC, ev.maxSoC,fea_crt_soc,crttime,v2x_allow*3600,tou_price,arbitrage_coeff)
         
     #Identify candidate chargers (one suitable charger from each cluster) 
     all_chargers_with_selected_type    = available_chargers[(available_chargers['CU type']==type_)&(available_chargers['max p_ch']==ch_rate)] 
@@ -62,14 +58,18 @@ def schedule_optimization_allocation_random(solver, cs, ev, ts, t_delta, deptime
         candidate_chargers[cc_id]=selected_charger_in_cluster
         
     #Select one of the chargers randomly    
-    optimal_cluster_id = np.random.choice(candidate_chargers.keys(),1)[0]
+    optimal_cluster_id = np.random.choice([*candidate_chargers],1)[0]
     optimal_cluster    = cs.clusters[optimal_cluster_id]
     optimal_charger    = optimal_cluster.cu[candidate_chargers[optimal_cluster_id]]
-    net_charging       = p_ref.sum()*t_delta/3600
+    net_charging       = p_ref.sum()*t_delta.seconds/3600
+    v2x_utilization    = -(p_ref[p_ref<0].sum())*t_delta.seconds/3600 
     
     #Reserve the selected charger
     reservation_id=optimal_charger.reserve(ts,ts,deptime,ev,net_charging)
     ev.reservation_id  = reservation_id
+    ev.estimated_leave = deptime
+    ev.scheduled_g2v   = net_charging
+    ev.scheduled_v2x   = v2x_utilization
     
     #Connect the EV to selected charger
     optimal_charger.connect(ts,ev)

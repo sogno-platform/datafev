@@ -17,7 +17,7 @@ from pyomo.core import *
 import pyomo.kernel as pmo
 
 
-def minimize_charging_cost_milp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,v2x_max,costcoeffs,arbrate):
+def minimize_cost_in_dp(solver,arrts,leavets,stepsize,p_ch,p_ds,ecap,inisoc,tarsoc,minsoc,maxsoc,crtsoc,crttime,v2x_max,costcoeffs,arbrate):
     """
     This function minimizes the charging cost for the given cost coefficients
     by solving a mixed integer linear optimization problem. The losses 

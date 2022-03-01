@@ -167,7 +167,8 @@ def minimize_deviation_from_schedules(parkdata,powerlimits,connections,solver):
     #start=time.time()
     #end=time.time()
     #print("Solution in",end-start)
-    solver.solve(model)
+    result=solver.solve(model)
+    #print(result)
     ###########################################################################
     
     ###########################################################################

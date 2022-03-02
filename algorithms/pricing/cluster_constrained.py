@@ -5,7 +5,7 @@ Created on Mon Nov 22 11:19:46 2021
 @author: egu
 """
 
-def penalize_violation(cc_schedule,cc_limit_upper,cc_limit_lower,tou_price):#,f=0.5):
+def penalize_violation(cc_schedule,cc_limit_upper,cc_limit_lower,tou_price,p_ch_max,p_ds_max):
     """
     #This function 
     #1) checks the existing commitments of the cluster
@@ -18,12 +18,11 @@ def penalize_violation(cc_schedule,cc_limit_upper,cc_limit_lower,tou_price):#,f=
     cc_cost_coeff_max = cc_cost_coeff.max()*1.01
     cc_cost_coeff_min = cc_cost_coeff.min()*0.99
      
-    
-    overloadedsteps   = cc_schedule[cc_schedule>=cc_limit_upper].index
-    underloadedsteps  = cc_schedule[cc_schedule<=cc_limit_lower].index
+    overloadedsteps   = cc_schedule[cc_schedule+p_ch_max>=cc_limit_upper].index
+    underloadedsteps  = cc_schedule[cc_schedule-p_ds_max<=cc_limit_lower].index
     
     if len(overloadedsteps)>0:
-        excess      = cc_schedule[overloadedsteps]-cc_limit_upper[overloadedsteps]
+        excess      = cc_schedule[overloadedsteps]+p_ch_max-cc_limit_upper[overloadedsteps]
         excess_max  = max(excess)
         if excess_max>0.01:
             excess_norm = excess/excess_max
@@ -32,7 +31,7 @@ def penalize_violation(cc_schedule,cc_limit_upper,cc_limit_lower,tou_price):#,f=
             cc_cost_coeff[overloadedsteps] = cc_cost_coeff_max
     
     if len(underloadedsteps)>0:
-        deficit     = cc_limit_lower[underloadedsteps]-cc_schedule[underloadedsteps]
+        deficit     = cc_limit_lower[underloadedsteps]-cc_schedule[underloadedsteps]-p_ds_max
         deficit_max = max(deficit)
         if deficit_max>0.01:
             deficit_norm= deficit/deficit_max
@@ -40,8 +39,4 @@ def penalize_violation(cc_schedule,cc_limit_upper,cc_limit_lower,tou_price):#,f=
         else:
             cc_cost_coeff[underloadedsteps]= cc_cost_coeff_min
     
-#    cc_cost_coeff[overloadedsteps] = cc_cost_coeff[overloadedsteps] * (1+f*excess)
-#    cc_cost_coeff[underloadedsteps] = cc_cost_coeff[underloadedsteps] * (1-f*deficit)
-    
     return cc_cost_coeff
-

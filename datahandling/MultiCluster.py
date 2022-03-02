@@ -20,26 +20,7 @@ class MultiCluster(object):
     def add_cc(self,cluster):
         self.clusters[cluster.id]=cluster
         cluster.station=self
-        
-    def number_of_charging_units(self,cu_ids=None):
-        
-        number_dict={}
-        self.cc_capacities={}
-        self.cu_capacities={}
-        for cc_id in self.clusters.keys():
-            number_dict[cc_id]=len(self.clusters[cc_id].cu.keys())
-            self.cc_capacities[cc_id]=self.clusters[cc_id].power_import_max
-            self.cu_capacities[cc_id]={}
-            for cu_id in sorted(self.clusters[cc_id].cu.keys()):
-                self.cu_capacities[cc_id][cu_id]=self.clusters[cc_id].cu[cu_id].P_max_ch
-            
-        self.cu_numbers   =pd.Series(number_dict)
-        self.cs_capacity  =sum(self.cc_capacities.values())
-        
-        self.cc_installed_capacities=pd.DataFrame(self.cu_capacities).sum()
-        self.cs_installed_capacity  =self.cc_installed_capacities.sum()
-
-        
+    
     def set_tou_price(self,series,resolution):
         """
         Method to load electricity price data as time series
@@ -51,29 +32,21 @@ class MultiCluster(object):
         temp_ser=series.reindex(timerange)
     
         self.tou_price=temp_ser.fillna(temp_ser.fillna(method='ffill'))
-                
-    def set_import_constraint(self,series,resolution):
+                       
+    def set_capacity_constraints(self,upper,lower,resolution):
         """
-        Method to enter import constraint as time series
+        Method to enter peak power constraint as time series
         """
-        start=min(series.index)
-        end  =max(series.index)+timedelta(hours=1)
+        start=min(upper.index)
+        end  =max(upper.index)+timedelta(hours=1)
         n_of_steps=int((end-start)/resolution)
         timerange =[start+t*resolution for t in range(n_of_steps+1)]
-        temp_ser=series.reindex(timerange)
-        self.import_max=temp_ser.fillna(temp_ser.fillna(method='ffill')) 
         
-    def set_export_constraint(self,series,resolution):
-        """
-        Method to enter export constraint as time series
-        """
-        start=min(series.index)
-        end  =max(series.index)+timedelta(hours=1)
-        n_of_steps=int((end-start)/resolution)
-        timerange =[start+t*resolution for t in range(n_of_steps+1)]
-        temp_ser=series.reindex(timerange)
-        self.export_max=temp_ser.fillna(temp_ser.fillna(method='ffill')) 
-    
+        upper=upper.reindex(timerange)
+        lower=lower.reindex(timerange)
+        self.upper_limit=upper.fillna(upper.fillna(method='ffill')) 
+        self.lower_limit=lower.fillna(lower.fillna(method='ffill')) 
+           
     def get_cluster_schedules(self,ts,t_delta,horizon):
         """
         To retrieve the actual schedules of the charging units for the specified period 
@@ -98,15 +71,15 @@ class MultiCluster(object):
                    nb_of_connected_cu+=1
         return nb_of_connected_cu
     
-    def available_chargers(self,period_start,period_end,period_step):
+    def get_available_chargers(self,period_start,period_end,period_step):
         """
         This function creates a dataframe with available chargers from all clusters
         """   
-        available_chargers=pd.DataFrame(columns=['Cluster','CU type','max p_ch','max p_ds'], dtype=np.float16)
+        available_chargers=pd.DataFrame(columns=['Cluster','CU type','max p_ch','max p_ds','eff'], dtype=np.float16)
         for cc_id, cc in self.clusters.items():
-            cc_available_chargers=cc.available_chargers(period_start,period_end-period_step,period_step)
+            cc_available_chargers=cc.get_available_chargers(period_start,period_end-period_step,period_step)
             for cu_id in cc_available_chargers.index:               
                 available_chargers.loc[cu_id,'Cluster']=cc_id
-                available_chargers.loc[cu_id,['CU type','max p_ch','max p_ds']]=cc_available_chargers.loc[cu_id]
+                available_chargers.loc[cu_id,['CU type','max p_ch','max p_ds','eff']]=cc_available_chargers.loc[cu_id]
         return available_chargers
     

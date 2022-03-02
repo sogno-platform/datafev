@@ -17,8 +17,8 @@ def minimize_idleness(demand, lead_time, ev_p_max_ac_ph1,ev_p_max_ac_ph3,ev_p_ma
     demand            : Energy demand of the EV                       float
     chargetime        : Time for which the EV will be charged         float
     ev_p_max_ac_ph1   : Maximum 1-phs AC charging power               float
-    ev_p_max_ac_ph1   : Maximum 1-phs AC charging power               float
-    ev_p_max_ac_ph1   : Maximum 1-phs AC charging power               float
+    ev_p_max_ac_ph3   : Maximum 3-phs AC charging power               float
+    ev_p_max_dc       : Maximum DC charging power                     float
     available_chargers: Table with data of all available chargers     dataframe                                              
     ---------------------------------------------------------------------------
     """
@@ -43,5 +43,6 @@ def minimize_idleness(demand, lead_time, ev_p_max_ac_ph1,ev_p_max_ac_ph3,ev_p_ma
     type_of_selected_charger      =available_chargers.loc[a_charger_of_selected_type,'CU type']
     ch_rating_of_selected_charger =available_chargers.loc[a_charger_of_selected_type,'max p_ch']
     ds_rating_of_selected_charger =available_chargers.loc[a_charger_of_selected_type,'max p_ds']
+    efficiency                    =available_chargers.loc[a_charger_of_selected_type,'eff']
       
-    return type_of_selected_charger,ch_rating_of_selected_charger,ds_rating_of_selected_charger
+    return type_of_selected_charger,ch_rating_of_selected_charger,ds_rating_of_selected_charger,efficiency

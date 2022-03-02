@@ -11,12 +11,10 @@ from datetime import datetime,timedelta
 
 class ChargerCluster(object):
     
-    def __init__(self,cluster_id,import_max,export_max=0):
+    def __init__(self,cluster_id):
         
         self.type    ='CC'
         self.id      =cluster_id
-        self.power_import_max=import_max   #Maximum power that the cluster can withdraw from upstream
-        self.power_export_max=export_max   #Maximum power that the cluster can inject to upstream
         
         self.power_installed =0            #Total installed power of the CUs in the cluster
               
@@ -123,17 +121,17 @@ class ChargerCluster(object):
         return cc_sch
     
     
-    def available_chargers(self,period_start,period_end,period_step):
+    def get_available_chargers(self,period_start,period_end,period_step):
         """
         This function identifies the available chargers for reservations/connections for the specificed period
         """  
-        available_chargers=pd.DataFrame(columns=['CU type','max p_ch','max p_ds'], dtype=np.float16)
+        available_chargers=pd.DataFrame(columns=['CU type','max p_ch','max p_ds','eff'], dtype=np.float16)
 
         for cu in self.cu.values():    
             cu_availability_series=cu.availability(period_start,period_end,period_step)
             is_cu_available        =cu_availability_series.all() 
             if is_cu_available==True:
-                available_chargers.loc[cu.id]={'CU type':cu.ctype,'max p_ch':cu.P_max_ch,'max p_ds':cu.P_max_ds}
+                available_chargers.loc[cu.id]={'CU type':cu.ctype,'max p_ch':cu.P_max_ch,'max p_ds':cu.P_max_ds,'eff':cu.eff}
     
         return available_chargers
     
@@ -149,29 +147,20 @@ class ChargerCluster(object):
             df[cu_id]=(cu.occupation_record(period_start,period_end,period_step).reindex(df.index)).fillna(0)      
         return df
             
-    def set_import_constraint(self,series,resolution):
+    def set_capacity_constraints(self,upper,lower,resolution):
         """
         Method to enter import constraint as time series
         """
-        start=min(series.index)
-        end  =max(series.index)+timedelta(hours=1)
+        start=min(upper.index)
+        end  =max(upper.index)+timedelta(hours=1)
         n_of_steps=int((end-start)/resolution)
         timerange =[start+t*resolution for t in range(n_of_steps+1)]
-        temp_ser=series.reindex(timerange)
-        self.import_max=temp_ser.fillna(temp_ser.fillna(method='ffill')) 
-        self.import_lim=True
         
-    def set_export_constraint(self,series,resolution):
-        """
-        Method to enter export constraint as time series
-        """
-        start=min(series.index)
-        end  =max(series.index)+timedelta(hours=1)
-        n_of_steps=int((end-start)/resolution)
-        timerange =[start+t*resolution for t in range(n_of_steps+1)]
-        temp_ser=series.reindex(timerange)
-        self.export_max=temp_ser.fillna(temp_ser.fillna(method='ffill')) 
-        self.export_lim=True
+        upper=upper.reindex(timerange)
+        lower=lower.reindex(timerange)
+        self.upper_limit=upper.fillna(upper.fillna(method='ffill')) 
+        self.lower_limit=lower.fillna(lower.fillna(method='ffill')) 
+
     
     
 

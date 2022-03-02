@@ -2,7 +2,7 @@ import pandas as pd
 from algorithms.coordination.multicluster_optimization import minimize_deviation_from_schedules
 
                               
-def ref_tracking_optimization(cs, ts, t_delta, horizon, solver):
+def ref_tracking_optimization(cs, ts, t_delta, horizon, solver,max_violation=0):
     opt_horizon_t_steps = pd.date_range(start=ts, end=ts + horizon, freq=t_delta)
     occ = cs.number_of_connected_chargers(ts)
     if occ>0:
@@ -27,15 +27,17 @@ def ref_tracking_optimization(cs, ts, t_delta, horizon, solver):
         connections['location']={}
         
         powlimits={}
-        powlimits['P_CC_pos_max']={}
-        powlimits['P_CC_neg_max']={}
-        powlimits['P_CS_pos_max']=dict(enumerate(cs.import_max[opt_horizon_t_steps].values))
-        powlimits['P_CS_neg_max']=dict(enumerate(cs.export_max[opt_horizon_t_steps].values))
+        powlimits['P_CC_up_lim'] ={}
+        powlimits['P_CC_low_lim']={}
+        powlimits['P_CS_up_lim'] =dict(enumerate(cs.upper_limit[opt_horizon_t_steps].values))
+        powlimits['P_CS_low_lim']=dict(enumerate(cs.lower_limit[opt_horizon_t_steps].values))
+        powlimits['P_CC_vio_lim']={}
         
         for cc_id, cc in cs.clusters.items():
             
-            powlimits['P_CC_pos_max'][cc_id]=dict(enumerate(cc.import_max[opt_horizon_t_steps].values))
-            powlimits['P_CC_neg_max'][cc_id]=dict(enumerate(cc.export_max[opt_horizon_t_steps].values))
+            powlimits['P_CC_up_lim'][cc_id] =dict(enumerate(cc.upper_limit[opt_horizon_t_steps].values))
+            powlimits['P_CC_low_lim'][cc_id]=dict(enumerate(cc.lower_limit[opt_horizon_t_steps].values))
+            powlimits['P_CC_vio_lim'][cc_id]=max_violation
             
             for cu_id, cu in cc.cu.items():
                 connected_ev = cu.connected_ev
@@ -55,8 +57,7 @@ def ref_tracking_optimization(cs, ts, t_delta, horizon, solver):
                     connections['target_soc'][ev_id]     = cu_sch[ts + horizon]
                     connections['charge_eff'][ev_id]     = cu.eff       
                     connections['discharge_eff'][ev_id]  = cu.eff 
-                    
-                                 
+                                                     
                     if cu.ctype=='ac1':
                         p_ev_pos_max=min(connected_ev.p_max_ac_ph1,cu.P_max_ch)
                         p_ev_neg_max=min(connected_ev.p_max_ac_ph1,cu.P_max_ds) 

@@ -29,16 +29,16 @@ def p_out(x):
 solver=SolverFactory("cplex")
 
 parkdata={}                             
-parkdata['clusters']=['CC1','CC2']     #System has only two clusters   
+parkdata['clusters']=['CC1','CC2']     #System has two clusters   
 parkdata['opt_horizon'] =list(range(13)) #1 hour 
 parkdata['con_horizon'] =parkdata['opt_horizon']   
 parkdata['opt_step']=timedelta(minutes=5) #5 minutes 
 
 powlimits={}
-powlimits['P_CC_pos_max']={'CC1':dict(enumerate(np.ones(12)*22)),'CC2':dict(enumerate(np.ones(12)*33))}     #The clusters are allowed to import half as the installed capacity 
-powlimits['P_CC_neg_max']={'CC1':dict(enumerate(np.zeros(12))),'CC2':dict(enumerate(np.zeros(12)))}     #The clusters are allowed to export half as the installed capacity 
-powlimits['P_CS_pos_max']=dict(enumerate(np.ones(12)*44))                                                   #Aggregate import of the station is limited by 44kW  
-powlimits['P_CS_neg_max']=dict(enumerate(np.zeros(12)))                                                   #Aggregate export of the station is limited by 44kW
+powlimits['P_CC_up_lim'] ={'CC1':dict(enumerate(np.ones(12)*22)),'CC2':dict(enumerate(np.ones(12)*33))} #The clusters are allowed to import half as the installed capacity 
+powlimits['P_CC_low_lim']={'CC1':dict(enumerate(np.zeros(12))),'CC2':dict(enumerate(np.zeros(12)))}     #The clusters are not allowed to export 
+powlimits['P_CS_up_lim'] =dict(enumerate(np.ones(12)*44))                                               #Aggregate import of the multi cluster system must be smaller than 44kW  
+powlimits['P_CS_low_lim']=dict(enumerate(np.zeros(12)))                                                 
 
 connections={}
 connections['P_EV_pos_max']={}
@@ -69,7 +69,7 @@ connections['location']['v22']      =('CC2',2)
 case1='Charge/discharge efficiency=100%'
 case2='Charge/discharge efficiency= 95%'
 
-color_top={'min':'w','max':'r','opt':'k'}
+color_top={'min':'r','max':'r','opt':'k'}
 np.random.seed(1)
 
 for case in [case1,case2]:
@@ -96,11 +96,11 @@ for case in [case1,case2]:
       
     c1_df=pd.DataFrame(columns=['max','opt'])
     c2_df=pd.DataFrame(columns=['max','opt'])
-    c1_df['max']=pd.Series(powlimits['P_CC_pos_max']['CC1'])
-    c1_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC1'])
+    c1_df['max']=pd.Series(powlimits['P_CC_up_lim']['CC1'])
+    c1_df['min']=-pd.Series(powlimits['P_CC_low_lim']['CC1'])
     c1_df['opt']=p_ref_df['v11'].apply(p_out)+p_ref_df['v12'].apply(p_out)
-    c2_df['max']=c2_pos_max=pd.Series(powlimits['P_CC_pos_max']['CC2'])
-    c2_df['min']=-pd.Series(powlimits['P_CC_neg_max']['CC2'])        
+    c2_df['max']=c2_pos_max=pd.Series(powlimits['P_CC_up_lim']['CC2'])
+    c2_df['min']=-pd.Series(powlimits['P_CC_low_lim']['CC2'])        
     c2_df['opt']=p_ref_df['v21'].apply(p_out)+p_ref_df['v22'].apply(p_out)
     
     fig1,axs1=plt.subplots(3,2,sharex=True,sharey='row')

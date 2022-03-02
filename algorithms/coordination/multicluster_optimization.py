@@ -21,11 +21,12 @@ def minimize_deviation_from_schedules(parkdata,powerlimits,connections,solver):
     horizonC =parkdata['con_horizon']
     deltaT   =parkdata['opt_step']
     
-    P_CC_pos_max  =powerlimits['P_CC_pos_max']
-    P_CC_neg_max  =powerlimits['P_CC_neg_max']
-    P_CS_pos_max  =powerlimits['P_CS_pos_max']
-    P_CS_neg_max  =powerlimits['P_CS_neg_max']
-    P_IC_unb_max  =powerlimits['P_IC_unb_max'] if 'P_IC_unb_max' in powerlimits.keys() else None
+    P_CC_up_lim   =powerlimits['P_CC_up_lim']
+    P_CC_low_lim  =powerlimits['P_CC_low_lim']
+    P_CC_vio_lim  =powerlimits['P_CC_vio_lim'] if 'P_CC_vio_lim' in powerlimits.keys() else None
+    P_IC_unb_max  =powerlimits['P_IC_unb_max'] if 'P_IC_unb_max' in powerlimits.keys() else None    
+    P_CS_up_lim   =powerlimits['P_CS_up_lim']
+    P_CS_low_lim  =powerlimits['P_CS_low_lim']
      
     P_EV_pos_max  =connections['P_EV_pos_max']
     P_EV_neg_max  =connections['P_EV_neg_max']
@@ -62,11 +63,12 @@ def minimize_deviation_from_schedules(parkdata,powerlimits,connections,solver):
     #Power capability parameters
     model.P_EV_pos=P_EV_pos_max      #Maximum charging power to EV battery
     model.P_EV_neg=P_EV_neg_max      #Maximum discharging power from EV battery 
-    model.P_CC_pos=P_CC_pos_max      #Maximum power that can be imported by a cluster
-    model.P_CC_neg=P_CC_neg_max      #Maximum power that can be exported by a cluster
-    model.P_CS_pos=P_CS_pos_max      #Maximum power that can be imported by the system
-    model.P_CS_neg=P_CS_neg_max      #Maximum power that can be exported by the system
+    model.P_CC_up =P_CC_up_lim       #Upper limit of the power that can be consumed by a cluster
+    model.P_CC_low=P_CC_low_lim      #Lower limit of the power that can be consumed by a cluster (negative values indicating export limit)
+    model.P_CC_vio=P_CC_vio_lim      #Cluster capacity violation limit
     model.P_IC_unb=P_IC_unb_max      #Maximum inter-cluster unbalance
+    model.P_CS_up =P_CS_up_lim       #Maximum power that can be imported by the system
+    model.P_CS_low=P_CS_low_lim      #Maximum power that can be exported by the system
     
     #Charging efficiency 
     model.eff_ch  =eta_ch            #Charging efficiency
@@ -88,6 +90,9 @@ def minimize_deviation_from_schedules(parkdata,powerlimits,connections,solver):
     #System variables
     model.p_cc  =Var(model.C,model.T,within=Reals)     #Power flows into the cluster c
     model.p_cs  =Var(model.T,within=Reals)             #Total system power  
+    
+    #Relaxation
+    model.eps     =Var(model.C,within=NonNegativeReals)       
                            
     #CONSTRAINTS
     def initialsoc(model,v):
@@ -132,32 +137,36 @@ def minimize_deviation_from_schedules(parkdata,powerlimits,connections,solver):
         return model.p_cs[t]==sum(model.p_cc[c,t] for c in model.C)
     model.stapowtotal=Constraint(model.T,rule=cspower)
 
-    def cluster_pos_limit_dynamic(model,c,t):           #Import constraint for CC
-        return model.p_cc[c,t]<=model.P_CC_pos[c][t]
-    model.ccpowcap_pos =Constraint(model.C,model.T,rule=cluster_pos_limit_dynamic)
+    def cluster_upper_limit(model,c,t):           #Import constraint for CC
+        return model.p_cc[c,t]<=model.P_CC_up[c][t]+model.eps[c]
+    model.ccpowcap_pos =Constraint(model.C,model.T,rule=cluster_upper_limit)
     
-    def cluster_neg_limit_dynamic(model,c,t):           #Export constraint for CC
-        return model.p_cc[c,t]>=-model.P_CC_neg[c][t]
-    model.ccpowcap_neg =Constraint(model.C,model.T,rule=cluster_neg_limit_dynamic)
+    def cluster_lower_limit(model,c,t):           #Export constraint for CC
+        return model.p_cc[c,t]>=model.P_CC_low[c][t]-model.eps[c]
+    model.ccpowcap_neg =Constraint(model.C,model.T,rule=cluster_lower_limit )
+    
+    def cluster_limit_violation(model,c):
+        return model.eps[c]<=model.P_CC_vio[c]
+    model.viol_clust   =Constraint(model.C,rule=cluster_limit_violation)
     
     def cluster_unbalance_limit(model,c1,c2,t):
         return model.p_cc[c1,t]<=model.p_cc[c2,t]+model.P_IC_unb[c1,c2][t]
     if model.P_IC_unb!=None:  
         model.inter_clust  =Constraint(model.C,model.C,model.T,rule=cluster_unbalance_limit)
         
-    def station_pos_limit_dynamic(model,t):             #Import constraint for CS
-        return model.p_cs[t]<=model.P_CS_pos[t]
-    model.cspowcap_pos=Constraint(model.T,rule=station_pos_limit_dynamic)
+    def clusteredsystem_upper_limit(model,t):             #Import constraint for CS
+        return model.p_cs[t]<=model.P_CS_up[t]
+    model.cspowcap_pos=Constraint(model.T,rule=clusteredsystem_upper_limit)
     
-    def station_neg_limit_dynamic(model,t):             #Export constraint for CS
-        return model.p_cs[t]>=-model.P_CS_neg[t]
-    model.cspowcap_neg=Constraint(model.T,rule=station_neg_limit_dynamic)
+    def clusteredsystem_lower_limit(model,t):             #Export constraint for CS
+        return model.p_cs[t]>=model.P_CS_low[t]
+    model.cspowcap_neg=Constraint(model.T,rule=clusteredsystem_lower_limit)
     
     #OBJECTIVE FUNCTION
     def obj_rule(model):  
         return sum((model.s_ref[v]-model.s[v,max(horizon)])*
                    (model.s_ref[v]-model.s[v,max(horizon)]) 
-                   for v in model.V)
+                   for v in model.V)+sum(model.eps[c] for c in model.C)
     model.obj=Objective(rule=obj_rule, sense = minimize)
     
     ###########################################################################         
@@ -167,8 +176,7 @@ def minimize_deviation_from_schedules(parkdata,powerlimits,connections,solver):
     #start=time.time()
     #end=time.time()
     #print("Solution in",end-start)
-    result=solver.solve(model)
-    #print(result)
+    solver.solve(model)
     ###########################################################################
     
     ###########################################################################

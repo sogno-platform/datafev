@@ -21,6 +21,7 @@ class ElectricVehicle(object):
         self.maxSoC = maxSoC
         self.soc    = {}
         self.v2x    = {}
+        self.x2v    = {}
                               
     def charge(self,ts,tdelta,p_in):
         """
@@ -34,3 +35,6 @@ class ElectricVehicle(object):
         """  
         self.soc[ts+tdelta]=self.soc[ts]+p_in*tdelta.seconds/self.bCapacity
         self.v2x[ts]       =-p_in if p_in<0 else 0
+        self.x2v[ts]       = p_in if p_in>0 else 0
+        
+    

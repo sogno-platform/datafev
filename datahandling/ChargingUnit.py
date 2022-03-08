@@ -41,7 +41,7 @@ class ChargingUnit(object):
         dataset_ind=max(self.connection_dataset.index)
         self.connection_dataset.loc[dataset_ind,'Disconnection']=ts
         
-    def reserve(self,ts,res_from,res_until,ev,demand):
+    def reserve(self,ts,res_from,res_until,ev,demand=None):
         reservation_id=len(self.reservation_dataset)+1
 
         #TODO: Add check for overlap
@@ -52,7 +52,8 @@ class ChargingUnit(object):
         self.reservation_dataset.loc[reservation_id,'Until'] =res_until
         self.reservation_dataset.loc[reservation_id,'Demand']=demand     
         return reservation_id
-        
+    
+               
     def unreserve(self,ts,reservation_id):
         self.reservation_dataset.loc[reservation_id,'Cancelled At']=ts
         self.reservation_dataset.loc[reservation_id,'Active']      =False

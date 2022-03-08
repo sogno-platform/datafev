@@ -8,6 +8,7 @@ Created on Fri Mar 19 13:43:13 2021
 import pandas as pd
 import numpy as np
 from datetime import datetime,timedelta
+from datahandling.ChargingUnit import ChargingUnit
 
 class ChargerCluster(object):
     
@@ -23,6 +24,27 @@ class ChargerCluster(object):
     
         self.cu={}
         
+
+    def initiate_cluster(self,topology_data,capacity_data,sim_horizon):
+    
+        sim_step=sim_horizon[1]-sim_horizon[0]
+        
+        for _,i in topology_data.iterrows():
+               
+            cuID = i['cu_id']
+            ctype= i['cu_type']
+            pch  = i['cu_p_ch_max']
+            pds  = i['cu_p_ds_max']
+            eff  = i['cu_eff']
+            cu   =ChargingUnit(cuID,ctype,pch,pds,eff)
+            self.add_cu(cu)
+            
+        capacity_data['TimeStep']=capacity_data['TimeStep'].round('S')
+        capacity_lb=pd.Series(capacity_data['LB'].values,index=capacity_data['TimeStep'].values)
+        capacity_ub=pd.Series(capacity_data['UB'].values,index=capacity_data['TimeStep'].values)
+        
+        self.set_capacity_constraints(capacity_ub,capacity_lb,sim_step)
+              
 
     def add_cu(self,charging_unit):
         """
@@ -49,8 +71,22 @@ class ChargerCluster(object):
         self.cc_dataset.loc[cc_dataset_id,'Scheduled G2V [kWh]']=ev.scheduled_g2v
         self.cc_dataset.loc[cc_dataset_id,'Scheduled V2X [kWh]']=ev.scheduled_v2x
         self.cc_dataset.loc[cc_dataset_id,'Connected CU']       =cu.id
-               
-    
+        
+    def enter_data_of_incoming_vehicle(self,ts,ev,cu):
+        """
+        To add an entry in cc_dataset for the arriving car. This method is run when a car is allocated to this cluster.
+        """      
+        cc_dataset_id=len(self.cc_dataset)+1
+        ev.cc_dataset_id=cc_dataset_id
+        ev.connected_cc =self
+        
+        self.cc_dataset.loc[cc_dataset_id,'EV ID']              =ev.vehicle_id
+        self.cc_dataset.loc[cc_dataset_id,'EV Battery [kWh]']   =ev.bCapacity/3600
+        self.cc_dataset.loc[cc_dataset_id,'Arrival Time']       =ts
+        self.cc_dataset.loc[cc_dataset_id,'Arrival SOC']        =ev.soc[ts]
+        self.cc_dataset.loc[cc_dataset_id,'Estimated Leave']    =ev.t_dep_est
+        self.cc_dataset.loc[cc_dataset_id,'Connected CU']       =cu.id
+            
     def enter_data_for_leaving_vehicle(self,ts,ev):
         
         self.cc_dataset.loc[ev.cc_dataset_id,'Leave Time']      =ts
@@ -63,14 +99,28 @@ class ChargerCluster(object):
     
         ev.cc_dataset_id=None
         ev.connected_cc =None
+        
+    def enter_data_of_outgoing_vehicle(self,ts,ev):
+        
+        self.cc_dataset.loc[ev.cc_dataset_id,'Leave Time']      =ts
+        self.cc_dataset.loc[ev.cc_dataset_id,'Leave SOC']       =ev.soc[ts]
+        self.cc_dataset.loc[ev.cc_dataset_id,'Net G2V [kWh]']   =(ev.soc[ts]-ev.soc_arr_real)*ev.bCapacity/3600
+        
+        ev_v2x_   =pd.Series(ev.v2x)
+        resolution=(ev_v2x_.index[1]-ev_v2x_.index[0])
+        ev_v2x    =ev_v2x_[ev.t_arr_real:ev.t_dep_real-resolution]
+        self.cc_dataset.loc[ev.cc_dataset_id,'Total V2X [kWh]'] =ev_v2x.sum()*resolution.seconds/3600
+    
+        ev.cc_dataset_id=None
+        ev.connected_cc =None
                       
-    def pick_free_cu_random(self,ts,t_delta):
-        
-        cu_occupancy_actual =self.get_unit_occupancies(ts,t_delta,t_delta).iloc[0] #Check the current occupancy profile
-        free_units   =(cu_occupancy_actual[cu_occupancy_actual==0].index).to_list() #All free CUs at this moment
-        cu_id=np.random.choice(free_units)  #Select a random CU to connect the EV
-        
-        return cu_id
+#    def pick_free_cu_random(self,ts,t_delta):
+#        
+#        cu_occupancy_actual =self.get_unit_occupancies(ts,t_delta,t_delta).iloc[0] #Check the current occupancy profile
+#        free_units   =(cu_occupancy_actual[cu_occupancy_actual==0].index).to_list() #All free CUs at this moment
+#        cu_id=np.random.choice(free_units)  #Select a random CU to connect the EV
+#        
+#        return cu_id
         
     def schedules_for_actual_connections(self,period_start,period_end,period_step):
         """
@@ -146,7 +196,7 @@ class ChargerCluster(object):
         for cu_id,cu in self.cu.items():
             df[cu_id]=(cu.occupation_record(period_start,period_end,period_step).reindex(df.index)).fillna(0)      
         return df
-            
+              
     def set_capacity_constraints(self,upper,lower,resolution):
         """
         Method to enter import constraint as time series
@@ -159,7 +209,12 @@ class ChargerCluster(object):
         upper=upper.reindex(timerange)
         lower=lower.reindex(timerange)
         self.upper_limit=upper.fillna(upper.fillna(method='ffill')) 
-        self.lower_limit=lower.fillna(lower.fillna(method='ffill')) 
+        self.lower_limit=lower.fillna(lower.fillna(method='ffill'))
+        
+        
+
+        
+
 
     
     

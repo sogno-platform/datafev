@@ -21,14 +21,14 @@ def calc_p_max_ch(ev_soc,ev_tarsoc,pmax, ev_bcap, period):
         
     return p_max_ch
     
-def calc_p_max_ds(ev_soc,ev_tarsoc,pmax, ev_bcap, period):
+def calc_p_max_ds(ev_soc,ev_minsoc,pmax, ev_bcap, period):
     """
     This function calculates the maximum energy that can be transferred
     from the EV battery within the given interval and returns the average power
     that allows for this energy transfer
     """   
 
-    e_supply=(ev_soc-ev_tarsoc)*ev_bcap  #Energy available for discharge
+    e_supply=(ev_soc-ev_minsoc)*ev_bcap  #Energy available for discharge
     e_max   =pmax*period                 #Maximum energy that the charger can transfer in the given period
     
     if e_max<=e_supply: 

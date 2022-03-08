@@ -13,11 +13,18 @@ from utils.result_analyze import print_results
 from utils.scenario_analyze import analyze_occupation
 import time
 
-from interface.functions import *
-from interface.realtime.uncontrolled import *
-from interface.realtime.cluster_modifiedllf import *
+from datahandling.Fleet import EVFleet
+from datahandling.EV import ElectricVehicle
+from datahandling.ChargingUnit import ChargingUnit
+from datahandling.ChargerCluster import ChargerCluster
+from datahandling.MultiCluster import MultiCluster
 
-from algorithms.allocation.charger_selection import minimize_idleness
+from interface.functions import *
+from interface.chargingcontrol.uncontrolled import *
+from interface.chargingcontrol.cluster_modifiedllf import *
+from interface.arrival.cluster_random_cu import *
+from interface.departure.disconnect_and_unreserve import *
+
 
 #Simulation time parameters
 sim_start       =datetime(2022,1,8,7)
@@ -34,18 +41,21 @@ input_capacity  = pd.read_excel(inputs, 'Capacity')
 analyze_occupation(input_fleet,sim_horizon)
 
 #Simulation outputs
-consumption={}
+controlApproaches=['Uncontrolled','Controlled']
+consumption=pd.DataFrame(columns=controlApproaches)
 datasets   ={}
 
-#%%
-for controlApproach in ['Uncontrolled','Controlled']:
+#Simulation
+for controlApproach in controlApproaches:
         
     print(controlApproach,"charging")
     np.random.seed(0)   #Same random behavior in all runs    
+
     #######################################################################
     #Cluster and fleet generation
-    cluster= generate_cluster("test_cluster",input_cluster,input_capacity,sim_step)
-    ev_fleet=generate_fleet(input_fleet)
+    cluster  = ChargerCluster("test_cluster")
+    cluster.initiate_cluster(input_cluster,input_capacity,sim_horizon)
+    ev_fleet = EVFleet("test_fleet",input_fleet,sim_horizon)
     #######################################################################
     
     for ts in sim_horizon:
@@ -53,33 +63,16 @@ for controlApproach in ['Uncontrolled','Controlled']:
         print("Simulating time step:",ts)
         #######################################################################
         #Vehicle departures
-        list_of_outgoing_vehicles =handle_departures(ts,input_fleet,ev_fleet)
+        list_of_outgoing_vehicles=ev_fleet.outgoing_vehicles_at(ts)
+        #Specific departure protocol
+        handle_departures(list_of_outgoing_vehicles)
         #######################################################################
         
         #######################################################################
-        #Vehicle admissions 
-        list_of_incoming_vehicles =handle_arrivals(ts,input_fleet,ev_fleet)    
-        for ev in list_of_incoming_vehicles:
-                        
-            available_chargers=ev.request_available_charger_list(cluster,sim_step)
-            if len(available_chargers)==0:
-                ev.admitted=False
-            else:
-                ev.admitted=True
-                
-                ######################################
-                #Specific allocation algorithm: Random in the simulated case 
-                selected_charger_id = np.random.choice(available_chargers.index)
-                ######################################
-                
-                ######################################
-                #Connection to the selected charger
-                selected_charger    = cluster.cu[selected_charger_id]
-                selected_charger.connect(ts,ev)
-                ev.reservation_id=selected_charger.reserve(ts,ts,ev.t_dep_est,ev)
-                cluster.enter_data_of_incoming_vehicle(ts,ev,selected_charger)
-                ######################################
-        #######################################################################
+        #Vehicle arrivals 
+        list_of_incoming_vehicles =ev_fleet.incoming_vehicles_at(ts)
+        #Specific arrival protocol
+        random_cu_select(cluster,list_of_incoming_vehicles,sim_step)
         
         #######################################################################
         #Real-time charging control
@@ -91,19 +84,15 @@ for controlApproach in ['Uncontrolled','Controlled']:
             modified_least_laxity_first(cluster, ts, sim_step)
         #######################################################################
     
-        #######################################################################
-        #Saving results
-        consumption[controlApproach] =cluster.utilization_record(sim_start,sim_end,sim_step)
-        datasets[controlApproach]    =cluster.cc_dataset
-        #######################################################################
+    #######################################################################
+    #Saving results
+    consumption[controlApproach] =(cluster.import_profile(sim_start,sim_end,sim_step)).sum(axis=1)
+    datasets[controlApproach]    =cluster.cc_dataset
+    #######################################################################
 
-#%%
 #Analysis
-results=pd.DataFrame(columns=['Uncontrolled','Controlled','Capacity'])
-results['Uncontrolled']=consumption['Uncontrolled']['Net consumption']
-results['Controlled']  =consumption['Controlled']['Net consumption']
-results['Capacity']    =consumption['Controlled']['UB']
-results.plot()
+consumption['Capacity']=cluster.upper_limit
+consumption.plot()
         
 
 

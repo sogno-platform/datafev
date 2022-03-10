@@ -20,7 +20,7 @@ class ChargingUnit(object):
         
         self.connected_ev       =None
         self.connection_dataset =pd.DataFrame(columns=['EV ID','Connection','Disconnection'])
-        self.reservation_dataset=pd.DataFrame(columns=['Active','EV ID','At','From','Until','Demand','Cancelled At'])
+        self.reservation_dataset=pd.DataFrame(columns=['Active','EV ID','At','From','Until','Cancelled At'])
         self.supplied_power     =pd.Series(dtype=float)
         self.consumed_power     =pd.Series(dtype=float)
         
@@ -50,10 +50,9 @@ class ChargingUnit(object):
         self.reservation_dataset.loc[reservation_id,'At']    =ts
         self.reservation_dataset.loc[reservation_id,'From']  =res_from
         self.reservation_dataset.loc[reservation_id,'Until'] =res_until
-        self.reservation_dataset.loc[reservation_id,'Demand']=demand     
+        
         return reservation_id
-    
-               
+              
     def unreserve(self,ts,reservation_id):
         self.reservation_dataset.loc[reservation_id,'Cancelled At']=ts
         self.reservation_dataset.loc[reservation_id,'Active']      =False

@@ -37,4 +37,19 @@ class ElectricVehicle(object):
         self.v2x[ts]       =-p_in if p_in<0 else 0
         self.x2v[ts]       = p_in if p_in>0 else 0
         
+#    def request_available_charger_list(self,server,tdelta,advance_reservation=False):
+#        
+#        if advance_reservation:
+#            period_start=self.t_arr_est
+#            period_end  =self.t_dep_est
+#            period_step =tdelta
+#        else:
+#            period_start=self.t_arr_real
+#            period_end  =self.t_dep_est
+#            period_step =tdelta
+#            
+#        available_chargers=server.get_available_chargers(period_start,period_end,period_step)
+#            
+#        return available_chargers
+        
     

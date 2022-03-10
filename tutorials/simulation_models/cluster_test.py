@@ -19,11 +19,10 @@ from datahandling.ChargingUnit import ChargingUnit
 from datahandling.ChargerCluster import ChargerCluster
 from datahandling.MultiCluster import MultiCluster
 
-from interface.functions import *
-from interface.chargingcontrol.uncontrolled import *
-from interface.chargingcontrol.cluster_modifiedllf import *
-from interface.arrival.cluster_random_cu import *
-from interface.departure.disconnect_and_unreserve import *
+from protocols.chargingcontrol.uncontrolled import *
+from protocols.chargingcontrol.cluster_modifiedllf import *
+from protocols.arrival.cluster_random_cu import *
+from protocols.departure.disconnect_and_unreserve import *
 
 
 #Simulation time parameters

@@ -47,10 +47,8 @@ tou_tariff      = pd.Series(price['Price'],index=price_t_steps)
 
 #######################################################################
 #System and fleet generation
-cluster1  = ChargerCluster("cluster1")
-cluster2  = ChargerCluster("cluster2")
-cluster1.initiate_cluster(input_cluster1,input_capacity1,sim_horizon)
-cluster2.initiate_cluster(input_cluster2,input_capacity2,sim_horizon)
+cluster1  = ChargerCluster("cluster1",input_cluster1,input_capacity1,sim_horizon)
+cluster2  = ChargerCluster("cluster2",input_cluster2,input_capacity2,sim_horizon)
 system    = MultiCluster("multicluster")
 system.add_cc(cluster1)
 system.add_cc(cluster2)

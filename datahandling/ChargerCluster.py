@@ -12,7 +12,7 @@ from datahandling.ChargingUnit import ChargingUnit
 
 class ChargerCluster(object):
     
-    def __init__(self,cluster_id):
+    def __init__(self,cluster_id,topology_data,capacity_data,sim_horizon):
         
         self.type    ='CC'
         self.id      =cluster_id
@@ -23,9 +23,7 @@ class ChargerCluster(object):
                                               'Scheduled V2G [kWh]','Connected CU','Leave Time','Leave SOC','Net G2V [kWh]','Total V2G [kWh]'])
     
         self.cu={}
-        
-
-    def initiate_cluster(self,topology_data,capacity_data,sim_horizon):
+    
     
         sim_step=sim_horizon[1]-sim_horizon[0]
         
@@ -66,7 +64,6 @@ class ChargerCluster(object):
         self.cc_dataset.loc[cc_dataset_id,'EV Battery [kWh]']   =ev.bCapacity/3600
         self.cc_dataset.loc[cc_dataset_id,'Arrival Time']       =ts
         self.cc_dataset.loc[cc_dataset_id,'Arrival SOC']        =ev.soc[ts]
-        #self.cc_dataset.loc[cc_dataset_id,'Estimated Leave']    =ev.t_dep_est
         self.cc_dataset.loc[cc_dataset_id,'Connected CU']       =cu.id
         
         if scheduled:

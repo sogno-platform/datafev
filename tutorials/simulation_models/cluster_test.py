@@ -34,7 +34,7 @@ sim_horizon     =[sim_start+t*sim_step for t in range(int(sim_length/sim_step))]
 
 #Simulation inputs
 inputs          = pd.ExcelFile('cluster_test_scenario.xlsx')
-input_fleet     = pd.read_excel(inputs, 'Fleet')#,index_col=0)
+input_fleet     = pd.read_excel(inputs, 'Fleet')
 input_cluster   = pd.read_excel(inputs, 'Cluster')
 input_capacity  = pd.read_excel(inputs, 'Capacity')
 analyze_occupation(input_fleet,sim_horizon)
@@ -52,8 +52,8 @@ for controlApproach in controlApproaches:
 
     #######################################################################
     #Cluster and fleet generation
-    cluster  = ChargerCluster("test_cluster")
-    cluster.initiate_cluster(input_cluster,input_capacity,sim_horizon)
+    cluster  = ChargerCluster("test_cluster",input_cluster,input_capacity,sim_horizon)
+    #cluster.initiate_cluster(input_cluster,input_capacity,sim_horizon)
     ev_fleet = EVFleet("test_fleet",input_fleet,sim_horizon)
     #######################################################################
     

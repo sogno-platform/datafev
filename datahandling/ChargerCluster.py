@@ -79,7 +79,7 @@ class ChargerCluster(object):
         ev_v2x_   =pd.Series(ev.v2x)
         resolution=(ev_v2x_.index[1]-ev_v2x_.index[0])
         ev_v2x    =ev_v2x_[ev.t_arr_real:ev.t_dep_real-resolution]
-        self.cc_dataset.loc[ev.cc_dataset_id,'Total V2X [kWh]'] =ev_v2x.sum()*resolution.seconds/3600
+        self.cc_dataset.loc[ev.cc_dataset_id,'Total V2G [kWh]'] =ev_v2x.sum()*resolution.seconds/3600
     
         ev.cc_dataset_id=None
         ev.connected_cc =None

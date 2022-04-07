@@ -90,9 +90,9 @@ def least_laxity_first(demand,capacity_lb,capacity_ub):
         
 #%%  
 #eff3=0.95
-#con3=15
+#con3=0
 #dem3=pd.DataFrame(index=['A','B','C','D','E','F'])
-#dem3['lb'] =[7,-7,-11,-22,-22,-7]
+#dem3['lb'] =[0,-7,-11,-22,-22,-7]
 #dem3['ub'] =[7,7,11,22,22,7]    
 #dem3['R']  =[7,7,11,22,-11,0]    
 #dem3['m']  =[0.32,0.11,0.17,0.83,0.64,0.13]

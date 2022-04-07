@@ -40,19 +40,24 @@ def modified_least_laxity_first(cc, ts, t_delta, scheduled=False):
         
             ev_soc   =connected_ev.soc[ts]
             ev_minsoc=connected_ev.minSoC
-            ev_maxsoc=connected_ev.maxSoC
+            #ev_maxsoc=connected_ev.maxSoC
+            ev_tarsoc=connected_ev.soc_tar_at_t_dep_est
             ev_bcap  =connected_ev.bCapacity
 
             demand_dic['lb'][cu_id]=-max(calc_p_max_ds(ev_soc,ev_minsoc,p_ev_neg_max, ev_bcap, period),0)
-            demand_dic['ub'][cu_id]=max(calc_p_max_ch(ev_soc,ev_maxsoc,p_ev_pos_max, ev_bcap, period),0)
+            demand_dic['ub'][cu_id]=max(calc_p_max_ch(ev_soc,ev_tarsoc,p_ev_pos_max, ev_bcap, period),0)
             demand_dic['f_p'][cu_id]=cu.eff
             demand_dic['f_n'][cu_id]=cu.eff
             
             if scheduled==False:
                 demand_dic['R'][cu_id]=demand_dic['ub'][cu_id]
-                T_M=(1.0-connected_ev.soc_tar_at_t_dep_est)*ev_bcap/p_ev_pos_max
-                T_L=(connected_ev.t_dep_est-ts).seconds
-                demand_dic['m'][cu_id]=(T_L-T_M)/T_L
+                T_M=(connected_ev.soc_tar_at_t_dep_est-connected_ev.soc[ts])*ev_bcap/p_ev_pos_max
+                if connected_ev.t_dep_est>ts:
+                    T_L=(connected_ev.t_dep_est-ts).seconds
+                    demand_dic['m'][cu_id]=(T_L-T_M)/T_L
+                else:
+                    #print("Entered")
+                    demand_dic['m'][cu_id]=0
                     
     if len(demand_dic['R'])>0:
         demand_df=pd.DataFrame(demand_dic)

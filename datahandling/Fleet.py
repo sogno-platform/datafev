@@ -39,7 +39,7 @@ class EVFleet(object):
             ev.soc_arr_est         =i['Estimated Arrival SOC']       
             ev.t_crt               =i['Critical Time']
             ev.soc_tar_at_t_crt    =i['Target SOC @ Critical Time']
-            ev.soc_tar_at_t_dep_est=i['Target SOC @ Critical Time']
+            ev.soc_tar_at_t_dep_est=i['Target SOC @ Estimated Departure Time']
             ev.v2x_allow           =i['V2X Allowance (kWh)']*3600
             ev.t_arr_real          =i['Real Arrival Time']
             ev.soc_arr_real        =i['Real Arrival SOC']

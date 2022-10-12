@@ -62,7 +62,6 @@ class EVFleet(object):
         ##################################################################################################
 
     def enter_power_soc_table(self,table):
-        
         for ev_id,ev in self.objects.items():
             ev.pow_soc_table=table.loc[ev_id].copy()
 

@@ -14,7 +14,7 @@ def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
     """
     This protocol is executed to reserve chargers for the EVs approaching a multi-cluster system.
 
-    The reservations are smart reservations in the sense that they specify
+    The smart reservations specify:
     1) Which cluster and which charger the approaching EVs must connect to
     2) Optimal charging schedule of EVs
     3) Payment for agreed charging service

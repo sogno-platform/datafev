@@ -10,7 +10,7 @@ import pandas as pd
 
 def arrival_protocol(ts,tdelta,fleet,system):
     """
-    This protocol is executed for admission of the EVs that arrive in charger clusters without reservations
+    This protocol is executed for admission of the EVs that arrive in charger clusters without reservations.
 
     :param ts:      Current time                    datetime
     :param tdelta:  Resolution of scheduling        timedelta

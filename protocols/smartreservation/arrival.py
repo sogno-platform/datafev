@@ -10,7 +10,7 @@ import pandas as pd
 
 def arrival_protocol(ts,tdelta,fleet):
     """
-    This protocol is executed upon arrival of EVs that have smart reservations
+    This protocol is executed upon arrival of EVs that have smart reservations.
 
     :param ts:      Current time                datetime
     :param tdelta:  Resolution of scheduling    timedelta

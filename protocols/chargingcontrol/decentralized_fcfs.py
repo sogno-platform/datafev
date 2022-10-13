@@ -10,8 +10,10 @@ import pandas as pd
 def charging_protocol(ts, t_delta,system):
     """
     This protocol is executed periodically during operation of charger clusters.
+
     It addresses the scenarios where each cluster has a local power consumption constraint and therefore has to control
-    the power distribution to the chargers. The applied control is based on "first-come-first-serve" logic.
+    the power distribution to the chargers. The control architecture is decentralized; therefore, each cluster applies
+    its own control. The applied control is based on "first-come-first-serve" logic.
 
     :param ts:          Current time                    datetime
     :param t_delta:     Resolution of scheduling        timedelta
@@ -26,17 +28,16 @@ def charging_protocol(ts, t_delta,system):
 
         cluster=system.clusters[cc_id]
 
-        ################################################################################################
-        # Step 1: Identification of charging demand
         if cluster.number_of_connected_chargers(ts) > 0:
             #The cluster includes connected EVs
 
+            ################################################################################################
+            # Step 1: Identification of charging demand
             p_ch = {}   #Will contain the charge powers that each EV want to consume
             eff  = {}   #Will contain the power conversion efficiencies during
             contime={}  #Will contain the connection time of EVs (from their arrial until now)
 
-            ################################################################################################
-            # Step 1: Loop through the chargers
+            # Loop through the chargers
             for cu_id, cu in cluster.chargers.items():
 
                 ev = cu.connected_ev

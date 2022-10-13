@@ -11,6 +11,7 @@ import pandas as pd
 def arrival_protocol(ts,tdelta,fleet):
     """
     This protocol is executed upon arrival of EVs that have smart reservations
+
     :param ts:      Current time                datetime
     :param tdelta:  Resolution of scheduling    timedelta
     :param fleet:   EV fleet                    datahandling.Fleet
@@ -21,18 +22,23 @@ def arrival_protocol(ts,tdelta,fleet):
     for ev in incoming_vehicles:
 
         if ev.reserved==True:
+
             #The EV approaches the cluster where it has reservation
             reserved_cluster   =ev.reserved_cluster
             reserved_charger   =ev.reserved_charger
 
             if reserved_charger.connected_ev==None:
+
                 # The reserved charger is available
                 # Connect to the reserved charger and enter the data to the cluster dataset
                 reserved_charger.connect(ts, ev)
+
+                # Enter the data of the EV to the connection dataset of the cluster
                 reserved_cluster.enter_data_of_incoming_vehicle(ts, ev, reserved_charger)
                 ev.admitted=True
 
             else:
+
                 # The reserved charger is occupied by another EV
                 old_reservation_id  =ev.reservation_id
                 old_reservation     =reserved_cluster.re_dataset.loc[old_reservation_id]
@@ -48,12 +54,12 @@ def arrival_protocol(ts,tdelta,fleet):
 
                     if len(identical_cus)>0:
                         # There are available chargers with same characteristics as the previously reserved one
-                        # Reserve an identicle charger
+                        # An identicle charger to be reserved
                         new_reserved_charger_id       = identical_cus.idxmin()
 
                     else:
                         # There is no available charger identical to the reserved one
-                        # Reserve the charger with maximum power capability
+                        # The charger with maximum power capability to be reserved
                         new_reserved_charger_id = available_cus['max p_ch'].idxmax()
 
                     new_reserved_charger = reserved_cluster.chargers[new_reserved_charger_id]
@@ -66,13 +72,19 @@ def arrival_protocol(ts,tdelta,fleet):
                     old_reservation_p_schedule    = reserved_charger.schedule_pow[old_reservation_time]
                     old_reservation_s_schedule    = reserved_charger.schedule_soc[old_reservation_time]
 
+                    # Reserve the charger until estimated departure time
                     reserved_cluster.reserve(ts, ts, ev.t_dep_est, ev, new_reserved_charger)
+
+                    # Add the smart reservation details
                     reserved_cluster.re_dataset.loc[ev.reservation_id,'Scheduled G2V']= old_reservation_scheduled_g2v
                     reserved_cluster.re_dataset.loc[ev.reservation_id,'Scheduled V2G']= old_reservation_scheduled_v2g
                     reserved_cluster.re_dataset.loc[ev.reservation_id,'Price V2G']    = old_reservation_price
 
+                    # Enter the data of the EV to the connection dataset of the cluster
                     new_reserved_charger.connect(ts, ev)
                     new_reserved_charger.set_schedule(ts, old_reservation_p_schedule, old_reservation_s_schedule)
+
+                    # Enter the data of the EV to the connection dataset of the cluster
                     reserved_cluster.enter_data_of_incoming_vehicle(ts, ev, new_reserved_charger)
 
                     # Old reservation will be removed
@@ -82,10 +94,10 @@ def arrival_protocol(ts,tdelta,fleet):
 
                 else:
                     # There is no available charger
+                    # TODO: Future work: add a re-routing protocol
                     ev.admitted=False
 
         else:
             # The EV has no reservation will be rejected
-            # TODO: Add a reservation protocl
             ev.admitted=False
 

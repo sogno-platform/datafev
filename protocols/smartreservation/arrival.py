@@ -11,10 +11,9 @@ import pandas as pd
 def arrival_protocol(ts,tdelta,fleet):
     """
     This protocol is executed upon arrival of EVs that have smart reservations
-    :param ts:
-    :param tdelta:
-    :param fleet:
-    :return:
+    :param ts:      Current time                datetime
+    :param tdelta:  Resolution of scheduling    timedelta
+    :param fleet:   EV fleet                    datahandling.Fleet
     """
 
     incoming_vehicles = fleet.incoming_vehicles_at(ts)
@@ -72,7 +71,9 @@ def arrival_protocol(ts,tdelta,fleet):
                     reserved_cluster.re_dataset.loc[ev.reservation_id,'Scheduled V2G']= old_reservation_scheduled_v2g
                     reserved_cluster.re_dataset.loc[ev.reservation_id,'Price V2G']    = old_reservation_price
 
+                    new_reserved_charger.connect(ts, ev)
                     new_reserved_charger.set_schedule(ts, old_reservation_p_schedule, old_reservation_s_schedule)
+                    reserved_cluster.enter_data_of_incoming_vehicle(ts, ev, new_reserved_charger)
 
                     # Old reservation will be removed
                     reserved_charger.unreserve(ts,old_reservation_id)

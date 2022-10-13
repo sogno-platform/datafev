@@ -6,6 +6,13 @@ Created on Tue Mar  8 16:23:42 2022
 """
 
 def departure_protocol(ts,fleet):
+    """
+    This protocol is executed for EVs leaving the charger clusters.
+
+    :param ts:      Current time                datetime
+    :param fleet:   EV fleet object             datahandling.fleet
+
+    """
 
     outgoing_vehicles=fleet.outgoing_vehicles_at(ts)
     

@@ -14,7 +14,8 @@ def arrival_protocol(ts,tdelta,fleet):
 
     :param ts:      Current time                datetime
     :param tdelta:  Resolution of scheduling    timedelta
-    :param fleet:   EV fleet                    datahandling.Fleet
+    :param fleet:   EV fleet object             datahandling.fleet
+
     """
 
     incoming_vehicles = fleet.incoming_vehicles_at(ts)

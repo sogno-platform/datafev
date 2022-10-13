@@ -9,7 +9,27 @@ import pandas as pd
 from algorithms.cluster.pricing_rule import idp
 from algorithms.vehicle.routing_milp import smart_routing
 
-def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast, f_discount=0.05, f_markup=0.05,arbitrage_coeff=0.0):
+def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
+                         f_discount=0.05, f_markup=0.05,arbitrage_coeff=0.0):
+    """
+    This protocol is executed to reserve chargers for the EVs approaching a multi-cluster system.
+
+    The reservations are smart reservations in the sense that they specify
+    1) Which cluster and which charger the approaching EVs must connect to
+    2) Optimal charging schedule of EVs
+    3) Payment for agreed charging service
+
+    :param ts:                Current time                                                      datetime
+    :param tdelta:            Resolution of scheduling                                          timedelta
+    :param system:            Multi-cluster system object                                       datahandling.multiclust
+    :param fleet:             EV fleet object                                                   datahandling.fleet
+    :param solver:            Optimization solver                                               pyomo.SolverFactory
+    :param traffic_forecast:  Traffic forecast data                                             dict of dict
+    :param f_discount:        Discount factor (to motivate load increase) in dynamic pricing    dict of float
+    :param f_markup:          Markup factor (to motivate load decrease) in dynamic pricing      dict of float
+    :param arbitrage_coeff:   Arbitrage coefficient to distinguish G2V/V2G prices               float
+
+    """
 
     reserving_vehicles = fleet.reserving_vehicles_at(ts)
 

@@ -16,7 +16,7 @@ def charging_protocol(ts, t_delta,system):
     its own control. The applied control is based on "first-come-first-serve" logic.
 
     :param ts:          Current time                    datetime
-    :param t_delta:     Resolution of scheduling        timedelta
+    :param t_delta:     Control horizon                 timedelta
     :param system:      Multi-cluster system object     datahandling.multicluster
 
     """

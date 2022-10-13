@@ -11,7 +11,7 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
     on MILP rescheduling.
 
     :param ts:                      Current time                                            datetime
-    :param t_delta:                 Resolution of scheduling                                timedelta
+    :param t_delta:                 Control horizon                                         timedelta
     :param horizon:                 Optimization horizon of rescheduling                    timedelta
     :param system:                  Multi-cluster system object                             datahandling.multicluster
     :param solver:                  Optimization solver                                     pyomo SolverFactory object

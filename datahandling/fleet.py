@@ -73,9 +73,31 @@ class EVFleet(object):
     
     def outgoing_vehicles_at(self,ts):
         return self.outgoing_at[ts]
-        
-        
-        
+
+    def export_results(self, start,end,step, xlfile):
+
+        sim_horizon=pd.date_range(start=start,end=end,freq=step)
+
+        soc    = pd.DataFrame(index=sim_horizon)
+        g2v    = pd.DataFrame(index=sim_horizon)
+        v2g    = pd.DataFrame(index=sim_horizon)
+        status = pd.Series()
+
+        with pd.ExcelWriter(xlfile) as writer:
+
+            for ev_id in sorted(self.objects.keys()):
+
+                ev=self.objects[ev_id]
+
+                soc.loc[:,ev_id]  = pd.Series(ev.soc)
+                g2v.loc[:,ev_id]  = pd.Series(ev.g2v)
+                v2g.loc[:, ev_id] = pd.Series(ev.v2g)
+                status[ev_id] = ev.admitted
+
+            soc.to_excel(writer,sheet_name="SOC Trajectory")
+            g2v.to_excel(writer,sheet_name="G2V Charge")
+            g2v.to_excel(writer,sheet_name="V2G Discharge")
+            status.to_excel(writer,sheet_name="Admitted")
         
     
         

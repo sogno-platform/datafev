@@ -8,7 +8,9 @@ Created on Thu Nov 18 11:46:44 2021
 from pyomo.core import *
 import pyomo.kernel as pmo
 
-def smart_routing(solver,opt_horizon,opt_step,ecap,v2gall,tarsoc,minsoc,maxsoc,crtsoc,crttime,arrtime,deptime,arrsoc, p_ch,p_ds,g2v_dps,v2g_dps):
+def smart_routing(solver,opt_horizon,opt_step,
+                  ecap,v2gall,tarsoc,minsoc,maxsoc,crtsoc,crttime,
+                  arrtime,deptime,arrsoc,p_ch,p_ds,g2v_dps,v2g_dps):
     """
     This function optimizes 
     1) the allocation of an incoming EV to a cluster

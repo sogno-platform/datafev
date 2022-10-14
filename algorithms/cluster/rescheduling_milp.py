@@ -8,7 +8,11 @@ Created on Fri Nov 19 15:24:35 2021
 from pyomo.core import *
 import pyomo.kernel as pmo
 
-def reschedule(solver,opt_step,opt_horizon,upperlimit,lowerlimit,tolerance,evdata,rho_y,rho_eps):
+def reschedule(solver,opt_step,opt_horizon,
+               upperlimit,lowerlimit,tolerance,
+               bcap,inisoc,tarsoc,minsoc,maxsoc,ch_eff,ds_eff,
+               pmax_pos,pmax_neg,deptime,
+               rho_y,rho_eps):
     """
     This function reschedules the charging operations of a cluster by considering
     1) upper-lower limits of aggregate power consumption of the cluster
@@ -23,7 +27,15 @@ def reschedule(solver,opt_step,opt_horizon,upperlimit,lowerlimit,tolerance,evdat
     upperlimit  : soft upper limit of cluster power consumption (kW series)     dict of float
     lowerlimit  : soft lower limit of cluster power consumption (kW series)     dict of float
     tolerance   : maximum allowed violation of oth upper-lower limits (kW)      float
-    evdata      : EV demand parameters                                          dict
+    bcap        : battery capactiy of EVs (kWs)                                 dict of float
+    inisoc      : initial SOCs of EV batteries                                  dict of float
+    tarsoc      : target SOCs of EV batteries                                   dict of float
+    minsoc      : minimum allowed SOCs                                          dict of float
+    maxsoc      : maximum allowed SOCs                                          dict of float
+    ch_eff      : charging efficiency of chargers                               dict of float
+    ds_eff      : discharging efficiency of chargers                            dict of float
+    pmax_pos    : maximum charge power that EV can take                         dict of float
+    pmax_neg    : maximum discharge power that EV can supply                    dict of float
     rho_y       : penalty factor for deviation of reference schedules           float
     rho_eps     : penalty factor for violation of upper-lower soft limits       float
     ------------------------------------------------------------------------------------------------------------------
@@ -38,7 +50,7 @@ def reschedule(solver,opt_step,opt_horizon,upperlimit,lowerlimit,tolerance,evdat
     ###########################################################################
     ####################Constructing the optimization model####################
     model = ConcreteModel()
-    model.V =Set(initialize=list(evdata['battery_cap'].keys()))  #Index set for the EVs
+    model.V =Set(initialize=list(bcap.keys()))  #Index set for the EVs
 
     #Time parameters
     model.deltaSec=opt_step                                     #Time discretization (Size of one time step in seconds)
@@ -46,23 +58,23 @@ def reschedule(solver,opt_step,opt_horizon,upperlimit,lowerlimit,tolerance,evdat
     model.Tp      =Set(initialize=opt_horizon,ordered=True)     #Index set for the time steps in opt horizon for SoC
 
     #Power capability parameters
-    model.P_EV_pos=evdata['P_EV_pos_max']       #Maximum charging power to EV battery
-    model.P_EV_neg=evdata['P_EV_neg_max']       #Maximum discharging power from EV battery
+    model.P_EV_pos=pmax_pos       #Maximum charging power to EV battery
+    model.P_EV_neg=pmax_neg       #Maximum discharging power from EV battery
     model.P_CC_up =upperlimit                   #Upper limit of the power that can be consumed by a cluster
     model.P_CC_low=lowerlimit                   #Lower limit of the power that can be consumed by a cluster (negative values indicating export limit)
     model.P_CC_vio=tolerance                    #Cluster upper-lower limit violation tolerance
 
     #Battery and charger parameters
-    model.eff_ch  =evdata['charge_eff']         #Charging efficiency
-    model.eff_ds  =evdata['discharge_eff']      #Discharging efficiency
-    model.E       =evdata['battery_cap']        #Battery capacities
+    model.eff_ch  =ch_eff         #Charging efficiency
+    model.eff_ds  =ds_eff      #Discharging efficiency
+    model.E       =bcap        #Battery capacities
         
     #Demand parameters
-    model.s_ini    =evdata['initial_soc']       #SoC when the optimization starts
-    model.s_tar    =evdata['target_soc']        #Target SOC
-    model.s_min    =evdata['minimum_soc']       #Minimum SOC
-    model.s_max    =evdata['maximum_soc']       #Maximum SOC
-    model.t_dep    =evdata['departure_time']    #Estimated departure of EVs
+    model.s_ini    =inisoc       #SoC when the optimization starts
+    model.s_tar    =tarsoc        #Target SOC
+    model.s_min    =minsoc       #Minimum SOC
+    model.s_max    =maxsoc       #Maximum SOC
+    model.t_dep    =deptime    #Estimated departure of EVs
 
     #Penalty parameters
     model.rho_y    =rho_y
@@ -184,8 +196,7 @@ if __name__ == '__main__':
     from pyomo.environ import SolverFactory
 
     PCU     = 11
-    ch_eff  = 1.0
-    ds_eff  = 1.0
+    eff  = 1.0
     N       = 4
     PPL     = 0.5
     CAP     = 55 * 3600
@@ -201,28 +212,28 @@ if __name__ == '__main__':
 
     np.random.seed(0)
     evdata = {}
-    evdata['P_EV_pos_max'] = {}
-    evdata['P_EV_neg_max'] = {}
-    evdata['charge_eff'] = {}
-    evdata['discharge_eff'] = {}
-    evdata['battery_cap'] = {}
-    evdata['target_soc'] = {}
-    evdata['departure_time'] = {}
-    evdata['initial_soc'] = {}
-    evdata['minimum_soc'] = {}
-    evdata['maximum_soc'] = {}
+    pmax_pos = {}
+    pmax_neg = {}
+    ch_eff = {}
+    ds_eff = {}
+    bcap = {}
+    tarsoc = {}
+    deptime = {}
+    inisoc = {}
+    minsoc = {}
+    maxsoc = {}
     for n in range(1,N+1):
         evid='EV'+str(n)
-        evdata['P_EV_pos_max'][evid]   = PCU
-        evdata['P_EV_neg_max'][evid]   = PCU
-        evdata['charge_eff'][evid]     = ch_eff
-        evdata['discharge_eff'][evid]  = ds_eff
-        evdata['battery_cap'][evid]    = CAP
-        evdata['initial_soc'][evid]    = np.random.uniform(low=0.4, high=0.8)
-        evdata['target_soc'][evid]     = evdata['initial_soc'][evid] + PCU*opt_step*int(nb_of_ts/2)/CAP
-        evdata['minimum_soc'][evid]    = 0.2
-        evdata['maximum_soc'][evid]    = 1.0
-        evdata['departure_time'][evid] = np.random.randint(low=int(nb_of_ts/2),high=int(nb_of_ts*1.5))
+        pmax_pos[evid]   = PCU
+        pmax_neg[evid]   = PCU
+        ch_eff[evid]     = eff
+        ds_eff[evid]  = eff
+        bcap[evid]    = CAP
+        inisoc[evid]    = np.random.uniform(low=0.4, high=0.8)
+        tarsoc[evid]     = inisoc[evid] + PCU*opt_step*int(nb_of_ts/2)/CAP
+        minsoc[evid]    = 0.2
+        maxsoc[evid]    = 1.0
+        deptime[evid] = np.random.randint(low=int(nb_of_ts/2),high=int(nb_of_ts*1.5))
 
     rho_y       =1
     rho_eps     =1
@@ -241,16 +252,20 @@ if __name__ == '__main__':
 
     print("...optimizing the charging profiles of the EVs with charging demands:")
     demand_data=pd.DataFrame(columns=['Battery Capacity','Initial SOC','Target SOC','Estimated Departure'])
-    demand_data['Battery Capacity']= pd.Series(evdata['battery_cap'])/3600
-    demand_data['Initial SOC']     = pd.Series(evdata['initial_soc'])
-    demand_data['Target SOC']      = pd.Series(evdata['target_soc'])
-    demand_data['Estimated Departure']=pd.Series(evdata['departure_time'])
+    demand_data['Battery Capacity']= pd.Series(bcap)/3600
+    demand_data['Initial SOC']     = pd.Series(inisoc)
+    demand_data['Target SOC']      = pd.Series(tarsoc)
+    demand_data['Estimated Departure']=pd.Series(deptime)
     print(demand_data)
     print()
 
 
     print("Optimized charging profiles:")
-    p_ref, s_ref = reschedule(solver,opt_step,opt_horizon,upperlimit,lowerlimit,tolerance,evdata,rho_y,rho_eps)
+    p_ref, s_ref = reschedule(solver,opt_step,opt_horizon,
+                              upperlimit,lowerlimit,tolerance,
+                              bcap,inisoc,tarsoc,minsoc,maxsoc,
+                              ch_eff,ds_eff,pmax_pos,pmax_neg,deptime,
+                              rho_y,rho_eps)
 
     results={}
     for v in demand_data.index:

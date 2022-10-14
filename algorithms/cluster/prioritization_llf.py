@@ -40,9 +40,6 @@ def leastlaxityfirst(inisoc,tarsoc,bcap,efficiency,p_socdep,p_chmax,p_re,leadtim
 
     for ev_id in inisoc.keys():
 
-        if ev_id=='EV5':
-            print()
-
         # Lead time until estimated departure
         T_LEAD=leadtime[ev_id]
 

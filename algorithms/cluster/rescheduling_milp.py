@@ -18,7 +18,7 @@ def reschedule(solver,opt_step,opt_horizon,upperlimit,lowerlimit,tolerance,evdat
     Inputs
     ------------------------------------------------------------------------------------------------------------------
     solver      : optimization solver                                           pyomo SolverFactory object
-    opt_step    : size of one time step in the optimization (seconds)           float
+    opt_step    : size of one time step in the optimization (seconds)           int
     opt_horizon : time step identifiers in the optimization horizon             list of integers
     upperlimit  : soft upper limit of cluster power consumption (kW series)     dict of float
     lowerlimit  : soft lower limit of cluster power consumption (kW series)     dict of float

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 12 17:24:19 2022
+Created on Thu Oct 13 19:01:12 2022
 
 @author: egu
 """
 
-import pandas as pd
+from algorithms.cluster.prioritization_llf import leastlaxityfirst
 
 def charging_protocol(ts, t_delta,system):
     """
@@ -13,7 +13,7 @@ def charging_protocol(ts, t_delta,system):
 
     It addresses the scenarios where each cluster has a local power consumption constraint and therefore has to control
     the power distribution to the chargers. The control architecture is decentralized; therefore, each cluster applies
-    its own control. The applied control is based on "first-come-first-serve" logic.
+    its own control. The applied control is based on "least-laxity-first" logic.
 
     :param ts:          Current time                    datetime
     :param t_delta:     Control horizon                 timedelta
@@ -33,9 +33,15 @@ def charging_protocol(ts, t_delta,system):
 
             ################################################################################################
             # Step 1: Identification of charging demand
-            p_ch = {}   #Will contain the charge powers requested by each EV
-            eff  = {}   #Will contain the power conversion efficiencies during
-            contime={}  #Will contain the connection time of EVs (from their arrial until now)
+
+            inisoc = {}         # Will contain the current SOC values of EV batteries
+            tarsoc = {}         # Will contain the target SOC values of EV batteries (at estimate departure time)
+            bcap = {}           # Will contain the EV battery capacities
+            eff = {}            # Will contain the power conversion efficiencies during
+            p_socdep = {}       # Will contain the data of SOC dependency of charge power
+            p_chmax = {}        # Will contain the maximum charge power that can be handled by EV-charger pair
+            p_re = {}           # Will contain the charge powers that EVs request
+            leadtime={}         # Will contain the lead time for charging from now arrial until estimate departure)
 
             # Loop through the chargers
             for cu_id, cu in cluster.chargers.items():
@@ -46,14 +52,32 @@ def charging_protocol(ts, t_delta,system):
 
                     # There is an EV connected in this charger
                     ev_id    = ev.vehicle_id
+
+                    # Current SOC of EV
                     ev_soc   = ev.soc[ts]
+                    inisoc[ev_id]=ev_soc
+
+                    # Target SOC of EV (for estimated departure time)
                     ev_tarsoc= ev.soc_tar_at_t_dep_est
+                    tarsoc[ev_id]=ev_tarsoc
+
+                    # Energy capactiy of the EV battery
                     ev_bcap  = ev.bCapacity
+                    bcap[ev_id] = ev_bcap
+
+                    # Power conversion efficiency of charger
+                    eff[ev_id] = cu.eff
+
+                    # Maximum charge power that can be handled by EV-charger pair (for the whole SOC curve)
+                    p_chmax[ev_id] = min(ev.p_max_ch, cu.p_max_ch)
+
+                    # How long EV will stay connected to the charger (seconds)
+                    leadtime[ev_id] = (ev.t_dep_est - ts).seconds if ts < ev.t_dep_est else 0.001
 
                     if ev_soc >= ev_tarsoc:
 
                         # The EV connected here has already reached its target SOC
-                        p_ch[ev_id]=0.0
+                        p_re[ev_id]=0.0
 
                     else:
 
@@ -69,38 +93,25 @@ def charging_protocol(ts, t_delta,system):
                             soc_range = (table[(table['SOC_LB'] <= ev_soc) & (ev_soc < table['SOC_UB'])]).index[0]
                             p_max = table.loc[soc_range, 'P_UB']
                             lim_ev_socdep = p_max * step # Limit due to the SOC dependency of charge power
+
                             e_max = min(lim_ev_batcap, lim_ch_pow, lim_ev_socdep)
+                            p_socdep[ev_id]=table.to_dict()
 
                         else:
 
                             # The power transfer is only limited by the charger's power and battery capacity
                             e_max = min(lim_ev_batcap, lim_ch_pow)
+                            p_socdep[ev_id]= None
 
-                        p_ch[ev_id] = e_max / step  # Average charge power during the simulation step
+                        # Charge powers requested by EVs during the control horizon
+                        p_re[ev_id] = e_max / step
 
-                    eff[ev_id] = cu.eff                         #Charging efficiency
-                    contime[ev_id]=(ts-ev.t_arr_real).seconds   #how long EV has been connected to the charger (seconds)
             ################################################################################################
 
             ################################################################################################
             # Step 2: Power distribution based on first-come-first-serve algorithm
             upperlimit = cluster.upper_limit[ts]    # Cluster level constraint
-            p_charge = {}                           # Will contain the charge power consumed by the EVs
-
-            vehicles_sorted=(pd.Series(contime).sort_values(ascending=False)).index
-            free_margin = upperlimit
-            for ev in vehicles_sorted:
-
-                p_max_to_cu = p_ch[ev] / eff[ev]
-
-                if p_max_to_cu <= free_margin:
-                    p_to_ev = p_max_to_cu*eff[ev]
-                else:
-                    p_to_ev = free_margin*eff[ev]
-
-                free_margin-=p_to_ev/eff[ev]
-
-                p_charge[ev] = p_to_ev
+            p_charge = leastlaxityfirst(inisoc,tarsoc,bcap,eff,p_socdep,p_chmax,p_re,leadtime,upperlimit)
             ################################################################################################
 
             ################################################################################################

@@ -53,17 +53,16 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
             rho_eps     = penalty_parameters['rho_eps'][cc_id]
 
             # Dictionary containing EV charging demand parameters
-            evdata = {}
-            evdata['P_EV_pos_max'] = {}             #Will contain the maximum power that can be withdrawn by the EVs
-            evdata['P_EV_neg_max'] = {}             #Will contain the maximum power that can be injected by the EVs
-            evdata['charge_eff'] = {}               #Will contain charging efficiencies of the chargers hosting EVs
-            evdata['discharge_eff'] = {}            #Will contain discharging efficiencies of the chargers hosting EVs
-            evdata['battery_cap'] = {}              #Will contain battery capacities of EVs
-            evdata['target_soc'] = {}               #Will contain target SOCs (at the end of rescheduling horizon)
-            evdata['departure_time'] = {}           #Will contain time until departures (in number of time steps)
-            evdata['initial_soc'] = {}              #Will contain current SOCs of EVs
-            evdata['minimum_soc'] = {}              #Will contain maximum SOCs allowed by EVs
-            evdata['maximum_soc'] = {}              #Will contain minimum SOCs allowed by EVs
+            pmax_pos = {}             #Will contain the maximum power that can be withdrawn by the EVs
+            pmax_neg = {}             #Will contain the maximum power that can be injected by the EVs
+            ch_eff = {}               #Will contain charging efficiencies of the chargers hosting EVs
+            ds_eff = {}            #Will contain discharging efficiencies of the chargers hosting EVs
+            bcap = {}              #Will contain battery capacities of EVs
+            tarsoc = {}               #Will contain target SOCs (at the end of rescheduling horizon)
+            deptime = {}           #Will contain time until departures (in number of time steps)
+            inisoc = {}              #Will contain current SOCs of EVs
+            minsoc = {}              #Will contain maximum SOCs allowed by EVs
+            maxsoc = {}              #Will contain minimum SOCs allowed by EVs
 
             #Loop through the chargers
             for cu_id, cu in cluster.chargers.items():
@@ -81,27 +80,29 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
                     cu_sch   = cu_sch.reindex(schedule_horizon)
                     cu_sch   = cu_sch.fillna(method="ffill")
 
-                    # maximum power that can be withdrawn/injected by the connected EV
-                    p_ev_pos_max = min(ev.p_max_ch, cu.p_max_ch)
-                    p_ev_neg_max = min(ev.p_max_ds, cu.p_max_ds)
+                    # parameters defining the charging demand/urgency
+                    bcap[ev_id]    = ev.bCapacity
+                    deptime[ev_id] = (ev.t_dep_est - ts) / t_delta
+                    inisoc[ev_id]    = ev.soc[ts]
+                    minsoc[ev_id]    = ev.minSoC
+                    maxsoc[ev_id]    = ev.maxSoC
+                    tarsoc[ev_id]     = cu_sch[ts + horizon]
+                    ch_eff[ev_id]     = cu.eff
+                    ds_eff[ev_id]  = cu.eff
 
-                    # other parameters defining the charging demand/urgency
-                    evdata['battery_cap'][ev_id]    = ev.bCapacity
-                    evdata['departure_time'][ev_id] = (ev.t_dep_est - ts) / t_delta
-                    evdata['initial_soc'][ev_id]    = ev.soc[ts]
-                    evdata['minimum_soc'][ev_id]    = ev.minSoC
-                    evdata['maximum_soc'][ev_id]    = ev.maxSoC
-                    evdata['target_soc'][ev_id]     = cu_sch[ts + horizon]
-                    evdata['charge_eff'][ev_id]     = cu.eff
-                    evdata['discharge_eff'][ev_id]  = cu.eff
-                    evdata['P_EV_pos_max'][ev_id] = p_ev_pos_max
-                    evdata['P_EV_neg_max'][ev_id] = p_ev_neg_max
+                    # maximum power that can be withdrawn/injected by the connected EV
+                    pmax_pos[ev_id] = min(ev.p_max_ch, cu.p_max_ch)
+                    pmax_neg[ev_id] = min(ev.p_max_ds, cu.p_max_ds)
+
             ################################################################################################
 
             ################################################################################################
             # Step 2: Solving (MILP-based) rescheduling problem to optimize the power distribution in cluster
-            p_schedule, s_schedule = reschedule(solver, opt_step, opt_horizon, upperlimit, lowerlimit,
-                                                tolerance, evdata, rho_y, rho_eps)
+            p_schedule, s_schedule = reschedule(solver,opt_step,opt_horizon,
+                                                upperlimit,lowerlimit,tolerance,
+                                                bcap,inisoc,tarsoc,minsoc,maxsoc,
+                                                ch_eff,ds_eff,pmax_pos,pmax_neg,deptime,
+                                                rho_y,rho_eps)
             ################################################################################################
 
             ################################################################################################

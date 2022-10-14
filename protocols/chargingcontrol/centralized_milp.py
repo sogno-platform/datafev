@@ -34,31 +34,27 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
     ################################################################################################
     # Step 1: Identification of charging demand
 
-    # Parameters defining the power constraints
-    powlimits = {}
-
     # Clusters' individual power constraints/ violation tolerance
-    powlimits['P_CC_up_lim']  = {}          # Will contain the upper limit of (soft) power consumption constraint
-    powlimits['P_CC_low_lim'] = {}          # Will contain the lower limit of (soft) power consumption constraint
-    powlimits['P_CC_vio_lim'] = {}          # Will contain the violation tolerance of upperlimit/lowerlimits
+    cluster_upperlimits  = {}           # Will contain the upper limit of (soft) power consumption constraint
+    cluster_lowerlimits = {}            # Will contain the lower limit of (soft) power consumption constraint
+    cluster_violationlimits = {}        # Will contain the violation tolerance of upperlimit/lowerlimits
 
     # System level constraints power constraints
-    powlimits['P_CS_up_lim']  = dict(enumerate(system.upper_limit[schedule_horizon[:-1]].values))
-    powlimits['P_CS_low_lim'] = dict(enumerate(system.lower_limit[schedule_horizon[:-1]].values))
+    system_upperlimit  = dict(enumerate(system.upper_limit[schedule_horizon[:-1]].values))
+    system_lowerlimit = dict(enumerate(system.lower_limit[schedule_horizon[:-1]].values))
 
     # Dictionary containing EV charging demand parameters
-    evdata = {}
-    evdata['P_EV_pos_max'] = {}     #Will contain the maximum power that can be withdrawn by the EVs
-    evdata['P_EV_neg_max'] = {}     #Will contain the maximum power that can be injected by the EVs
-    evdata['charge_eff'] = {}       #Will contain charging efficiencies of the chargers hosting EVs
-    evdata['discharge_eff'] = {}    #Will contain discharging efficiencies of the chargers hosting EVs
-    evdata['battery_cap'] = {}      #Will contain battery capacities of EVs
-    evdata['target_soc'] = {}       #Will contain target SOCs (at the end of rescheduling horizon)
-    evdata['departure_time'] = {}   #Will contain time until departures (in number of time steps)
-    evdata['initial_soc'] = {}      #Will contain current SOCs of EVs
-    evdata['minimum_soc'] = {}      #Will contain maximum SOCs allowed by EVs
-    evdata['maximum_soc'] = {}      #Will contain minimum SOCs allowed by EVs
-    evdata['location'] = {}         #Will contain the parameters indicating the location of EV in multi-cluster system
+    pmax_pos = {}   # Will contain the maximum power that can be withdrawn by the EVs
+    pmax_neg = {}   # Will contain the maximum power that can be injected by the EVs
+    ch_eff = {}     # Will contain charging efficiencies of the chargers hosting EVs
+    ds_eff = {}     # Will contain discharging efficiencies of the chargers hosting EVs
+    bcap = {}       # Will contain battery capacities of EVs
+    tarsoc = {}     # Will contain target SOCs (at the end of rescheduling horizon)
+    deptime = {}    # Will contain time until departures (in number of time steps)
+    inisoc = {}     # Will contain current SOCs of EVs
+    minsoc = {}     # Will contain maximum SOCs allowed by EVs
+    maxsoc = {}     # Will contain minimum SOCs allowed by EVs
+    location = {}   #Will contain the parameters indicating the location of EV in multi-cluster system
 
     # Dictionaries contianing the penalty factors for the objective function of optimization model
     rho_y  = {} # Will contain cost parameters penalizing deviation from individual schedules of EVs
@@ -76,11 +72,11 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
             clusters.append(cc_id)
 
             # Parameters defining the upper/lower limits of (soft) power consumption constraints of cluster
-            powlimits['P_CC_up_lim'][cc_id]  = dict(enumerate(cluster.upper_limit[schedule_horizon[:-1]].values))
-            powlimits['P_CC_low_lim'][cc_id] = dict(enumerate(cluster.lower_limit[schedule_horizon[:-1]].values))
+            cluster_upperlimits[cc_id]  = dict(enumerate(cluster.upper_limit[schedule_horizon[:-1]].values))
+            cluster_lowerlimits[cc_id] = dict(enumerate(cluster.lower_limit[schedule_horizon[:-1]].values))
 
             # Parameter defining how much the upperlimit/lowerlimit can be violated
-            powlimits['P_CC_vio_lim'][cc_id] = cluster.violation_tolerance
+            cluster_violationlimits[cc_id] = cluster.violation_tolerance
 
             # Cost parameter penalizing deviation from individual optimal charging schedules of EVs
             rho_y[cc_id]=penalty_parameters['rho_y'][cc_id]
@@ -104,31 +100,37 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
                     cu_sch   = cu_sch.reindex(schedule_horizon)
                     cu_sch   = cu_sch.fillna(method="ffill")
 
-                    # maximum power that can be withdrawn/injected by the connected EV
-                    p_ev_pos_max = min(ev.p_max_ch, cu.p_max_ch)
-                    p_ev_neg_max = min(ev.p_max_ds, cu.p_max_ds)
+                    # parameters defining the charging demand/urgency
+                    bcap[ev_id]    = ev.bCapacity
+                    deptime[ev_id] = (ev.t_dep_est - ts) / t_delta
+                    inisoc[ev_id]    = ev.soc[ts]
+                    minsoc[ev_id]    = ev.minSoC
+                    maxsoc[ev_id]    = ev.maxSoC
+                    tarsoc[ev_id]     = cu_sch[ts + horizon]
+                    ch_eff[ev_id]     = cu.eff
+                    ds_eff[ev_id]  = cu.eff
 
-                    # other parameters defining the charging demand/urgency
-                    evdata['battery_cap'][ev_id] = ev.bCapacity
-                    evdata['departure_time'][ev_id] = (ev.t_dep_est - ts) / t_delta
-                    evdata['initial_soc'][ev_id] = ev.soc[ts]
-                    evdata['minimum_soc'][ev_id] = ev.minSoC
-                    evdata['maximum_soc'][ev_id] = ev.maxSoC
-                    evdata['target_soc'][ev_id] = cu_sch[ts + horizon]
-                    evdata['charge_eff'][ev_id] = cu.eff
-                    evdata['discharge_eff'][ev_id] = cu.eff
-                    evdata['P_EV_pos_max'][ev_id] = p_ev_pos_max
-                    evdata['P_EV_neg_max'][ev_id] = p_ev_neg_max
-                    evdata['location'][ev_id] = (cc_id, cu_id)
+                    # maximum power that can be withdrawn/injected by the connected EV
+                    pmax_pos[ev_id] = min(ev.p_max_ch, cu.p_max_ch)
+                    pmax_neg[ev_id] = min(ev.p_max_ds, cu.p_max_ds)
+
+                    #Parameter indicating the EVs' positions in the multi-cluster system
+                    location[ev_id] = (cc_id, cu_id)
+
     ################################################################################################
 
-    if len(evdata['battery_cap'])>0:
+    if len(bcap)>0:
 
         # The system includes connected EVs
 
         ################################################################################################
         # Step 2: Solving (MILP-based) rescheduling problem to centrally decide how the chargers will operate now
-        p_schedule, s_schedule= reschedule(solver, opt_step, opt_horizon, powlimits, evdata, clusters, rho_y, rho_eps)
+        p_schedule, s_schedule = reschedule(solver, opt_step, opt_horizon,
+                                            bcap, inisoc, tarsoc, minsoc, maxsoc, ch_eff, ds_eff,
+                                            pmax_pos, pmax_neg, deptime, location,
+                                            system_upperlimit, system_lowerlimit,
+                                            clusters, cluster_upperlimits, cluster_lowerlimits, cluster_violationlimits,
+                                            rho_y, rho_eps)
         ################################################################################################
 
         ################################################################################################

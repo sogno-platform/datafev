@@ -67,7 +67,6 @@ def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
                 ds_rate=row['max p_ds']
 
                 #It is assumed that power capability of EV battery is not SOC dependent
-                #TODO: Add SOC dependency
                 p_ch       =min(ch_rate, ev.p_max_ch)
                 p_ds       =min(ds_rate, ev.p_max_ds)
                 arrsoc     =ev.soc_arr_est + traffic_forecast['soc_dec'][cc_id]

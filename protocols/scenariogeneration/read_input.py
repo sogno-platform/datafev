@@ -6,17 +6,16 @@ Created on Mon Oct 17 11:38:18 2022
 """
 
 import pandas as pd
-import os
+import os, sys
 
 
 def excel_to_sceneration_input(file_path, dependent_times=False):
     # TODO: Explain the function, inputs and outputs
-    # TODO: We should not assume that statistical input file is always stored under a specific path (make adaptive!)
-
+    
     # Read excel file
-    project_folder = os.path.dirname(os.path.dirname(__file__))
-    project_folder = os.path.dirname(os.path.normpath(project_folder))
-    statistic_ev_input_path = os.path.join(project_folder, file_path)
+    pathname = os.path.dirname(sys.argv[0])        
+    full_path = os.path.abspath(pathname) 
+    statistic_ev_input_path = os.path.join(full_path, file_path)
     if dependent_times is False:
         dep_times_df = pd.read_excel(statistic_ev_input_path, 'DepartureTime')
         arr_times_df = pd.read_excel(statistic_ev_input_path, 'ArrivalTime')
@@ -68,7 +67,6 @@ def excel_to_sceneration_input(file_path, dependent_times=False):
         times_df['TimeLowerBound'] = times_df['TimeLowerBound'].round('S')
         times_df['TimeUpperBound'] = times_df['TimeUpperBound'].round('S')
         times_dict = times_df.T.to_dict('list')
-        print(times_dict)
         arr_dep_times_df = arr_dep_times_df.set_index('TimeID')
         arr_dep_times_dict = {}
         for arr_time_id, row in arr_dep_times_df.iterrows():
@@ -79,7 +77,6 @@ def excel_to_sceneration_input(file_path, dependent_times=False):
                 id_tuple = tuple(id_list)
                 arr_dep_times_dict[id_tuple] = probability
                 id_list.clear()
-        print(arr_dep_times_dict)
 
     # Convert percent SoCs to values between 0 and 1
     arr_soc_df['SoCLowerBound'] = arr_soc_df['SoCLowerBound'].div(100)

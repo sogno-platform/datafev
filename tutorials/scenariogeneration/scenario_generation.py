@@ -19,7 +19,7 @@ def main(dependent_times=False):
     if dependent_times is False:
         # independent times
         arr_times_dict, dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict = \
-            ri.excel_to_sceneration_input(file_path='tutorials/scenariogeneration/input_generator.xlsx',
+            ri.excel_to_sceneration_input(file_path='input_generator.xlsx',
                                           dependent_times=False)
 
         ev_df = sc.generate_fleet_data(arr_soc_dict=arr_soc_dict, dep_soc_dict=dep_soc_dict, ev_dict=ev_dict,
@@ -31,7 +31,7 @@ def main(dependent_times=False):
     else:
         # dependent times
         times_dict, arr_dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict = \
-            ri.excel_to_sceneration_input(file_path='tutorials/scenariogeneration/input_generator.xlsx',
+            ri.excel_to_sceneration_input(file_path='input_generator.xlsx',
                                           dependent_times=True)
 
         ev_df = sc.generate_fleet_data(arr_soc_dict=arr_soc_dict, dep_soc_dict=dep_soc_dict, ev_dict=ev_dict,
@@ -52,4 +52,4 @@ def main(dependent_times=False):
     sc.output_to_sim_input(ev_df, 'input_simulator.xlsx')
     
 if __name__ == "__main__":
-    main(dependent_times=False)  #TODO: When I switch to "True" it does not work
+    main(dependent_times=False)

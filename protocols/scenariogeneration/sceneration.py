@@ -139,7 +139,6 @@ def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_
             time_pairs_dict[index] = value
         # Pre assignment list, consist of assigned time pair's ID
         pre_assignment = list(np.random.choice(list(time_pairs_dict.keys()), number_of_evs, p=prob_list))
-        print(pre_assignment)
         # Dictionary -- keys: dates, values: assigned time stamps
         # Assign possible arrival datetimes
         # Find a datetime which satisfies following conditions
@@ -160,10 +159,8 @@ def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_
             dep_datetime_lowerb = times_dict[time_pair[1]][0]
             dep_datetime_upperb = times_dict[time_pair[1]][1]
 
-            # Arrival time
-            # TO-DO: Add timedelta check; difference between upperb and lowerb < timedelta? return sys.exit if not
+            # Arrival time        
             arr_time_lst = generate_datetime_list(arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min)
-            print(arr_time_lst)
             #arr_time_lst = generate_time_list(arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min, day)
             # Assign generated departure time if:
             # 1. time difference between arrival and departure is satisfied

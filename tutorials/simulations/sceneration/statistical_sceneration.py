@@ -46,7 +46,9 @@ def main(dependent_times=False):
     # Unlocalize datetimes, as Excel does not support datetimes with timezones
     ev_df['ArrivalTime'] = ev_df['ArrivalTime'].dt.tz_localize(None)
     ev_df['DepartureTime'] = ev_df['DepartureTime'].dt.tz_localize(None)
-    ev_df.to_excel("statistical_output.xlsx") 
+    ev_df.to_excel("statistical_output.xlsx")
+    
+    sc.output_to_sim_input(ev_df, 'simulation_input.xlsx')
     
 if __name__ == "__main__":
     main(dependent_times=False)

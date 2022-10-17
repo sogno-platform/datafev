@@ -324,3 +324,23 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
     plot_name = 'departure_times_of_EVs'
     plot_path = os.path.join(file_path, plot_name)
     plt.savefig(plot_path)
+
+def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
+
+    sim_input_df=pd.DataFrame(columns=['Battery Capacity (kWh)','p_max_ch',
+                                       'p_max_ds','Real Arrival Time','Real Arrival SOC', 
+                                       'Estimated Departure Time', 'Target SOC @ Estimated Departure Time'])
+    
+    sim_input_df['Battery Capacity (kWh)'] = sce_output_df['BatteryCapacity'].values
+    sim_input_df['Real Arrival Time'] = sce_output_df['ArrivalTime'].values
+    sim_input_df['Real Arrival SOC'] = sce_output_df['ArrivalSoC'].values
+    sim_input_df['Estimated Departure Time'] = sce_output_df['DepartureTime'].values   
+    sim_input_df['Target SOC @ Estimated Departure Time'] = sce_output_df['DepartureSoC'].values  
+    if dc_power is False: # use AC-charging-powers
+        sim_input_df['p_max_ch'] = sce_output_df['MaxChargingPower'].values
+        sim_input_df['p_max_ds'] = sce_output_df['MaxChargingPower'].values
+    else: # use DC-fast-charging-powers
+        sim_input_df['p_max_ch'] = sce_output_df['MaxFastChargingPower'].values
+        sim_input_df['p_max_ds'] = sce_output_df['MaxFastChargingPower'].values
+    # Simulation input dataframe to excel file
+    sim_input_df.to_excel(xlfile)

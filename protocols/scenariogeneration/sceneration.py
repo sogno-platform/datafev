@@ -15,11 +15,15 @@ import matplotlib.ticker as tck
 import os
 
 
-def scenerate_ev_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_day_prob_distribution,
+def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_day_prob_distribution,
                       startdate=dt.date(2020, 5, 17), enddate=dt.date(2020, 5, 19), timedelta_in_min=15,
                       diff_arr_dep_in_min=0, dependent_times=False, arr_times_dict=None, dep_times_dict=None,
                       times_dict=None, arr_dep_times_dict=None
                       ):
+    #TODO: Explain the function, inputs and outputs
+    #TODO: Please take other protocols as examples
+    #TODO: Put yourself in the user's shoes. They will not know what dependent-independent times mean unless explained.
+
     # Create date list
     date_list = pd.date_range(startdate, enddate - timedelta(days=1), freq='d')
 
@@ -252,6 +256,7 @@ def scenerate_ev_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_da
 
 
 def generate_time_list(time_lowerb, time_upperb, timedelta_in_min, date):
+    # TODO: Explain the function, inputs and outputs
     times = []
     times_str_list = [(time_lowerb + timedelta(hours=timedelta_in_min * i / 60)).strftime("%H:%M:%S")
                   for i in range(int((time_upperb - time_lowerb).total_seconds() / 60.0 / timedelta_in_min))]
@@ -263,6 +268,7 @@ def generate_time_list(time_lowerb, time_upperb, timedelta_in_min, date):
 
 
 def generate_datetime_list(sdate, edate, timedelta_in_min):
+    # TODO: Explain the function, inputs and outputs
     diff_delta = edate - sdate  # as timedelta
     number_of_ts = int(diff_delta / dt.timedelta(minutes=timedelta_in_min))
     datetime_lst = []
@@ -274,6 +280,7 @@ def generate_datetime_list(sdate, edate, timedelta_in_min):
 
 
 def drange(x, y, jump):
+    # TODO: Explain the function, inputs and outputs
     # Generate a range from x to y with jump spaces
     while x < y:
         yield float(x)
@@ -281,6 +288,7 @@ def drange(x, y, jump):
 
 
 def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min=15):
+    # TODO: Explain the function, inputs and outputs
     # Create times dicts for arrival and departure Keys: All possible time assignments, Values: number of assigned EVs
     current = dt.datetime(2022, 1, 1)  # arbitrary day
     datetime_lst = [current + timedelta(minutes=m) for m in range(0, 24 * 60, timedelta_in_min)]
@@ -326,7 +334,7 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
     plt.savefig(plot_path)
 
 def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
-
+    # TODO: Explain the function, inputs and outputs
     sim_input_df=pd.DataFrame(columns=['Battery Capacity (kWh)','p_max_ch',
                                        'p_max_ds','Real Arrival Time','Real Arrival SOC', 
                                        'Estimated Departure Time', 'Target SOC @ Estimated Departure Time'])

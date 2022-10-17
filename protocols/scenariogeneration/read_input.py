@@ -10,6 +10,8 @@ import os
 
 
 def excel_to_sceneration_input(file_path, dependent_times=False):
+    # TODO: Explain the function, inputs and outputs
+    # TODO: We should not assume that statistical input file is always stored under a specific path (make adaptive!)
 
     # Read excel file
     project_folder = os.path.dirname(os.path.dirname(__file__))

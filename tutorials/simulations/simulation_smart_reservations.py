@@ -104,4 +104,31 @@ system.export_results(sim_start,sim_end,sim_step,'result_smartreservation_cluste
 fleet.export_results(sim_start,sim_end,sim_step,'result_smartreservation_fleet.xlsx')
 #######################################################################
 
-#TODO: Add visual outputs
+print("Aggregate consumption and occupation profiles of the clusters are plotted")
+clu1_pow=cluster1.import_profile(sim_start,sim_end,sim_step).sum(axis=1)
+clu2_pow=cluster2.import_profile(sim_start,sim_end,sim_step).sum(axis=1)
+clu3_pow=cluster3.import_profile(sim_start,sim_end,sim_step).sum(axis=1)
+
+clu1_occ=cluster1.occupation_profile(sim_start,sim_end,sim_step).sum(axis=1)
+clu2_occ=cluster2.occupation_profile(sim_start,sim_end,sim_step).sum(axis=1)
+clu3_occ=cluster3.occupation_profile(sim_start,sim_end,sim_step).sum(axis=1)
+
+fig1,ax1=plt.subplots(2,1,tight_layout=True)
+fig1.suptitle("cluster1")
+clu1_occ.plot(ax=ax1[0],title='Number of connceted EVs')
+clu1_pow.plot(ax=ax1[1],title='Aggregate consumption')
+cluster1.upper_limit[sim_start:sim_end].plot(ax=ax1[1],label='Constraint')
+
+fig2,ax2=plt.subplots(2,1,tight_layout=True)
+fig2.suptitle("cluster2")
+clu2_occ.plot(ax=ax2[0],title='Number of connected EVs')
+clu2_pow.plot(ax=ax2[1],title='Aggregate consumption')
+cluster2.upper_limit[sim_start:sim_end].plot(ax=ax2[1],label='Constraint')
+
+fig3,ax3=plt.subplots(2,1,tight_layout=True)
+fig3.suptitle("cluster3")
+clu3_occ.plot(ax=ax3[0],title='Number of EVs')
+clu3_pow.plot(ax=ax3[1],title='Aggregate Consumption')
+cluster3.upper_limit[sim_start:sim_end].plot(ax=ax3[1],label='Constraint')
+
+plt.show()

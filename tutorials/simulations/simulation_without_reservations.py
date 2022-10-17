@@ -5,6 +5,7 @@ Created on Thu Mar  3 08:28:41 2022
 @author: egu
 """
 
+import matplotlib.pyplot as plt
 from datetime import datetime,timedelta
 from pyomo.environ import SolverFactory
 
@@ -39,7 +40,12 @@ price           = pd.read_excel(inputs, 'Price')
 price_t_steps   = price['TimeStep'].round('S')
 tou_tariff      = pd.Series(price['Price'].values,index=price_t_steps)
 
+#Dictionaries to store the simulation outputs
+consumption_profiles_cluster1={}
+consumption_profiles_cluster2={}
+consumption_profiles_cluster3={}
 
+#Simulating the same scenario for three different cases
 for charging_control in ['uncontrolled','fcfs','llf']:
 
     print("Simulating the charging control approach:",charging_control)
@@ -96,4 +102,24 @@ for charging_control in ['uncontrolled','fcfs','llf']:
     fleet.export_results(sim_start,sim_end,sim_step,'result_noreservation_'+charging_control+'_fleet.xlsx')
     #######################################################################
 
-#TODO: Add visual outputs
+    #######################################################################
+    #Storing the aggregate consumption profiles of individual clusters to dictionaries
+    consumption_profiles_cluster1[charging_control] = (cluster1.import_profile(sim_start, sim_end, sim_step)).sum(axis=1)
+    consumption_profiles_cluster2[charging_control] = (cluster2.import_profile(sim_start, sim_end, sim_step)).sum(axis=1)
+    consumption_profiles_cluster3[charging_control] = (cluster3.import_profile(sim_start, sim_end, sim_step)).sum(axis=1)
+    #######################################################################
+
+
+print()
+print("Aggregate consumption profiles of clusters in each management approach are plotted:")
+fig,axs=plt.subplots(3,1,tight_layout=True,sharex=True)
+
+pd.concat(consumption_profiles_cluster1,axis=1).plot(ax=axs[0],title='cluster1')
+pd.concat(consumption_profiles_cluster2,axis=1).plot(ax=axs[1],title='cluster2')
+pd.concat(consumption_profiles_cluster3,axis=1).plot(ax=axs[2],title='cluster3')
+
+plt.show()
+
+
+
+

@@ -231,7 +231,6 @@ def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs,
 
             # Arrival time        
             arr_time_lst = generate_datetime_list(arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min)
-            #arr_time_lst = generate_time_list(arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min, day)
             # Assign generated departure time if:
             # 1. time difference between arrival and departure is satisfied
             # 2. ...
@@ -322,7 +321,26 @@ def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs,
 
 
 def generate_time_list(time_lowerb, time_upperb, timedelta_in_min, date):
-    # TODO: Explain the function, inputs and outputs
+    """
+    Generates a datetime list with the given resolution and given date.
+
+    Parameters
+    ----------
+    time_lowerb : datetime.datetime
+        Start datetime.
+    time_upperb : datetime.datetime
+        End datetime.
+    timedelta_in_min : int
+        Resolution in minutes.
+    date : datetime.datetime
+        Date of the datetimes to be returned.
+
+    Returns
+    -------
+    times : list
+        Datetime list.
+
+    """
     times = []
     times_str_list = [(time_lowerb + timedelta(hours=timedelta_in_min * i / 60)).strftime("%H:%M:%S")
                   for i in range(int((time_upperb - time_lowerb).total_seconds() / 60.0 / timedelta_in_min))]
@@ -334,7 +352,24 @@ def generate_time_list(time_lowerb, time_upperb, timedelta_in_min, date):
 
 
 def generate_datetime_list(sdate, edate, timedelta_in_min):
-    # TODO: Explain the function, inputs and outputs
+    """
+    Generates a datetime list with the given resolution.
+
+    Parameters
+    ----------
+    sdate : TYPE
+        Start datetime.
+    edate : TYPE
+        End datetime.
+    timedelta_in_min : int
+        Resolution in minutes.
+
+    Returns
+    -------
+    datetime_lst : TYPE
+        Datetime list.
+
+    """
     diff_delta = edate - sdate  # as timedelta
     number_of_ts = int(diff_delta / dt.timedelta(minutes=timedelta_in_min))
     datetime_lst = []

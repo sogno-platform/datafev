@@ -9,7 +9,7 @@ import datetime as dt
 import protocols.scenariogeneration.read_input as ri
 import protocols.scenariogeneration.sceneration as sc
 
-def main(dependent_times=True):
+def main(dependent_times=False):
     """
     Example script for the usage of scenario generator.
 
@@ -77,4 +77,4 @@ def main(dependent_times=True):
     sc.output_to_sim_input(ev_df, 'input_simulator.xlsx')
     
 if __name__ == "__main__":
-    main(dependent_times=True)
+    main(dependent_times=False)

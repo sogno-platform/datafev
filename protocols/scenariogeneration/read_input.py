@@ -10,7 +10,56 @@ import os, sys
 
 
 def excel_to_sceneration_input(file_path, dependent_times=False):
-    # TODO: Explain the function, inputs and outputs
+    """
+    This method converts the excel inputs into inputs suitable for the generate_fleet_data function under sceneration.py.
+
+    Parameters
+    ----------
+    file_path : str
+        File path of the Excel input file.
+    dependent_times : bool, optional
+        Scenario generator has the ability to generate scenarios from two different types of inputs:
+            1. Independent arrival and departure times:
+                The statistical data of arrival and departure times are independent.
+                The user must provide two different independent statistical distribution inputs for both arrival and departure times.
+                If the boolean is False:
+                    Excel inputs will be converted into appropriate inputs to the scenario function for independent arrival and departure times use.
+            2. Dependent arrival and departure times:
+                The user must provide a single statistical distribution input for arrival and departure times. 
+                The relationship between arrival and departure times is assumed to be predefined in that provided input.
+                If the boolean is True:
+                    Excel inputs will be converted into appropriate inputs to the scenario function for dependent arrival and departure times use.
+        The default is False.
+
+    Returns
+    -------
+    1. Incase of using independent arrival and departure times:
+        arr_times_dict : dict
+            Arrival times nested dictionary.
+            keys: weekend or weekday,
+            values: {keys: time identifier, values: time lower bound, time upper bounds and arrival probabilities}.
+        dep_times_dict : dict
+            Departure times nested dictionary.
+            keys: weekend or weekday,
+            values: {keys: time identifier, values: time lower bound, time upper bounds and departure probabilities}.
+    2. Incase of using dependent arrival and departure times:
+        times_dict : dict
+            Arrival-departure time combinations nested dictionary.
+            keys: Arrival-departure time combination identifier, values: time upper and lower bounds.
+        arr_dep_times_dict : dict
+            Arrival-departure time combinations' probabilities nested dictionary.
+            keys: Arrival-departure time combination identifier, values: their probabilities.
+    arr_soc_dict : dict
+        SoC nested dictionaries for arrival.
+        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
+    dep_soc_dict : dict
+        SoC nested dictionaries for departure.
+        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
+    ev_dict : dict
+        EV nested dictionary.
+        keys: EV models, values: their data and probability.
+
+    """
     
     # Read excel file
     pathname = os.path.dirname(sys.argv[0])        
@@ -51,7 +100,7 @@ def excel_to_sceneration_input(file_path, dependent_times=False):
                                                                                 'Probability')
         # Arrival/departure times nested dictionaries
         # keys: weekend or weekday
-        # values: {keys: Time Identifier, values: Time Lower Bound, Time Upper Bounds and Arrival probabilities}
+        # values: {keys: Time Identifier, values: Time Lower Bound, Time Upper Bounds and arrival/departure probabilities}
         arr_times_dict = {}
         weekday_arr_times_df = weekday_arr_times_df.set_index('TimeID')
         arr_times_dict['Weekday'] = weekday_arr_times_df.to_dict(orient='index')
@@ -85,7 +134,7 @@ def excel_to_sceneration_input(file_path, dependent_times=False):
     dep_soc_df['SoCUpperBound'] = dep_soc_df['SoCUpperBound'].div(100)
 
     # SoC nested dictionaries for both arrival and departure
-    # keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and  their probabilities
+    # keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities
     arr_soc_df = arr_soc_df.set_index('SoCID')
     arr_soc_dict = arr_soc_df.to_dict(orient='index')
     dep_soc_df = dep_soc_df.set_index('SoCID')

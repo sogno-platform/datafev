@@ -15,15 +15,85 @@ import matplotlib.ticker as tck
 import os
 
 
-def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_day_prob_distribution,
-                      startdate=dt.date(2020, 5, 17), enddate=dt.date(2020, 5, 19), timedelta_in_min=15,
-                      diff_arr_dep_in_min=0, dependent_times=False, arr_times_dict=None, dep_times_dict=None,
-                      times_dict=None, arr_dep_times_dict=None
-                      ):
-    #TODO: Explain the function, inputs and outputs
-    #TODO: Please take other protocols as examples
-    #TODO: Put yourself in the user's shoes. They will not know what dependent-independent times mean unless explained.
+def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs,
+                        startdate=dt.date(2020, 5, 17), enddate=dt.date(2020, 5, 19), timedelta_in_min=15,
+                        diff_arr_dep_in_min=0, dependent_times=False, arr_times_dict=None, dep_times_dict=None,
+                        times_dict=None, arr_dep_times_dict=None, dep_day_prob_distribution=None
+                        ):
+    """
+    This function is executed to generate a simulation scenario with given statistical EV fleet data.
+    
+    It has the ability to generate scenarios from two different types of inputs:
+        1. Independent arrival and departure times:
+            The statistical data of arrival and departure times are independent.
+            The user must provide two different independent statistical distribution inputs for both arrival and departure times.
+        2. Dependent arrival and departure times:
+            The user must provide a single statistical distribution input for arrival and departure times. 
+            The relationship between arrival and departure times is assumed to be predefined in that provided input.
 
+    Parameters
+    ----------
+    arr_soc_dict : dict
+        SoC nested dictionaries for arrival.
+        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
+    dep_soc_dict : dict
+        SoC nested dictionaries for departure.
+        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
+    ev_dict : dict
+        EV nested dictionary.
+        keys: EV models, values: their data and probability.
+    number_of_evs : int
+        This parameter has different description for the two situations:
+            1. If user is using independent arrival and departure times:
+                Number of desired EVs per day for the simulation
+            2. If the user is using dependent arrival and departure times:
+                Number of desired EVs for the simulation 
+    startdate : datetime.date, optional
+        The start date of the simulation. The default is dt.date(2020, 5, 17).
+    enddate : TYPE, datetime.date
+        The end date of the simulation. The default is dt.date(2020, 5, 19).
+    timedelta_in_min : int, optional
+        Resolution of the simulation in minutes. The default is 15.
+    diff_arr_dep_in_min : int, optional
+        Minimum time between arrival and departure for each EV in minutes. The default is 0.
+    dependent_times : bool, optional
+        1. If true: Dependent arrival and departure times is to be used.
+        2. If false: Independent arrival and departure times to be used.
+        The default is False.
+    arr_times_dict : dict, optional
+        Only to be given, if using independent arrival and departure times!
+        Arrival times nested dictionary.
+        keys: weekend or weekday,
+        values: {keys: time identifier, values: time lower bound, time upper bounds and arrival probabilities}.
+        The default is None.
+    dep_times_dict : dict, optional
+        Only to be given, if using independent arrival and departure times!
+        Departure times nested dictionary.
+        keys: weekend or weekday,
+        values: {keys: time identifier, values: time lower bound, time upper bounds and departure probabilities}.
+        The default is None..
+    times_dict : dict, optional
+        Only to be given, if using dependent arrival and departure times!
+        Arrival-departure time combinations nested dictionary.
+        keys: Arrival-departure time combination identifier, values: time upper and lower bounds.
+        The default is None.
+    arr_dep_times_dict : dict, optional
+        Only to be given, if using dependent arrival and departure times!
+        Arrival-departure time combinations' probabilities nested dictionary.
+        keys: Arrival-departure time combination identifier, values: their probabilities.
+        The default is None.
+    dep_day_prob_distribution : list
+        Only to be given, if using independent arrival and departure times!
+        List consist of two elements:
+            The first element of the list should be the possibility of departure on the same day as arrival.
+            The second element of the list should be the possibility of not departing on the same day as arrival.
+    Returns
+    -------
+    gen_ev_df : pandas.core.frame.DataFrame
+        Generated EV dataset for future use in any simulation.
+
+    """
+    
     # Create date list
     date_list = pd.date_range(startdate, enddate - timedelta(days=1), freq='d')
 
@@ -248,7 +318,6 @@ def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs, dep_
         gen_ev_df.at[ev_id, 'MaxFastChargingPower'] = ev_df.at[chosen_model, 'MaxFastChargingPower']
 
     ###################################################################################################################
-    
     return gen_ev_df
 
 
@@ -277,15 +346,49 @@ def generate_datetime_list(sdate, edate, timedelta_in_min):
 
 
 def drange(x, y, jump):
-    # TODO: Explain the function, inputs and outputs
-    # Generate a range from x to y with jump spaces
+    """
+    Generate a range from x to y with jump spaces.
+    
+    Parameters
+    ----------
+    x : numpy.float64
+        Start point.
+    y : float
+        End point.
+    jump : str
+        Space between generated jumps.
+
+    Yields
+    ------
+    decimal.Decimal
+        Parts in the equal range of the jump between x and y.
+
+    """
+
     while x < y:
         yield float(x)
         x = decimal.Decimal(x) + decimal.Decimal(jump)
 
 
 def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min=15):
-    # TODO: Explain the function, inputs and outputs
+    """
+    This method visualizes generated EV arrival and departure data.
+
+    Parameters
+    ----------
+    file_path : str
+        The file path for image files to be saved.
+    gen_ev_df : pandas.core.frame.DataFrame
+        Output data frame from generate_fleet_data function.
+    timedelta_in_min : int, optional
+        Resolution of the simulation in minutes. The default is 15.
+
+    Returns
+    -------
+    None.
+
+    """
+
     # Create times dicts for arrival and departure Keys: All possible time assignments, Values: number of assigned EVs
     current = dt.datetime(2022, 1, 1)  # arbitrary day
     datetime_lst = [current + timedelta(minutes=m) for m in range(0, 24 * 60, timedelta_in_min)]
@@ -331,7 +434,25 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
     plt.savefig(plot_path)
 
 def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
-    # TODO: Explain the function, inputs and outputs
+    '''
+    This function makes the electric vehicle information generated from statistical data available to the different simulation tools in the project
+
+    Parameters
+    ----------
+    sce_output_df : pandas.core.frame.DataFrame
+        Output data frame from generate_fleet_data function.
+    xlfile : str
+        Desired name of the output excel file.
+    dc_power : bool, optional
+        This parameter indicates whether dc or ac will be used as charging power in the simulation. 
+        The default is False.
+
+    Returns
+    -------
+    None.
+
+    '''
+
     sim_input_df=pd.DataFrame(columns=['Battery Capacity (kWh)','p_max_ch',
                                        'p_max_ds','Real Arrival Time','Real Arrival SOC', 
                                        'Estimated Departure Time', 'Target SOC @ Estimated Departure Time'])

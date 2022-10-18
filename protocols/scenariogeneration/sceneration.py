@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 import os
 
-
+#TODO: should we seperate generate_fleet_data functions for statistical input types?
 def generate_fleet_data(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs,
                         startdate=dt.date(2020, 5, 17), enddate=dt.date(2020, 5, 19), timedelta_in_min=15,
                         diff_arr_dep_in_min=0, dependent_times=False, arr_times_dict=None, dep_times_dict=None,
@@ -407,7 +407,7 @@ def drange(x, y, jump):
 
 def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min=15):
     """
-    This method visualizes generated EV arrival and departure data.
+    This method visualizes generated distribution of arrival and departure times of the generated fleet behavior.
 
     Parameters
     ----------
@@ -469,8 +469,9 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
     plt.savefig(plot_path)
 
 def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
-    '''
-    This function makes the electric vehicle information generated from statistical data available to the different simulation tools in the project
+    """
+    This function converts the fleet behavior (generated from statistical data) to the format that could be simulated
+    in this simulation framework.
 
     Parameters
     ----------
@@ -486,7 +487,7 @@ def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
     -------
     None.
 
-    '''
+    """
 
     sim_input_df=pd.DataFrame(columns=['Battery Capacity (kWh)','p_max_ch',
                                        'p_max_ds','Real Arrival Time','Real Arrival SOC', 

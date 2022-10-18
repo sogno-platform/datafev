@@ -8,7 +8,7 @@ Created on Mon Oct 17 11:38:18 2022
 import pandas as pd
 import os, sys
 
-
+#TODO: Should we consider to shift all the support functions (=except for generate_fleet_data function(s)) from sceneration.py to this script and rename this as "utils.py"?
 def excel_to_sceneration_input(file_path, dependent_times=False):
     """
     This method converts the excel inputs into inputs suitable for the generate_fleet_data function under sceneration.py.

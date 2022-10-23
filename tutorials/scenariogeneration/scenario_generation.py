@@ -35,10 +35,12 @@ def main(dependent_times=False):
 
     """
 
+    #TODO: explain the parameters below
     same_day_departure_prob = 0.7
     overnight_stay_prob = 0.3
     dep_day_prob_distribution = [same_day_departure_prob, overnight_stay_prob]
     
+    #TODO: should we seperate the scenario generation tutorials for these two cases
     if dependent_times is False:
         # independent times
         arr_times_dict, dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict = \

@@ -4,7 +4,7 @@ save_data_on_exit = True
 save_history = True
 save_non_project_files = False
 project_type = 'empty-project-type'
-recent_files = ['tutorials\\scenariogeneration\\scenario_generation.py', 'protocols\\scenariogeneration\\sceneration.py', 'protocols\\scenariogeneration\\read_input.py', 'tutorials\\simulations\\simulation_simple_reservations.py']
+recent_files = ['tutorials\\scenariogeneration\\scenario_generation.py', 'protocols\\scenariogeneration\\sceneration.py', 'protocols\\scenariogeneration\\read_input.py', 'tutorials\\simulations\\simulation_simple_reservations.py', 'tutorials\\simulations\\simulation_smart_reservations.py', 'tutorials\\simulations\\simulation_without_reservations.py', 'algorithms\\cluster\\prioritization_llf.py']
 
 [main]
 version = 0.2.0

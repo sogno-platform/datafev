@@ -24,7 +24,7 @@ sim_end         =datetime(2022,1,8,20)
 sim_length      =sim_end-sim_start
 sim_step        =timedelta(minutes=5)
 sim_horizon     =[sim_start+t*sim_step for t in range(int(sim_length/sim_step))]
-solver=SolverFactory("cplex")
+solver=SolverFactory("gurobi") # User has to specify the suitable optimization solver
 opt_horizon=timedelta(minutes=10)
 
 #Simulation inputs

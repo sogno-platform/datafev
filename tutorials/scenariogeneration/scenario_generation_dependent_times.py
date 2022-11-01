@@ -23,14 +23,14 @@ def main():
                                  timedelta_in_min=15, diff_arr_dep_in_min=0, times_dict=times_dict,
                                  arr_dep_times_dict=arr_dep_times_dict)
     
-    ut.visualize_statistical_time_generation('output_generator/dependent_times/', ev_df, timedelta_in_min=15)
+    ut.visualize_statistical_time_generation(r'C:\Users\aytugy\Desktop\workspace\charger-clusters\outputs', ev_df, timedelta_in_min=15)
     
     # Unlocalize datetimes, as Excel does not support datetimes with timezones
     ev_df['ArrivalTime'] = ev_df['ArrivalTime'].dt.tz_localize(None)
     ev_df['DepartureTime'] = ev_df['DepartureTime'].dt.tz_localize(None)
-    ev_df.to_excel("output_generator/dependent_times/output_generator_dependent_times.xlsx")          
+    ev_df.to_excel(r'C:\Users\aytugy\Desktop\workspace\charger-clusters\outputs\output_generator_dependent_times.xlsx')          
     
-    ut.output_to_sim_input(ev_df, 'output_generator/dependent_times/input_simulator_dependent_times.xlsx')
+    ut.output_to_sim_input(ev_df, r'C:\Users\aytugy\Desktop\workspace\charger-clusters\outputs\input_simulator_dependent_times.xlsx')
     
 if __name__ == "__main__":
     main()

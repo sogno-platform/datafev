@@ -170,7 +170,7 @@ cython_debug/
 *gurobi.log
 
 # Saved output files in examples
-tutorials/scenariogeneration/*.xlsx
-tutorials/scenariogeneration/*.png
-tutorials/simulations/*.xlsx
-tutorials/simulations/*.png
+src/tutorials/scenariogeneration/*.xlsx
+src/tutorials/scenariogeneration/*.png
+src/tutorials/simulations/*.xlsx
+src/tutorials/simulations/*.png

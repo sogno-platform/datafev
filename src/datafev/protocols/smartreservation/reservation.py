@@ -1,10 +1,19 @@
-
 import pandas as pd
 from src.datafev.algorithms.cluster.pricing_rule import idp
 from src.datafev.algorithms.vehicle.routing_milp import smart_routing
 
-def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
-                         f_discount=0.05, f_markup=0.05,arbitrage_coeff=0.0):
+
+def reservation_protocol(
+    ts,
+    tdelta,
+    system,
+    fleet,
+    solver,
+    traffic_forecast,
+    f_discount=0.05,
+    f_markup=0.05,
+    arbitrage_coeff=0.0,
+):
     """
     This protocol is executed to reserve chargers for the EVs approaching a multi-cluster system.
 
@@ -32,122 +41,167 @@ def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
         ############################################################################
         ############################################################################
         ############################################################################
-        #Start reservation protccol
+        # Start reservation protccol
 
         ############################################################################
         ############################################################################
-        #Step 1: Identify available chargers
-        available_chargers=system.query_availability(ev.t_arr_est,ev.t_dep_est,tdelta,traffic_forecast)
+        # Step 1: Identify available chargers
+        available_chargers = system.query_availability(
+            ev.t_arr_est, ev.t_dep_est, tdelta, traffic_forecast
+        )
         ############################################################################
         ############################################################################
 
-        if len(available_chargers)==0:
-            ev.reserved=False
+        if len(available_chargers) == 0:
+            ev.reserved = False
         else:
             ############################################################################
             ############################################################################
-            #Step 2: Apply a specific reservation management strategy
+            # Step 2: Apply a specific reservation management strategy
             # Applied one is based on the smart routing strategy introduced in (doi: 10.1109/TTE.2022.3208627)
 
             ############################################################################
-            #Step 2.1: Identify candidate chargers and optimization parameters
+            # Step 2.1: Identify candidate chargers and optimization parameters
             candidate_chargers_df = available_chargers.drop_duplicates()
             candidate_chargers_dc = candidate_chargers_df.T.to_dict()
 
-            for cu_id,row in candidate_chargers_df.iterrows():
+            for cu_id, row in candidate_chargers_df.iterrows():
 
-                cc_id = row['Cluster']
-                ch_rate=row['max p_ch']
-                ds_rate=row['max p_ds']
+                cc_id = row["Cluster"]
+                ch_rate = row["max p_ch"]
+                ds_rate = row["max p_ds"]
 
-                #It is assumed that power capability of EV battery is not SOC dependent
-                p_ch       =min(ch_rate, ev.p_max_ch)
-                p_ds       =min(ds_rate, ev.p_max_ds)
-                arrsoc     =ev.soc_arr_est + traffic_forecast['soc_dec'][cc_id]
-                pardur     =(ev.t_dep_est+traffic_forecast['dep_del'][cc_id])-(ev.t_arr_est+traffic_forecast['arr_del'][cc_id])
-                soc_max    =min(1,arrsoc+(p_ch*pardur.seconds)/ev.bCapacity)
-                tarsoc     =min(soc_max,ev.soc_tar_at_t_dep_est)
+                # It is assumed that power capability of EV battery is not SOC dependent
+                p_ch = min(ch_rate, ev.p_max_ch)
+                p_ds = min(ds_rate, ev.p_max_ds)
+                arrsoc = ev.soc_arr_est + traffic_forecast["soc_dec"][cc_id]
+                pardur = (ev.t_dep_est + traffic_forecast["dep_del"][cc_id]) - (
+                    ev.t_arr_est + traffic_forecast["arr_del"][cc_id]
+                )
+                soc_max = min(1, arrsoc + (p_ch * pardur.seconds) / ev.bCapacity)
+                tarsoc = min(soc_max, ev.soc_tar_at_t_dep_est)
 
-                candidate_chargers_dc[cu_id]['max p_ch'] = p_ch
-                candidate_chargers_dc[cu_id]['max p_ds'] = p_ds
-                candidate_chargers_dc[cu_id]['arrsoc']   = arrsoc
-                candidate_chargers_dc[cu_id]['tarsoc']   = tarsoc
-                candidate_chargers_dc[cu_id]['arrtime']  = int(traffic_forecast['arr_del'][cc_id] / tdelta)
-                candidate_chargers_dc[cu_id]['deptime']  = int(pardur/tdelta)
+                candidate_chargers_dc[cu_id]["max p_ch"] = p_ch
+                candidate_chargers_dc[cu_id]["max p_ds"] = p_ds
+                candidate_chargers_dc[cu_id]["arrsoc"] = arrsoc
+                candidate_chargers_dc[cu_id]["tarsoc"] = tarsoc
+                candidate_chargers_dc[cu_id]["arrtime"] = int(
+                    traffic_forecast["arr_del"][cc_id] / tdelta
+                )
+                candidate_chargers_dc[cu_id]["deptime"] = int(pardur / tdelta)
 
-            candidate_chargers=pd.DataFrame(candidate_chargers_dc).T
+            candidate_chargers = pd.DataFrame(candidate_chargers_dc).T
             #########################################################################
 
             ############################################################################
-            #Step 2.2: Execute dynamic pricing algorithm for clusters having candidate chargers
+            # Step 2.2: Execute dynamic pricing algorithm for clusters having candidate chargers
             g2v_dps = {}
             v2g_dps = {}
-            deptime_max=ts+candidate_chargers['deptime'].max()*tdelta
+            deptime_max = ts + candidate_chargers["deptime"].max() * tdelta
             for cu_id in candidate_chargers.index:
 
-                cc_id=candidate_chargers.loc[cu_id,'Cluster']
-                cc=system.clusters[cc_id]
+                cc_id = candidate_chargers.loc[cu_id, "Cluster"]
+                cc = system.clusters[cc_id]
                 cc_power_ub = dict(enumerate(cc.upper_limit[ts:deptime_max].values))
                 cc_power_lb = dict(enumerate(cc.lower_limit[ts:deptime_max].values))
-                cc_schedule = dict(enumerate((cc.aggregate_schedule_for_actual_connections(ts,deptime_max,tdelta)).values))
-                tou_tariff  = dict(enumerate((system.tou_price.loc[ts:deptime_max]).values))
+                cc_schedule = dict(
+                    enumerate(
+                        (
+                            cc.aggregate_schedule_for_actual_connections(
+                                ts, deptime_max, tdelta
+                            )
+                        ).values
+                    )
+                )
+                tou_tariff = dict(
+                    enumerate((system.tou_price.loc[ts:deptime_max]).values)
+                )
 
-                dlp=idp(cc_schedule, cc_power_ub, cc_power_lb, tou_tariff, f_discount, f_markup)
-                g2v_dps[cu_id]=dlp
-                v2g_dps[cu_id]=dict([(k,dlp[k]*(1-arbitrage_coeff)) for k in sorted(dlp.keys())])
-            ############################################################################
-                            
-            ############################################################################
-            #Step 2.3: Execute smart routing algorithm to find optimal cluster and schedules
-            opt_horizon=list(range(int(candidate_chargers['deptime'].max())+1))
-            opt_step   =tdelta.seconds
-            ecap       =ev.bCapacity
-            v2gall     =ev.v2g_allow
-            tarsoc     =candidate_chargers['tarsoc'].max()
-            minsoc     =ev.minSoC
-            maxsoc     =ev.maxSoC
-            crtsoc     =tarsoc
-            crttime    =int(candidate_chargers['deptime'].max())
-            arrtime    =candidate_chargers['arrtime'].to_dict()
-            deptime    =candidate_chargers['deptime'].to_dict()
-            arrsoc     =candidate_chargers['arrsoc'].to_dict()
-            pch        =candidate_chargers['max p_ch'].to_dict()
-            pds        =candidate_chargers['max p_ds'].to_dict()
-
-            p,s,selected_charger_id=smart_routing(solver, opt_horizon, opt_step, ecap, v2gall, tarsoc, minsoc, maxsoc, crtsoc, crttime, arrtime, deptime, arrsoc, pch, pds, g2v_dps, v2g_dps)
-            ############################################################################
-
-            #Outputs of Step 2
-            selected_cluster_id = candidate_chargers.loc[selected_charger_id, 'Cluster']
-            selected_cluster    = system.clusters[selected_cluster_id]
-            selected_charger    = selected_cluster.chargers[selected_charger_id]
-
-            #End: Reservation management strategy
-            ############################################################################
+                dlp = idp(
+                    cc_schedule,
+                    cc_power_ub,
+                    cc_power_lb,
+                    tou_tariff,
+                    f_discount,
+                    f_markup,
+                )
+                g2v_dps[cu_id] = dlp
+                v2g_dps[cu_id] = dict(
+                    [(k, dlp[k] * (1 - arbitrage_coeff)) for k in sorted(dlp.keys())]
+                )
             ############################################################################
 
             ############################################################################
-            ############################################################################
-            #Step 3: Reserve the selected charger for the EV and assign relevant reservation parameters
-            res_at   =ts
-            res_from =ev.t_arr_est+traffic_forecast['arr_del'][selected_cluster_id]
-            res_until=ev.t_dep_est+traffic_forecast['dep_del'][selected_cluster_id]
+            # Step 2.3: Execute smart routing algorithm to find optimal cluster and schedules
+            opt_horizon = list(range(int(candidate_chargers["deptime"].max()) + 1))
+            opt_step = tdelta.seconds
+            ecap = ev.bCapacity
+            v2gall = ev.v2g_allow
+            tarsoc = candidate_chargers["tarsoc"].max()
+            minsoc = ev.minSoC
+            maxsoc = ev.maxSoC
+            crtsoc = tarsoc
+            crttime = int(candidate_chargers["deptime"].max())
+            arrtime = candidate_chargers["arrtime"].to_dict()
+            deptime = candidate_chargers["deptime"].to_dict()
+            arrsoc = candidate_chargers["arrsoc"].to_dict()
+            pch = candidate_chargers["max p_ch"].to_dict()
+            pds = candidate_chargers["max p_ds"].to_dict()
 
-            contract={}
-            contract['Schedule']   = True
-            contract['Payment']    = True
-            contract['P Schedule'] = {}
-            contract['S Schedule'] = {}
-            contract['G2V Price']  = {}
-            contract['V2G Price']  = {}
-            contract['Resolution'] = opt_step
+            p, s, selected_charger_id = smart_routing(
+                solver,
+                opt_horizon,
+                opt_step,
+                ecap,
+                v2gall,
+                tarsoc,
+                minsoc,
+                maxsoc,
+                crtsoc,
+                crttime,
+                arrtime,
+                deptime,
+                arrsoc,
+                pch,
+                pds,
+                g2v_dps,
+                v2g_dps,
+            )
+            ############################################################################
+
+            # Outputs of Step 2
+            selected_cluster_id = candidate_chargers.loc[selected_charger_id, "Cluster"]
+            selected_cluster = system.clusters[selected_cluster_id]
+            selected_charger = selected_cluster.chargers[selected_charger_id]
+
+            # End: Reservation management strategy
+            ############################################################################
+            ############################################################################
+
+            ############################################################################
+            ############################################################################
+            # Step 3: Reserve the selected charger for the EV and assign relevant reservation parameters
+            res_at = ts
+            res_from = ev.t_arr_est + traffic_forecast["arr_del"][selected_cluster_id]
+            res_until = ev.t_dep_est + traffic_forecast["dep_del"][selected_cluster_id]
+
+            contract = {}
+            contract["Schedule"] = True
+            contract["Payment"] = True
+            contract["P Schedule"] = {}
+            contract["S Schedule"] = {}
+            contract["G2V Price"] = {}
+            contract["V2G Price"] = {}
+            contract["Resolution"] = opt_step
             for t in opt_horizon:
-                contract['P Schedule'][ts+t*tdelta]=p[t]
-                contract['S Schedule'][ts+t*tdelta]=s[t]
-                contract['G2V Price'][ts+t*tdelta]=g2v_dps[selected_charger_id][t]
-                contract['V2G Price'][ts+t*tdelta]=v2g_dps[selected_charger_id][t]
+                contract["P Schedule"][ts + t * tdelta] = p[t]
+                contract["S Schedule"][ts + t * tdelta] = s[t]
+                contract["G2V Price"][ts + t * tdelta] = g2v_dps[selected_charger_id][t]
+                contract["V2G Price"][ts + t * tdelta] = v2g_dps[selected_charger_id][t]
 
-            selected_cluster.reserve(res_at,res_from,res_until,ev,selected_charger,contract)
+            selected_cluster.reserve(
+                res_at, res_from, res_until, ev, selected_charger, contract
+            )
             ev.reserved = True
             ############################################################################
             ############################################################################
@@ -155,4 +209,4 @@ def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
         ############################################################################
         ############################################################################
         ############################################################################
-        #End reservation protccol
+        # End reservation protccol

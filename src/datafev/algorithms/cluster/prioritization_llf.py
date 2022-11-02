@@ -1,7 +1,9 @@
-
 import pandas as pd
 
-def leastlaxityfirst(inisoc,tarsoc,bcap,efficiency,p_socdep,p_chmax,p_re,leadtime,upperlimit):
+
+def leastlaxityfirst(
+    inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit
+):
     """
     This function prioritizes the charging operations of a cluster by considering the arrival times.
 
@@ -35,22 +37,22 @@ def leastlaxityfirst(inisoc,tarsoc,bcap,efficiency,p_socdep,p_chmax,p_re,leadtim
     for ev_id in inisoc.keys():
 
         # Lead time until estimated departure
-        T_LEAD=leadtime[ev_id]
+        T_LEAD = leadtime[ev_id]
 
-        if inisoc[ev_id]>=tarsoc[ev_id]:
+        if inisoc[ev_id] >= tarsoc[ev_id]:
 
-            #Minimum time required to acheive taget SOC is 0 if target SOC is already achieved
-            T_MIN=0
+            # Minimum time required to acheive taget SOC is 0 if target SOC is already achieved
+            T_MIN = 0
 
         else:
 
             # Target SOC has not been achieved yet: T_MIN will have a postive value
 
-            if p_socdep[ev_id]==None:
+            if p_socdep[ev_id] == None:
 
                 # The EV battery does not have a specific charger power-SOC dependency limiting the power transfer
                 # T_MIN is determined by p_chmax (max power that charger-EV pair can handle for whole SOC range
-                T_MIN = (tarsoc[ev_id]-inisoc[ev_id])*bcap[ev_id]/p_chmax[ev_id]
+                T_MIN = (tarsoc[ev_id] - inisoc[ev_id]) * bcap[ev_id] / p_chmax[ev_id]
 
             else:
 
@@ -58,64 +60,90 @@ def leastlaxityfirst(inisoc,tarsoc,bcap,efficiency,p_socdep,p_chmax,p_re,leadtim
                 table = pd.DataFrame(p_socdep[ev_id]).T
 
                 # Current SOC range of the EV
-                I=(table[(table['SOC_LB'] <= inisoc[ev_id]) & (inisoc[ev_id] < table['SOC_UB'])]).index[0]
+                I = (
+                    table[
+                        (table["SOC_LB"] <= inisoc[ev_id])
+                        & (inisoc[ev_id] < table["SOC_UB"])
+                    ]
+                ).index[0]
 
                 # Target SOC range of the EV
-                F=(table[(table['SOC_LB'] <= tarsoc[ev_id]) & (tarsoc[ev_id] < table['SOC_UB'])]).index[0]
+                F = (
+                    table[
+                        (table["SOC_LB"] <= tarsoc[ev_id])
+                        & (tarsoc[ev_id] < table["SOC_UB"])
+                    ]
+                ).index[0]
 
-                if I==F:
+                if I == F:
 
                     # The current SOC is in the same range as the target SOC
                     # The EV can be charged with a constant power until target SOC is reached
-                    p_max_in_range = table.loc[I, 'P_UB']
+                    p_max_in_range = table.loc[I, "P_UB"]
 
                     # Maximum feasible power input to EV can be smaller though (taking into account the charger rating)
                     p_max_feassible = min(p_max_in_range, p_chmax[ev_id])
 
                     # T_MIN is determined by considering only p_max_feasible
-                    T_MIN = (tarsoc[ev_id]-inisoc[ev_id])*bcap[ev_id]/p_max_feassible
+                    T_MIN = (
+                        (tarsoc[ev_id] - inisoc[ev_id]) * bcap[ev_id] / p_max_feassible
+                    )
 
                 else:
 
                     # T_MIN is determined by taking into account the variations in charge power capability with SOC change
                     # T_MIN will be summation of the minimum time spent in each SOC range
-                    time_in_range = {}  # Will contain the minimum time spent within a particular SOC range
+                    time_in_range = (
+                        {}
+                    )  # Will contain the minimum time spent within a particular SOC range
 
                     # Loop through all SOC ranges to calculate the minimum time spent in each SOC range
-                    for r in range(I,F+1):
+                    for r in range(I, F + 1):
 
                         # Parameters for the specific SOC range
-                        soc_ub_in_range=table.loc[r, 'SOC_UB']
-                        soc_lb_in_range=table.loc[r, 'SOC_LB']
-                        p_max_in_range =table.loc[r, 'P_UB']
+                        soc_ub_in_range = table.loc[r, "SOC_UB"]
+                        soc_lb_in_range = table.loc[r, "SOC_LB"]
+                        p_max_in_range = table.loc[r, "P_UB"]
 
                         # Maximum feasible power input to EV in this SOC range (taking into account the charger rating)
-                        p_max_feassible=min(p_max_in_range,p_chmax[ev_id])
+                        p_max_feassible = min(p_max_in_range, p_chmax[ev_id])
 
                         # Calculation of minimum time spent in specific SOC range through charging
-                        if r==I:
-                            #From initial SOC to upper bound of this particular range
-                            time_in_range[r] = (soc_ub_in_range - inisoc[ev_id]) * bcap[ev_id] / p_max_feassible
-                        elif r<F:
-                            #From lower to upper bound of this particular range
-                            time_in_range[r] = (soc_ub_in_range - soc_lb_in_range) * bcap[ev_id] / p_max_feassible
-                        else: # r==F
-                            #From lower bound of this particular range to target SOC
-                            time_in_range[r] = (tarsoc[ev_id] - soc_lb_in_range) * bcap[ev_id] / p_max_feassible
+                        if r == I:
+                            # From initial SOC to upper bound of this particular range
+                            time_in_range[r] = (
+                                (soc_ub_in_range - inisoc[ev_id])
+                                * bcap[ev_id]
+                                / p_max_feassible
+                            )
+                        elif r < F:
+                            # From lower to upper bound of this particular range
+                            time_in_range[r] = (
+                                (soc_ub_in_range - soc_lb_in_range)
+                                * bcap[ev_id]
+                                / p_max_feassible
+                            )
+                        else:  # r==F
+                            # From lower bound of this particular range to target SOC
+                            time_in_range[r] = (
+                                (tarsoc[ev_id] - soc_lb_in_range)
+                                * bcap[ev_id]
+                                / p_max_feassible
+                            )
 
-                    T_MIN= sum(time_in_range[r] for r in range(I,F+1))
+                    T_MIN = sum(time_in_range[r] for r in range(I, F + 1))
 
         # Laxity of this EV's charging demand
-        LAX=1-T_MIN/T_LEAD
+        LAX = 1 - T_MIN / T_LEAD
 
         # Store in the laxity dictionary
-        laxity[ev_id]=LAX
+        laxity[ev_id] = LAX
 
     # Sorting EVs according to their laxity (least laxity first)
-    vehicles_sorted=(pd.Series(laxity).sort_values(ascending=True)).index
+    vehicles_sorted = (pd.Series(laxity).sort_values(ascending=True)).index
 
-    p_charge={}                 # Will contain the charge power consumed by the EVs
-    free_margin=upperlimit      # Cluster level constraint
+    p_charge = {}  # Will contain the charge power consumed by the EVs
+    free_margin = upperlimit  # Cluster level constraint
 
     for ev in vehicles_sorted:
 
@@ -124,12 +152,12 @@ def leastlaxityfirst(inisoc,tarsoc,bcap,efficiency,p_socdep,p_chmax,p_re,leadtim
 
         if p_max_to_cu <= free_margin:
 
-            #The grid has enough margin to suppy the requested amount
+            # The grid has enough margin to suppy the requested amount
             p_to_ev = p_max_to_cu * efficiency[ev]
 
         else:
 
-            #The grid does not have enough margin to supply the requested amount
+            # The grid does not have enough margin to supply the requested amount
             p_to_ev = free_margin * efficiency[ev]
 
         # This EV will get p_to_ev amount of power in this control horizon
@@ -141,72 +169,81 @@ def leastlaxityfirst(inisoc,tarsoc,bcap,efficiency,p_socdep,p_chmax,p_re,leadtim
     return p_charge
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import pandas as pd
     import numpy as np
 
-    PEV = 50                    # Maximum charge power that the EV battery can accept
-    ch_eff = 1.0                # Power conversion efficiency of the charger
-    N = 16                      # Number of connected EVs in the system
-    CAP = 55 * 3600             # Battery capacity of EVs
+    PEV = 50  # Maximum charge power that the EV battery can accept
+    ch_eff = 1.0  # Power conversion efficiency of the charger
+    N = 16  # Number of connected EVs in the system
+    CAP = 55 * 3600  # Battery capacity of EVs
     upperlimit = 0.5 * N * PEV  # Aggregate power consumption constraint of the cluster
-    sch_horizon = 300           # Decision taken for the next 300 seconds (5 minutes)
+    sch_horizon = 300  # Decision taken for the next 300 seconds (5 minutes)
 
     # SOC dependency of the maximum charge power to the EV battery
-    pow_soc_dep_table={0: {'SOC_LB': 0.0, 'SOC_UB': 0.5, 'P_UB': 50},
-                       1: {'SOC_LB': 0.5, 'SOC_UB': 0.7, 'P_UB': 40},
-                       2: {'SOC_LB': 0.7, 'SOC_UB': 1.0, 'P_UB': 30},}
-
+    pow_soc_dep_table = {
+        0: {"SOC_LB": 0.0, "SOC_UB": 0.5, "P_UB": 50},
+        1: {"SOC_LB": 0.5, "SOC_UB": 0.7, "P_UB": 40},
+        2: {"SOC_LB": 0.7, "SOC_UB": 1.0, "P_UB": 30},
+    }
 
     # Demand specifications
     np.random.seed(0)
 
     p_re = {}
-    p_chmax ={}
+    p_chmax = {}
     efficiency = {}
     bcap = {}
     tarsoc = {}
     leadtime = {}
     inisoc = {}
-    p_socdep={}
+    p_socdep = {}
     for n in range(1, N + 1):
-        evid = 'EV' + str(n)
+        evid = "EV" + str(n)
 
-        p_chmax[evid]    = PEV                                                      #Maximum charge power to EV
-        efficiency[evid] = ch_eff                                                   #Efficiency
-        bcap[evid]       = CAP                                                      #Battery capacity
-        inisoc[evid]     = np.random.uniform(low=0.4, high=0.8)                     #Current SOCs are between 40%-60%
-        tarsoc[evid]     = 0.9                                                      #Target SOCs are 90%
-        leadtime[evid]   = np.random.uniform(low=sch_horizon,high=sch_horizon*2)    #EVs have 5-10 min till departure
-        p_socdep[evid]   = pow_soc_dep_table                                        #SOC dependency table
+        p_chmax[evid] = PEV  # Maximum charge power to EV
+        efficiency[evid] = ch_eff  # Efficiency
+        bcap[evid] = CAP  # Battery capacity
+        inisoc[evid] = np.random.uniform(
+            low=0.4, high=0.8
+        )  # Current SOCs are between 40%-60%
+        tarsoc[evid] = 0.9  # Target SOCs are 90%
+        leadtime[evid] = np.random.uniform(
+            low=sch_horizon, high=sch_horizon * 2
+        )  # EVs have 5-10 min till departure
+        p_socdep[evid] = pow_soc_dep_table  # SOC dependency table
 
         # Electric vehicles want to consume the maximum amount of power feasible in this SOC range
-        table= pd.DataFrame(pow_soc_dep_table).T
-        inisoc_range = (table[(table['SOC_LB'] <= inisoc[evid]) & (inisoc[evid] < table['SOC_UB'])]).index[0]
-        p_re[evid]=min(PEV,table.loc[inisoc_range,'P_UB'])
-
+        table = pd.DataFrame(pow_soc_dep_table).T
+        inisoc_range = (
+            table[(table["SOC_LB"] <= inisoc[evid]) & (inisoc[evid] < table["SOC_UB"])]
+        ).index[0]
+        p_re[evid] = min(PEV, table.loc[inisoc_range, "P_UB"])
 
     print("The cluster with total installed capacity of:", N * PEV)
     print()
     print("...has a power limit of:", upperlimit)
     print()
 
-    print("...controlling the real-time chaging rates of the EVs with charging demands:")
-    p_ref = leastlaxityfirst(inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit)
+    print(
+        "...controlling the real-time chaging rates of the EVs with charging demands:"
+    )
+    p_ref = leastlaxityfirst(
+        inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit
+    )
 
-    demand_data=pd.DataFrame(columns=['Initial SOC','Target SOC','Estimated Departure','Controlled Consumption'])
-    demand_data['Initial SOC']     = pd.Series(inisoc)
-    demand_data['Target SOC']      = pd.Series(tarsoc)
-    demand_data['Estimated Departure']=pd.Series(leadtime)
-    demand_data['Controlled Consumption']=pd.Series(p_ref)
-    print((demand_data.sort_values(by=['Estimated Departure','Initial SOC'])))
+    demand_data = pd.DataFrame(
+        columns=[
+            "Initial SOC",
+            "Target SOC",
+            "Estimated Departure",
+            "Controlled Consumption",
+        ]
+    )
+    demand_data["Initial SOC"] = pd.Series(inisoc)
+    demand_data["Target SOC"] = pd.Series(tarsoc)
+    demand_data["Estimated Departure"] = pd.Series(leadtime)
+    demand_data["Controlled Consumption"] = pd.Series(p_ref)
+    print((demand_data.sort_values(by=["Estimated Departure", "Initial SOC"])))
     print()
-
-    
-
-
-
-
-
-

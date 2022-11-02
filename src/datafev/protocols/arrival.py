@@ -1,8 +1,8 @@
-
 import numpy as np
 import pandas as pd
 
-def arrival_protocol(ts,tdelta,fleet,system):
+
+def arrival_protocol(ts, tdelta, fleet, system):
     """
     This protocol is executed for admission of the EVs that arrive in charger clusters without reservations.
 
@@ -18,18 +18,18 @@ def arrival_protocol(ts,tdelta,fleet,system):
     for ev in incoming_vehicles:
 
         # The EV approaches the cluster
-        target_cluster_id=ev.cluster_target
-        target_cluster   =system.clusters[target_cluster_id]
+        target_cluster_id = ev.cluster_target
+        target_cluster = system.clusters[target_cluster_id]
 
         # Charger availability check
-        available_cus =target_cluster.query_availability(ts,ev.t_dep_est,tdelta)
+        available_cus = target_cluster.query_availability(ts, ev.t_dep_est, tdelta)
 
         if len(available_cus) > 0:
 
             # There is available charger
-            selected_charger_id=np.random.choice(list(available_cus.index))
-            selected_charger=target_cluster.chargers[selected_charger_id]
-            ev.reserved=True
+            selected_charger_id = np.random.choice(list(available_cus.index))
+            selected_charger = target_cluster.chargers[selected_charger_id]
+            ev.reserved = True
 
             # Reserve the charger until estimated departure time
             target_cluster.reserve(ts, ts, ev.t_dep_est, ev, selected_charger)

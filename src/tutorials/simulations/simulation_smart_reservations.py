@@ -1,22 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  3 08:28:41 2022
-
-@author: egu
-"""
 
 from datetime import datetime,timedelta
 from pyomo.environ import SolverFactory
 import matplotlib.pyplot as plt
 
-from datahandling.fleet import EVFleet
-from datahandling.cluster import ChargerCluster
-from datahandling.multicluster import MultiClusterSystem
+from src.datafev.datahandling.fleet import EVFleet
+from src.datafev.datahandling.cluster import ChargerCluster
+from src.datafev.datahandling.multicluster import MultiClusterSystem
 
-from protocols.smartreservation.reservation import *
-from protocols.smartreservation.arrival import *
-from protocols.departure import *
-from protocols.chargingcontrol.decentralized_milp import charging_protocol
+from src.datafev.protocols.smartreservation.reservation import *
+from src.datafev.protocols.smartreservation.arrival import *
+from src.datafev.protocols.departure import *
+from src.datafev.protocols.chargingcontrol.decentralized_milp import charging_protocol
 
 #Simulation parameters
 sim_start       =datetime(2022,1,8,7)

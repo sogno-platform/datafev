@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov 19 15:24:35 2021
-
-@author: egu
-"""
 
 from pyomo.core import *
 import pyomo.kernel as pmo

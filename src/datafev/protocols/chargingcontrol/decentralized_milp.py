@@ -1,11 +1,6 @@
-"""
-Created on Thu Mar  3 17:44:32 2022
-
-@author: egu
-"""
 
 import pandas as pd
-from algorithms.cluster.rescheduling_milp import reschedule
+from src.datafev.algorithms.cluster.rescheduling_milp import reschedule
 
 def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
     """

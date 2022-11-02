@@ -1,11 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct 13 19:01:12 2022
 
-@author: egu
-"""
-
-from algorithms.cluster.prioritization_llf import leastlaxityfirst
+from src.datafev.algorithms.cluster.prioritization_llf import leastlaxityfirst
 
 def charging_protocol(ts, t_delta,system):
     """

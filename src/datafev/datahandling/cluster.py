@@ -1,14 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Mar 19 13:43:13 2021
-
-@author: egu
-"""
 
 import pandas as pd
 import numpy as np
 from datetime import datetime,timedelta
-from datahandling.charger import ChargingUnit
+from src.datafev.datahandling.charger import ChargingUnit
 
 class ChargerCluster(object):
     

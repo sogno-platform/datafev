@@ -1,11 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  8 14:50:05 2022
 
-@author: egu
-"""
-
-from datahandling.vehicle import ElectricVehicle
+from src.datafev.datahandling.vehicle import ElectricVehicle
 import pandas as pd
 
 class EVFleet(object):

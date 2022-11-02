@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov 19 15:24:35 2021
-
-@author: egu
-"""
 
 from pyomo.environ import SolverFactory
 from pyomo.core import *
@@ -11,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pyomo.kernel as pmo
 from itertools import product
-
 
 def reschedule(solver,opt_step,opt_horizon,
                bcap,inisoc,tarsoc,minsoc,maxsoc,ch_eff,ds_eff,

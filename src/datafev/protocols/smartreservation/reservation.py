@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar  9 08:25:34 2022
-
-@author: egu
-"""
 
 import pandas as pd
-from algorithms.cluster.pricing_rule import idp
-from algorithms.vehicle.routing_milp import smart_routing
+from src.datafev.algorithms.cluster.pricing_rule import idp
+from src.datafev.algorithms.vehicle.routing_milp import smart_routing
 
 def reservation_protocol(ts, tdelta, system, fleet, solver, traffic_forecast,
                          f_discount=0.05, f_markup=0.05,arbitrage_coeff=0.0):

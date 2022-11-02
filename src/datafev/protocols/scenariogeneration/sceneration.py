@@ -1,15 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 17 11:37:57 2022
-
-@author: aytugy
-"""
 
 import pandas as pd
 import numpy as np
 from datetime import timedelta
 import datetime as dt
-import protocols.scenariogeneration.utils as ut
+import src.datafev.protocols.scenariogeneration.utils as ut
 
 def generate_fleet_data_independent_times(arr_soc_dict, dep_soc_dict, ev_dict, number_of_evs_per_day,
                         startdate=dt.date(2020, 5, 17), enddate=dt.date(2020, 5, 19), timedelta_in_min=15,
@@ -34,7 +28,7 @@ def generate_fleet_data_independent_times(arr_soc_dict, dep_soc_dict, ev_dict, n
         Number of desired EVs per day for the simulation.
     startdate : datetime.date, optional
         The start date of the simulation. The default is dt.date(2020, 5, 17).
-    enddate : TYPE, datetime.date
+    enddate : datetime.date, optional
         The end date of the simulation. The default is dt.date(2020, 5, 19).
     timedelta_in_min : int, optional
         Resolution of the simulation in minutes. The default is 15.

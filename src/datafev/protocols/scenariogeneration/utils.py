@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Oct 23 11:02:22 2022
-
-@author: aytugy
-"""
 
 import pandas as pd
 from datetime import timedelta

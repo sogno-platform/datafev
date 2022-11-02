@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar  9 08:25:34 2022
 
-@author: egu
-"""
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 def reservation_protocol(ts, tdelta, system, fleet, traffic_forecast):
     """

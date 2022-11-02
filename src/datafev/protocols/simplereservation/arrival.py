@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov  08:25:34 2022
 
-@author: egu
-"""
-
-import numpy as np
 import pandas as pd
+import numpy as np
 
 def arrival_protocol(ts,tdelta,fleet):
     """

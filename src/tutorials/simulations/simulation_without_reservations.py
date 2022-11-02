@@ -1,22 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar  3 08:28:41 2022
-
-@author: egu
-"""
 
 import matplotlib.pyplot as plt
 from datetime import datetime,timedelta
 from pyomo.environ import SolverFactory
 
-from datahandling.fleet import EVFleet
-from datahandling.cluster import ChargerCluster
-from datahandling.multicluster import MultiClusterSystem
+from src.datafev.datahandling.fleet import EVFleet
+from src.datafev.datahandling.cluster import ChargerCluster
+from src.datafev.datahandling.multicluster import MultiClusterSystem
 
-from protocols.arrival import *
-from protocols.departure import *
-from protocols.chargingcontrol.decentralized_fcfs import charging_protocol as charging_protocol_fcs
-from protocols.chargingcontrol.decentralized_llf import charging_protocol as charging_protocol_llf
+from src.datafev.protocols.arrival import *
+from src.datafev.protocols.departure import *
+from src.datafev.protocols.chargingcontrol.decentralized_fcfs import charging_protocol as charging_protocol_fcs
+from src.datafev.protocols.chargingcontrol.decentralized_llf import charging_protocol as charging_protocol_llf
 
 #Simulation parameters
 sim_start       =datetime(2022,1,8,7)
@@ -24,10 +18,10 @@ sim_end         =datetime(2022,1,8,20)
 sim_length      =sim_end-sim_start
 sim_step        =timedelta(minutes=5)
 sim_horizon     =[sim_start+t*sim_step for t in range(int(sim_length/sim_step))]
-solver=SolverFactory("cplex") # User has to specify the suitable optimization solver
+solver=SolverFactory("gurobi") # User has to specify the suitable optimization solver
 
 #Simulation inputs
-inputs          = pd.ExcelFile('scenario_without_resevation.xlsx')
+inputs          = pd.ExcelFile('scenario_without_reservation.xlsx')
 input_fleet     = pd.read_excel(inputs, 'Fleet')
 input_cluster1  = pd.read_excel(inputs, 'Cluster1')
 input_capacity1 = pd.read_excel(inputs, 'Capacity1')

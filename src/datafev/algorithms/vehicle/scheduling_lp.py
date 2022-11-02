@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Apr 23 11:30:19 2021
-
-@author: egu
-"""
 
 from pyomo.core import *
 

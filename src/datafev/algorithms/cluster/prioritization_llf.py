@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Oct 12 17:24:19 2022
-
-@author: egu
-"""
 
 import pandas as pd
 

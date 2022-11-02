@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  8 16:23:42 2022
-
-@author: egu
-"""
 
 def departure_protocol(ts,fleet):
     """

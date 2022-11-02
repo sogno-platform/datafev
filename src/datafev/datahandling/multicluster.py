@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar 23 07:56:46 2021
-
-@author: egu
-"""
 
 from datetime import datetime,timedelta
 from itertools import product

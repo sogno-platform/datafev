@@ -2,14 +2,14 @@ from datetime import datetime, timedelta
 from pyomo.environ import SolverFactory
 import matplotlib.pyplot as plt
 
-from src.datafev.datahandling.fleet import EVFleet
-from src.datafev.datahandling.cluster import ChargerCluster
-from src.datafev.datahandling.multicluster import MultiClusterSystem
+from datafev.datahandling.fleet import EVFleet
+from datafev.datahandling.cluster import ChargerCluster
+from datafev.datahandling.multicluster import MultiClusterSystem
 
-from src.datafev.protocols.simplereservation.reservation import *
-from src.datafev.protocols.simplereservation.arrival import *
-from src.datafev.protocols.departure import *
-from src.datafev.protocols.chargingcontrol.decentralized_llf import charging_protocol
+from datafev.protocols.simplereservation.reservation import *
+from datafev.protocols.simplereservation.arrival import *
+from datafev.protocols.departure import *
+from datafev.protocols.chargingcontrol.decentralized_llf import charging_protocol
 
 # Simulation parameters
 sim_start = datetime(2022, 1, 8, 7)

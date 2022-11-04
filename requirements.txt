@@ -1,4 +1,6 @@
 matplotlib==3.5.1
 numpy==1.21.5
+openpyxl==3.0.9
 pandas==1.4.2
 Pyomo==6.4.1
+sphinx==4.4.0

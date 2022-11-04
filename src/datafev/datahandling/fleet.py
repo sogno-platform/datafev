@@ -1,9 +1,32 @@
-from src.datafev.datahandling.vehicle import ElectricVehicle
+from datafev.datahandling.vehicle import ElectricVehicle
 import pandas as pd
 
 
 class EVFleet(object):
+    """
+    Class to define charging demand of an EV fleet
+    """
+    
     def __init__(self, fleet_id, behavior, sim_horizon):
+        """
+        EVFleet objects are initialized by three data
+        
+
+        Parameters
+        ----------
+        fleet_id : str
+            Identifier of the fleet.
+        behavior : pd.DataFrame
+            This is the input that determines the fleet behavior.
+            It contains all necessary information defining the charging demand.
+        sim_horizon : list or pd.date_range
+            Iterable object that contains time steps in the simulation horizon.
+
+        Returns
+        -------
+        None.
+
+        """
 
         self.fleet_id = fleet_id
         self.objects = {}
@@ -59,19 +82,99 @@ class EVFleet(object):
         ##################################################################################################
 
     def enter_power_soc_table(self, table):
+        """
+        In practice, power that can be handled by EV batteries change by SOC.
+        This method is used to enter SOC dependency of the power capability of
+        the EVs in the scenario
+
+        Parameters
+        ----------
+        table : pd.DataFrame
+            TODO: Elaborate
+
+        Returns
+        -------
+        None.
+
+        """
         for ev_id, ev in self.objects.items():
             ev.pow_soc_table = table.loc[ev_id].copy()
 
     def reserving_vehicles_at(self, ts):
+        """
+        The method to query vehicles that place reservation request at a
+        particular time step in simulatio.
+
+        Parameters
+        ----------
+        ts : datetime
+            The queried time step 
+
+        Returns
+        -------
+        list
+            the list of the objects that place reservation request at ts
+
+        """
         return self.reserving_at[ts]
 
     def incoming_vehicles_at(self, ts):
+        """
+        The method to query vehicles that arrive in charger clusters at a
+        particular time step in simulation.
+
+        Parameters
+        ----------
+        ts : datetime
+            The queried time step 
+
+        Returns
+        -------
+        list
+            the list of the objects that arrive in clusters at ts
+
+        """
         return self.incoming_at[ts]
 
     def outgoing_vehicles_at(self, ts):
+        """
+        The method to query vehicles that leave charger clusters at a
+        particular time step in simulation.
+
+        Parameters
+        ----------
+        ts : datetime
+            The queried time step 
+
+        Returns
+        -------
+        list
+            the list of the objects that leave clusters at ts
+
+        """
         return self.outgoing_at[ts]
 
     def export_results(self, start, end, step, xlfile):
+        """
+        This method exports simulation results of the simulated EV fleet 
+        to xlsx.
+
+        Parameters
+        ----------
+        start : datetime.datetime
+            Start of the simulation horizon.
+        end : datetime.datetime
+            End of the simulation horizon.
+        step : datetime.timedelta
+            Length of one time step in the simulation horizon.
+        xlfile : str
+            The name of the xlsx file to export results.
+
+        Returns
+        -------
+        None.
+
+        """
 
         sim_horizon = pd.date_range(start=start, end=end, freq=step)
 

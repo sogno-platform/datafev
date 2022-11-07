@@ -88,7 +88,7 @@ def reservation_protocol(
 
             for cu_id, row in candidate_chargers_df.iterrows():
 
-                cc_id = row["Cluster"]
+                cc_id = row["cluster"]
                 ch_rate = row["max p_ch"]
                 ds_rate = row["max p_ds"]
 
@@ -121,14 +121,14 @@ def reservation_protocol(
             deptime_max = ts + candidate_chargers["deptime"].max() * tdelta
             for cu_id in candidate_chargers.index:
 
-                cc_id = candidate_chargers.loc[cu_id, "Cluster"]
+                cc_id = candidate_chargers.loc[cu_id, "cluster"]
                 cc = system.clusters[cc_id]
                 cc_power_ub = dict(enumerate(cc.upper_limit[ts:deptime_max].values))
                 cc_power_lb = dict(enumerate(cc.lower_limit[ts:deptime_max].values))
                 cc_schedule = dict(
                     enumerate(
                         (
-                            cc.aggregate_schedule_for_actual_connections(
+                            cc.query_actual_schedule(
                                 ts, deptime_max, tdelta
                             )
                         ).values
@@ -191,7 +191,7 @@ def reservation_protocol(
             ############################################################################
 
             # Outputs of Step 2
-            selected_cluster_id = candidate_chargers.loc[selected_charger_id, "Cluster"]
+            selected_cluster_id = candidate_chargers.loc[selected_charger_id, "cluster"]
             selected_cluster = system.clusters[selected_cluster_id]
             selected_charger = selected_cluster.chargers[selected_charger_id]
 

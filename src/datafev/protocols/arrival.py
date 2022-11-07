@@ -31,6 +31,7 @@ def arrival_protocol(ts, tdelta, fleet, system):
     :param tdelta:  Resolution of scheduling        timedelta
     :param fleet:   EV fleet object                 datahandling.fleet
     :param system:  Multi-cluster system object     datahandling.multicluster
+    :param logging: If True the connection status is logged
 
     """
 
@@ -62,7 +63,7 @@ def arrival_protocol(ts, tdelta, fleet, system):
             target_cluster.enter_data_of_incoming_vehicle(ts, ev, selected_charger)
 
             ev.admitted = True
-
+            
         else:
 
             # There is no available charger

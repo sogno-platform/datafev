@@ -49,7 +49,7 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
 
         cluster = system.clusters[cc_id]
 
-        if cluster.number_of_connected_chargers(ts) > 0:
+        if cluster.query_actual_occupation(ts) > 0:
             # The cluster includes connected EVs
 
             ################################################################################################

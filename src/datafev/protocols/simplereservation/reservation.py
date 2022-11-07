@@ -58,7 +58,7 @@ def reservation_protocol(ts, tdelta, system, fleet, traffic_forecast):
             # Step 2: Apply a specific reservation management strategy
             # In the simple resevation strategy, an available charger is selected randomly
             selected_charger_id = np.random.choice(list(available_chargers.index))
-            selected_cluster_id = available_chargers.loc[selected_charger_id, "Cluster"]
+            selected_cluster_id = available_chargers.loc[selected_charger_id, "cluster"]
             selected_cluster = system.clusters[selected_cluster_id]
             selected_charger = selected_cluster.chargers[selected_charger_id]
             # End: Reservation management strategy

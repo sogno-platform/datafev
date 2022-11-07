@@ -1,3 +1,24 @@
+# The datafev framework
+
+# Copyright (C) 2022,
+# Institute for Automation of Complex Power Systems (ACS),
+# E.ON Energy Research Center (E.ON ERC),
+# RWTH Aachen University
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+# Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 from datafev.datahandling.vehicle import ElectricVehicle
 import pandas as pd
 
@@ -83,14 +104,20 @@ class EVFleet(object):
 
     def enter_power_soc_table(self, table):
         """
-        In practice, power that can be handled by EV batteries change by SOC.
-        This method is used to enter SOC dependency of the power capability of
-        the EVs in the scenario
+        In practice, power that can be handled (withdrawn/injected) by EV 
+        batteries change by SOC. This method is called to enter SOC dependency 
+        data of the EVs in the scenario. SOC dependency is defined in a table.
 
         Parameters
         ----------
-        table : pd.DataFrame
-            TODO: Elaborate
+        table : pandas.DataFrame
+            This table contains all EVs SOC dependency data.
+            Each EV's data has the following parameters.
+            index --> Identifier of the SOC range
+            SOC_LB --> Lower bound of a particular SOC range
+            SOC_UB --> Upper bound of a particular SOC range
+            P_LB --> Lower bound of power capability in a particular SOC range
+            P_UB --> Upper bound of power capability in a particular SOC range
 
         Returns
         -------
@@ -125,13 +152,13 @@ class EVFleet(object):
 
         Parameters
         ----------
-        ts : datetime
-            The queried time step 
+        ts : datetime.datetime
+            The queried time step. 
 
         Returns
         -------
         list
-            the list of the objects that arrive in clusters at ts
+            the list of the objects that arrive in clusters at ts.
 
         """
         return self.incoming_at[ts]
@@ -149,24 +176,24 @@ class EVFleet(object):
         Returns
         -------
         list
-            the list of the objects that leave clusters at ts
+            the list of the objects that leave clusters at ts.
 
         """
         return self.outgoing_at[ts]
 
     def export_results(self, start, end, step, xlfile):
         """
-        This method exports simulation results of the simulated EV fleet 
-        to xlsx.
+        This method is run after simulation to analyze the simulation results 
+        related to the EV fleet. It exports simulation results to an xlsx file.
 
         Parameters
         ----------
         start : datetime.datetime
-            Start of the simulation horizon.
+            Start of the period of investigation.
         end : datetime.datetime
-            End of the simulation horizon.
+            End of the period of investigation.
         step : datetime.timedelta
-            Length of one time step in the simulation horizon.
+            Time resolution of the period of investiation.
         xlfile : str
             The name of the xlsx file to export results.
 

@@ -1,4 +1,29 @@
+# The datafev framework
+
+# Copyright (C) 2022,
+# Institute for Automation of Complex Power Systems (ACS),
+# E.ON Energy Research Center (E.ON ERC),
+# RWTH Aachen University
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+# Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 class ElectricVehicle(object):
+    """
+    Simulation model of electric vehicles
+    """
+    
     def __init__(
         self,
         carID,
@@ -10,8 +35,35 @@ class ElectricVehicle(object):
         pow_soc_table=None,
     ):
         """
-        This method initializes the car objects.
+        ElectricVehicle objects are initialized by relevant data
+        
+
+        Parameters
+        ----------
+        carId : str
+            Identifier of the EV.
+        bCapacity : float
+            Energy capacit of EV battery (kWh)
+        p_max_ch : float
+            Maximum charge power EV battery can handle (kW)
+        p_max_ds : float
+            Maximum discharge power EV battery can handle (kW)
+        minSoC : float
+            Minimum SOC that EV battery is allowed to reduce to (0<=minsoc<=1)
+        maxSoC : float
+            Maximum SOC that EV battery is allowed to reach to (0<=maxsoc<=1)
+        pow_soc_table : dataframe
+            The table that contains the power capability limits of EV batteries
+            In practice, power that can be charged/discharged by EV batteries 
+            change.
+
+        Returns
+        -------
+        None.
+
         """
+        
+        
         self.type = "Vehicle"
         self.vehicle_id = carID
         self.bCapacity = bCapacity * 3600  # kWh to kWs
@@ -28,30 +80,26 @@ class ElectricVehicle(object):
 
     def charge(self, ts, tdelta, p_in):
         """
-        ts    : datetime
-        tdelta: timedelta
-        p_in  : float
-        
-        Charge starting from ts for tdelta by p_in
-        p_in>0 charging
-        p_in<0 discharging
+        The method to enter the charging data to EV.
+
+        Parameters
+        ----------
+        ts : datetime
+            DESCRIPTION.
+        tdelta : timedelta
+            DESCRIPTION.
+        p_in : float
+            
+            Charge power to starting from ts for tdelta by p_in
+            p_in>0 charging
+            p_in<0 discharging.
+
+        Returns
+        -------
+        None.
+
         """
+        
         self.soc[ts + tdelta] = self.soc[ts] + p_in * tdelta.seconds / self.bCapacity
         self.v2g[ts] = -p_in if p_in < 0 else 0
         self.g2v[ts] = p_in if p_in > 0 else 0
-
-
-#    def request_available_charger_list(self,server,tdelta,advance_reservation=False):
-#
-#        if advance_reservation:
-#            period_start=self.t_arr_est
-#            period_end  =self.t_dep_est
-#            period_step =tdelta
-#        else:
-#            period_start=self.t_arr_real
-#            period_end  =self.t_dep_est
-#            period_step =tdelta
-#
-#        available_chargers=server.get_available_chargers(period_start,period_end,period_step)
-#
-#        return available_chargers

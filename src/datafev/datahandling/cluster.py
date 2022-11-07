@@ -1,3 +1,25 @@
+# The datafev framework
+
+# Copyright (C) 2022,
+# Institute for Automation of Complex Power Systems (ACS),
+# E.ON Energy Research Center (E.ON ERC),
+# RWTH Aachen University
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+# Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -5,12 +27,36 @@ from src.datafev.datahandling.charger import ChargingUnit
 
 
 class ChargerCluster(object):
+    """
+    A charger cluster consists of X number of charging units. It is considered 
+    to be the lower aggregation level in the datafev framework. A single entity 
+    (e.g., a charging station operator, micro-grid controller, aggregator) is 
+    responsible for management of a cluster. 
+    """
+    
     def __init__(self, cluster_id, topology_data):
+        """
+        Clusters are defined by the EV chargers that they consist of.
+
+        Parameters
+        ----------
+        cluster_id : str
+            String identifier of the cluster.
+        topology_data : pandas.DataFrame
+            A table containing 1) string identifiers, 2) maximum charge powers,
+            3) maximum discharge powers, 4) power conversion efficiencies of
+            charging units in the cluster.
+
+        Returns
+        -------
+        None.
+
+        """
 
         self.type = "CC"
         self.id = cluster_id
 
-        self.power_installed = 0  # Total installed power of the CUs in the cluster
+        self.power_installed = 0  # Total installed power of the CUs 
 
         self.cc_dataset = pd.DataFrame(
             columns=[
@@ -56,31 +102,103 @@ class ChargerCluster(object):
 
     def add_cu(self, charging_unit):
         """
-        To add charging units to the cluster. This method is run before running the simulations.
+        This method is run at initialization of the cluster object.
+        It adds charging units to the cluster.
+
+        Parameters
+        ----------
+        charging_unit : ChargingUnit
+            A charging unit object.
+
+        Returns
+        -------
+        None.
+
         """
+        
         self.power_installed += charging_unit.p_max_ch
         self.chargers[charging_unit.id] = charging_unit
 
-    def set_peak_limits(self, start, end, step, peaklimits, violation_tolerance=0):
+    def enter_power_limits(self, start, end, step, limits, tolerance=0):
         """
-        Method to enter peak power constraint as time series
+        This method enters limits (lower and upper) for aggregate net power
+        consumption of the cluster within a specific period.
+        It is often run at the begining of simulation. However, it is possible
+        to call this method multiple times during the simulation to update 
+        the peak power limits of the cluster.
+        
+        Parameters
+        ----------
+        start : datetime.datetime 
+            Start of the period for which the limits are set.
+        end : datetime.datetime
+            End of the period for which the limits are set.
+        step : datetime.timedelta
+            Time resolution of the target period.
+        limits : pandas.DataFrame
+            Time indexed table indicating the lower and upper limits.
+            index --> Identifier of time steps
+            LB --> Lower bound of consumption limit at a particular time step
+            UB --> Lower bound of consumption limit at a particular time step
+        tolerance : float, optional
+            It is possible to specify a tolerance range (kW) for violation of
+            the given limits. If specified, the net consumption of the cluster
+            is allowed to be larger than the upper limit or smaller than the 
+            lower limit but such violation should not exceed 'tolerance'. The
+            default is 0.
+
+        Returns
+        -------
+        None.
+
         """
 
-        roundedts = peaklimits["TimeStep"].dt.round("S")
+        roundedts = limits["TimeStep"].dt.round("S")
 
-        capacity_lb = pd.Series(peaklimits["LB"].values, index=roundedts)
-        capacity_ub = pd.Series(peaklimits["UB"].values, index=roundedts)
+        _lb = pd.Series(limits["LB"].values, index=roundedts)
+        _ub = pd.Series(limits["UB"].values, index=roundedts)
 
         n_of_steps = int((end - start) / step)
         timerange = [start + t * step for t in range(n_of_steps + 1)]
 
-        upper = capacity_ub.reindex(timerange)
-        lower = capacity_lb.reindex(timerange)
+        lower = _lb.reindex(timerange)        
+        upper = _ub.reindex(timerange)
+        
         self.upper_limit = upper.fillna(upper.fillna(method="ffill"))
         self.lower_limit = lower.fillna(lower.fillna(method="ffill"))
-        self.violation_tolerance = violation_tolerance
+        self.violation_tolerance = tolerance
 
     def reserve(self, ts, res_from, res_until, ev, cu, contract=None):
+        """
+        This method reserves a charging unit for an EV for a specific period.
+        It is usually called in execution of reservation protocol. However, it 
+        is called also in execution of arrival protocol in scenarios without
+        advance reservations.
+        
+
+        Parameters
+        ----------
+        ts : datetime.datetime
+            Current time (i.e., when the reservation is placed).
+        res_from : datetime.datetime
+            Start of the reservation period.
+        res_until : datetime.datetime
+            End of the reservation period.
+        ev : ElectricVehicle
+            Reserving electric vehicle.
+        cu : ChargingUNit
+            Reserved charging unit.
+        contract : dictionary, optional
+            datafev framework distinguishes two types of reservations.
+            Simple reservations only indicate a reservation period. 
+            Smart reservations include schedules and optionally price details.
+            The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
 
         reservation_id = len(self.re_dataset) + 1
         ev.reservation_id = reservation_id
@@ -127,13 +245,65 @@ class ChargerCluster(object):
                     )
 
     def unreserve(self, ts, reservation_id):
+        """
+        This method cancels a particular reservation. It is usually called 
+        in execution of departure protocols. 
+
+        Parameters
+        ----------
+        ts : datetime.datetime
+            Current time.
+        reservation_id : str
+            Identifier of the reservation to be cancelled.
+
+        Returns
+        -------
+        None.
+
+        """
         self.re_dataset.loc[reservation_id, "Cancelled At"] = ts
         self.re_dataset.loc[reservation_id, "Active"] = False
+        
+    def uncontrolled_supply(self, ts, step):
+        """
+        This method is run to execute the uncontrolled charging behavior.
+
+        Parameters
+        ----------
+        ts : datetime.datetime
+            Current time.
+        step : datetime.timedelta
+            Length of time step..
+
+        Returns
+        -------
+        None.
+        """
+        
+        for cu_id, cu in self.chargers.items():
+            if cu.connected_ev != None:
+                cu.uncontrolled_supply(ts, step)
 
     def enter_data_of_incoming_vehicle(self, ts, ev, cu):
         """
-        To add an entry in cc_dataset for the incoming EV. This method is run when a car is allocated to a charger.
+        This method adds an entry in cc_dataset for the incoming EV. It is 
+        called in execution of arrival protocols.
+
+        Parameters
+        ----------
+        ts : datetime.datetime
+            Current time.
+        ev : ElectricVehicle
+            Electric vehicle object.
+        cu : ChargingUnit
+            Charging unit object.
+
+        Returns
+        -------
+        None.
+
         """
+
         cc_dataset_id = len(self.cc_dataset) + 1
         ev.cc_dataset_id = cc_dataset_id
         ev.connected_cc = self
@@ -158,6 +328,23 @@ class ChargerCluster(object):
         )
 
     def enter_data_of_outgoing_vehicle(self, ts, ev):
+        """
+        This method enters the data about the charging event to the cc_dataset 
+        for an outgoing EV. It is usually called in execution of departure 
+        protocols.
+
+        Parameters
+        ----------
+        ts : datetime.datetime
+            Current time.
+        ev : ElectricVehicle
+            Electric vehicle object.
+
+        Returns
+        -------
+        None.
+
+        """
 
         self.cc_dataset.loc[ev.cc_dataset_id, "Leave Time"] = ts
         self.cc_dataset.loc[ev.cc_dataset_id, "Leave SOC"] = ev.soc[ts]
@@ -175,10 +362,32 @@ class ChargerCluster(object):
         ev.cc_dataset_id = None
         ev.connected_cc = None
 
-    def aggregate_schedule_for_actual_connections(self, start, end, step):
+    def query_actual_schedule(self, start, end, step):
         """
-        To retrieve the actual schedules of the charging units for the specified period 
+        This method retrieves the aggregate schedule of the cluster for a 
+        specific query (future) period considering actual schedules of the 
+        charging units. It is usually run in execution of reservation protocol.
+        
+
+        Parameters
+        ----------
+        start : datetime.datetime
+            Start of queried period (EV's estimated arrival at this cluster).
+        end : datetime.datetime
+            End of queried period (EV's estimated arrival at this cluster).
+        step : datetime.timedelta
+            Time resolution in the queried period.
+
+        Returns
+        -------
+        cc_sch : pandas.Series
+            Time indexed power schedule of cluster.
+            Each index indicates a time step in the queried period.
+            Each value indicates how much power the cluster should consume
+            (kW) during a particular time step (i.e. index value).
+
         """
+
         time_index = pd.date_range(start=start, end=end, freq=step)
         cu_sch_df = pd.DataFrame(index=time_index)
 
@@ -207,10 +416,23 @@ class ChargerCluster(object):
 
         return cc_sch
 
-    def number_of_connected_chargers(self, ts):
+    def query_actual_occupation(self, ts):
         """
-        This function identifies chargers with occupancy for the specified period 
+        This function identifies currently occupied chargers. It  is usually
+        called in execution of arrival protocols.
+
+        Parameters
+        ----------
+        ts : datetime.datetime
+            Current time.
+
+        Returns
+        -------
+        nb_of_connected_cu : int
+            Number of occupied chargers.
+
         """
+
         nb_of_connected_cu = 0
         for cu_id, cu in self.chargers.items():
             if cu.connected_ev != None:
@@ -219,16 +441,30 @@ class ChargerCluster(object):
 
     def query_availability(self, start, end, step):
         """
-        This function creates a dataframe containing the data of the available chargers within a specific period.
+        This function creates a dataframe containing the data of the 
+        available chargers for a specific period. It is usually called in 
+        execution of reservation protocols.
+        
 
-        Inputs
-        ------------------------------------------------------------------------------------------------------------
-        start    : start of queried period (EV's estimated arrival at this cluster)              datetime
-        end      : end of queried period (EV's estimated departure from this cluster)            datetime
-        step     : time resolution of query                                                      timedelta
-        ------------------------------------------------------------------------------------------------------------
+        Parameters
+        ----------
+        start : datetime.datetime
+            Start of queried period (EV's estimated arrival at this cluster).
+        end : datetime.datetime
+            End of queried period (EV's estimated arrival at this cluster).
+        step : datetime.timedelta
+            Time resolution in the queried period.
+
+        Returns
+        -------
+        available_chargers : pandas.DataFrame
+            Table containing the data of available chargers.
+            index--> string identifier 
+            max p_ch --> maximum charge power
+            max p_ds --> maximum discharge power
+            eff --> power conversion efficiency of the charger.
+
         """
-
         available_chargers = pd.DataFrame(
             columns=["max p_ch", "max p_ds", "eff"], dtype=np.float16
         )
@@ -278,18 +514,64 @@ class ChargerCluster(object):
 
         return available_chargers
 
-    def uncontrolled_supply(self, ts, step):
-        for cu_id, cu in self.chargers.items():
-            if cu.connected_ev != None:
-                cu.uncontrolled_supply(ts, step)
 
-    def import_profile(self, start, end, step):
+    def analyze_import_profile(self, start, end, step):
+        """
+        This method is run after simulation to analyze the power consumption
+        profile of the chargers in the cluster.
+
+        Parameters
+        ----------
+        start : datetime
+            Start of the period of investigation.
+        end : datetime
+            End of the period of investigation.
+        step : timedelta
+            Time resolution of the period of investiation.
+
+        Returns
+        -------
+        df : pandas.DataFrame
+            Table contining the power consumption profiles of chargers.
+            Each index indicates a time step in the investigated period.
+            Columns indicate the charger identifiers.
+            The value of a single cell in this table indicates the power (kW) 
+            that the a particular charger imports (p>0) or exports (p<0) from 
+            or to the grid in a particular time step.
+
+        """
+        
         df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step))
         for cu_id, cu in self.chargers.items():
             df[cu_id] = (cu.consumed_power.reindex(df.index)).fillna(0)
         return df
 
-    def occupation_profile(self, start, end, step):
+    def analyze_occupation_profile(self, start, end, step):
+        """
+        This method is run after simulation to analyze the occupation profile 
+        of the cluster.
+
+        Parameters
+        ----------
+        start : datetime
+            Start of the period of investigation.
+        end : datetime
+            End of the period of investigation.
+        step : timedelta
+            Time resolution of the period of investiation.
+
+        Returns
+        -------
+        record : pandas.Series
+            Time indexed occupation record.
+            Each index indicates a time step in the investigated period.
+            Columns indicate the charger identifiers
+            The value of a single cell in this table indicates whether a 
+            particular charger has (1) or has no (0) connected EV a particular 
+            time step.
+
+        """
+              
         df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step))
         for cu_id, cu in self.chargers.items():
             df[cu_id] = (
@@ -298,6 +580,26 @@ class ChargerCluster(object):
         return df
 
     def export_results(self, start, end, step, xlfile):
+        """
+        This method is run after simulation to analyze the simulation results 
+        related to the  cluster. It exports simulation results to an xlsx file.
+
+        Parameters
+        ----------
+        start : datetime.datetime
+            Start of the period of investigation.
+        end : datetime.datetime
+            End of the period of investigation.
+        step : datetime.timedelta
+            Time resolution of the period of investiation.
+        xlfile : str
+            The name of the xlsx file to export results.
+
+        Returns
+        -------
+        None.
+
+        """
 
         with pd.ExcelWriter(xlfile) as writer:
 

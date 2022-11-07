@@ -515,7 +515,7 @@ class ChargerCluster(object):
         return available_chargers
 
 
-    def analyze_import_profile(self, start, end, step):
+    def analyze_consumption_profile(self, start, end, step):
         """
         This method is run after simulation to analyze the power consumption
         profile of the chargers in the cluster.
@@ -606,11 +606,11 @@ class ChargerCluster(object):
             ds = self.cc_dataset
             ds.to_excel(writer, sheet_name="ClusterDataset")
 
-            p_cu = self.import_profile(start, end, step)
+            p_cu = self.analyze_consumption_profile(start, end, step)
             p_cu["Total"] = p_cu.sum(axis=1)
             p_cu.to_excel(writer, sheet_name="UnitConsumption")
 
-            o_cu = self.occupation_profile(start, end, step)
+            o_cu = self.analyze_occupation_profile(start, end, step)
             o_cu["Total"] = o_cu.sum(axis=1)
             o_cu.to_excel(writer, sheet_name="UnitOccupation")
 

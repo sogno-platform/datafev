@@ -52,6 +52,7 @@ class EVFleet(object):
         self.fleet_id = fleet_id
         self.objects = {}
         self.reserving_at = dict([(t, []) for t in sim_horizon])
+        self.reserving_at[None] = []
         self.incoming_at = dict([(t, []) for t in sim_horizon])
         self.outgoing_at = dict([(t, []) for t in sim_horizon])
         self.outgoing_at[None] = []
@@ -81,7 +82,13 @@ class EVFleet(object):
             ev.soc[ev.t_arr_real] = ev.soc_arr_real
 
             self.objects[evID] = ev
-            self.reserving_at[ev.t_res].append(ev)
+            
+            if pd.isna(ev.t_res):
+                self.reserving_at[None].append(ev)
+            else:
+                self.reserving_at[ev.t_res].append(ev)
+            
+           
             self.incoming_at[ev.t_arr_real].append(ev)
 
             if pd.isna(ev.t_dep_real):

@@ -290,8 +290,8 @@ class MultiClusterSystem(object):
                 ds = cc.cc_dataset.copy()
                 cluster_datasets.append(ds)
 
-                con_cu_dict[cc_id] = cc.import_profile(start, end, step)
-                occ_cu_dict[cc_id] = cc.occupation_profile(start, end, step)
+                con_cu_dict[cc_id] = cc.analyze_consumption_profile(start, end, step)
+                occ_cu_dict[cc_id] = cc.analyze_occupation_profile(start, end, step)
 
                 unfulfilled_g2v_ser = ds["Scheduled G2V [kWh]"] - ds["Net G2V [kWh]"]
                 unscheduled_v2g_ser = ds["Total V2G [kWh]"] - ds["Scheduled V2G [kWh]"]

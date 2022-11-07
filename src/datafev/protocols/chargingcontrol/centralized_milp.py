@@ -131,6 +131,8 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
                     # with a schedule of
                     sch_inst = cu.active_schedule_instance
                     cu_sch = cu.schedule_soc[sch_inst]
+                    if cu_sch.index.max()<schedule_horizon.min():
+                        cu_sch[schedule_horizon.min()]=cu_sch[cu_sch.index.max()] 
                     cu_sch = cu_sch.reindex(schedule_horizon)
                     cu_sch = cu_sch.fillna(method="ffill")
 

@@ -1,9 +1,8 @@
 <img src="https://fein-aachen.org/img/logos/pycity_scheduling.png" width="150"/>
 
-# pycity_scheduling
+# datafev
 
-Python package pycity_scheduling is a framework for the effective development, testing, and assessment of optimization-based power scheduling algorithms for local multi-energy systems in city districts.
-The framework primarily targets the elaboration of coordination concepts that can efficiently solve the power dispatch problem on the city district level.
+Python package datafev is a framework for the development, testing, and assessment of managemant algorithms for EV charging scenarios. The framework allows to develop scenario-oriented management strategies. It includes a portfolio of optimization- and rule-based algorithms to coordinate charging and routing operations in clustered charging systems. Furthermore, it provides statistical scenario generation tool to create EV fleet demand profiles.
 Its target users are researchers in the field of smart grid applications and the deployment of operational flexibility for local energy systems.
 
 
@@ -278,13 +277,14 @@ Also see the pycity_base package's tutorials for the basic usage of the framewor
 
 ## License
 
-The pycity_scheduling package is released by the Institute for Automation of Complex Power Systems (ACS), E.ON Energy Research Center (E.ON ERC), RWTH Aachen University under the [MIT License](https://opensource.org/licenses/MIT).
+The datafev package is released by the Institute for Automation of Complex Power Systems (ACS), E.ON Energy Research Center (E.ON ERC), RWTH Aachen University under the [MIT License](https://opensource.org/licenses/MIT).
 
 
 ## Contact
 
-- Sebastian Schwarz, M.Sc. <sebastian.schwarz@eonerc.rwth-aachen.de>
-- Sebastian Alexander Uerlich, B.Sc. <sebastian.uerlich@rwth-aachen.de>
+- Erdem Gümrükcü, M.Sc. <erdem.guemruekcue@eonerc.rwth-aachen.de>
+- Amir Ahmadifar, M.Sc. <aahmadifar@eonerc.rwth-aachen.de>
+- Aytug Yavuzer, B.Sc. <aytug.yavuzer@rwth-aachen.de>
 - Univ.-Prof. Antonello Monti, Ph.D. <post_acs@eonerc.rwth-aachen.de>
 
 [Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de) \

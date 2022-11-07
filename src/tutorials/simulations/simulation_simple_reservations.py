@@ -34,7 +34,7 @@ from datafev.protocols.chargingcontrol.decentralized_llf import charging_protoco
 
 # Simulation parameters
 sim_start = datetime(2022, 1, 8, 7)
-sim_end = datetime(2022, 1, 8, 20)
+sim_end = datetime(2022, 1, 8, 14)
 sim_length = sim_end - sim_start
 sim_step = timedelta(minutes=5)
 sim_horizon = [sim_start + t * sim_step for t in range(int(sim_length / sim_step))]
@@ -65,21 +65,20 @@ system = MultiClusterSystem("multicluster")
 system.add_cc(cluster1)
 system.add_cc(cluster2)
 system.add_cc(cluster3)
-system.set_tou_price(tou_tariff, sim_step)
 
 fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
 #######################################################################
 
 #######################################################################
 # Additional parameters for charging management protocol
-cluster1.set_peak_limits(sim_start, sim_end, sim_step, input_capacity1)
-cluster2.set_peak_limits(sim_start, sim_end, sim_step, input_capacity2)
-cluster3.set_peak_limits(sim_start, sim_end, sim_step, input_capacity3)
-system.set_peak_limits(sim_start, sim_end, sim_step, input_capacityT)
 
-rho_y = {"cluster1": 1, "cluster2": 1, "cluster3": 1}
-rho_eps = {"cluster1": 1, "cluster2": 1, "cluster3": 1}
-penalty_parameters = {"rho_y": rho_y, "rho_eps": rho_eps}
+# Power limits of individual clusters
+cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
+cluster2.enter_power_limits(sim_start, sim_end, sim_step, input_capacity2)
+cluster3.enter_power_limits(sim_start, sim_end, sim_step, input_capacity3)
+
+# Power limit of the multicluster system
+system.enter_power_limits(sim_start, sim_end, sim_step, input_capacityT)
 #######################################################################
 
 #######################################################################
@@ -122,22 +121,18 @@ for ts in sim_horizon:
 
 #######################################################################
 # Printing the results to excel files
-system.export_results(
-    sim_start, sim_end, sim_step, "result_simplereservation_clusters.xlsx"
-)
-fleet.export_results(
-    sim_start, sim_end, sim_step, "result_simplereservation_fleet.xlsx"
-)
+system.export_results(sim_start, sim_end, sim_step, "result_simplereservation_clusters.xlsx")
+fleet.export_results(sim_start, sim_end, sim_step, "result_simplereservation_fleet.xlsx")
 #######################################################################
 
 print("Aggregate consumption and occupation profiles of the clusters are plotted")
-clu1_pow = cluster1.import_profile(sim_start, sim_end, sim_step).sum(axis=1)
-clu2_pow = cluster2.import_profile(sim_start, sim_end, sim_step).sum(axis=1)
-clu3_pow = cluster3.import_profile(sim_start, sim_end, sim_step).sum(axis=1)
+clu1_pow = cluster1.analyze_consumption_profile(sim_start, sim_end, sim_step).sum(axis=1)
+clu2_pow = cluster2.analyze_consumption_profile(sim_start, sim_end, sim_step).sum(axis=1)
+clu3_pow = cluster3.analyze_consumption_profile(sim_start, sim_end, sim_step).sum(axis=1)
 
-clu1_occ = cluster1.occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
-clu2_occ = cluster2.occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
-clu3_occ = cluster3.occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
+clu1_occ = cluster1.analyze_occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
+clu2_occ = cluster2.analyze_occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
+clu3_occ = cluster3.analyze_occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
 
 fig1, ax1 = plt.subplots(2, 1, tight_layout=True)
 fig1.suptitle("cluster1")

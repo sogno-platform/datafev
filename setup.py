@@ -21,11 +21,11 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER I
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import os
 import setuptools
+from pathlib import Path
 
+long_description = (Path(__file__).parent / "README.md").read_text()
 
-os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 with open('README.md') as f:
     long_description = f.read()
@@ -40,7 +40,8 @@ setuptools.setup(
     author_email="post_acs@eonerc.rwth-aachen.de",
     url="https://git.rwth-aachen.de/acs/public/automation/datafev",
     license="MIT",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(where="src"),
+    package_dir={"": "src"},
     #package_data={"pycity_scheduling": ["data/*.txt"], "examples": ["*.ipynb"]},
     #data_files=[(".", ["LICENSE.txt", "README.md"])],
     install_requires=[
@@ -51,9 +52,9 @@ setuptools.setup(
 		"pyomo==6.4.1",
 		"sphinx==4.4.0",
     ],
-    extras_require={
-        "test": ["pytest==6.2.4"]
-    },
+    # extras_require={
+    #     "test": ["pytest==6.2.4"]
+    # },
     platforms="any",
     long_description=long_description,
     long_description_content_type='text/markdown',

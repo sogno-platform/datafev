@@ -22,30 +22,46 @@
 import pandas as pd
 
 
-def leastlaxityfirst(
-    inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit
-):
+def leastlaxityfirst(inisoc, tarsoc, bcap, efficiency, 
+                     p_socdep, p_chmax, p_re, leadtime, upperlimit):
     """
-    This function prioritizes the charging operations of a cluster by considering the arrival times.
+    This is a control algorithm that manages the real-time charging rates of
+    the EV chargers in a cluster under given power limits. The control is 
+    based on the least-laxity-first rule prioritizing urgent demands.
+    
 
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    inisoc      : initial SOCs of EV batteries                                                  dict of float
-    tarsoc      : target SOCs of EV batteries                                                   dict of float
-    bcap        : battery capactiy of EVs (kWs)                                                 dict of float
-    efficiency  : power conversion efficiencies of chargers                                     dict of float
-    p_socdep    : SOC dependency of power capability of EV batteries                            dict of dict
-    p_chmax     : maximum charge power capabilities of EVs without p_socdep                     dict of float
-    p_request   : powers requested by EVs                                                       dict of float
-    leadtime    : how long EVs are expected to stay connected (seconds)                         dict of float
-    upperlimit  : upper limit of cluster power consumption (kW)                                 float
+    Parameters
+    ----------
+    inisoc : dict of float
+        Initial SOCs of EV batteries (0<inisoc[key]<1).
+    tarsoc : dict of float
+        Target SOCs of EVs (0<inisoc[key]<1).
+    bcap : dict of float
+        Battery capactiy of EVs (kWs).
+    efficiency : dict of float
+        Power conversion efficiencies of chargers.
+    p_socdep : dict of dict
+        SOC dependency of power capability of EV batteries. Dictionary values
+        are dictionaries for a single EV in the cluster. In the EV dictionaries
+        a key indicates a particular SOC range. An SOC range is defined by 
+        lower (SOC_LB) and upper bound of the SOC range(SOC_UB). The power that 
+        the EV battery can accept (kW) in a particular SOC range is indicated
+        by the value of 'P_UB'. 
+    p_chmax : dict of float
+        Maximum charge power capabilities of EVs (kW).
+    p_re : dict of float
+        Power requested by EVs (kW).
+    leadtime : dict of int
+        How long EVs are expected to stay connected (seconds).
+    upperlimit : dict of float
+        Upper limit of cluster power consumption (kW) .
 
-    ------------------------------------------------------------------------------------------------------------------
+    Returns
+    -------
+    p_charge : dict of float
+        Dictionary containing the charge power (kW) to each EV connected
+        in the cluster.
 
-    Outputs
-    ------------------------------------------------------------------------------------------------------------------
-    p_charge    : power that will be delivered to EVs witin the current control horizon         dict
-    ------------------------------------------------------------------------------------------------------------------
     """
 
     # This will contain the laxity of EVs
@@ -220,51 +236,59 @@ if __name__ == "__main__":
     leadtime = {}
     inisoc = {}
     p_socdep = {}
+    
     for n in range(1, N + 1):
+        
+        #EV IDs
         evid = "EV" + str(n)
 
-        p_chmax[evid] = PEV  # Maximum charge power to EV
-        efficiency[evid] = ch_eff  # Efficiency
-        bcap[evid] = CAP  # Battery capacity
-        inisoc[evid] = np.random.uniform(
-            low=0.4, high=0.8
-        )  # Current SOCs are between 40%-60%
-        tarsoc[evid] = 0.9  # Target SOCs are 90%
-        leadtime[evid] = np.random.uniform(
-            low=sch_horizon, high=sch_horizon * 2
-        )  # EVs have 5-10 min till departure
-        p_socdep[evid] = pow_soc_dep_table  # SOC dependency table
+        # Maximum charge power to EV
+        p_chmax[evid] = PEV
+        
+        # Conversion efficiency
+        efficiency[evid] = ch_eff  
+        
+        # Battery capacity (given in kWs)
+        bcap[evid] = CAP  
+        
+        # Current SOCs are between 40%-60%
+        inisoc[evid] = np.random.uniform(low=0.4, high=0.8)  
+        
+        # Target SOCs are 90%
+        tarsoc[evid] = 0.9 
+        
+        # EVs have 5-10 min till departure. 
+        # The values are given in number of time steps until departure times
+        leadtime[evid] = int(np.random.uniform(low=sch_horizon, 
+                                               high=sch_horizon * 2))  
+        
+        # SOC dependency of power capability of EV batteries
+        p_socdep[evid] = pow_soc_dep_table  
 
-        # Electric vehicles want to consume the maximum amount of power feasible in this SOC range
+        # EVs want to consume the maximum feasible power in their SOC range
         table = pd.DataFrame(pow_soc_dep_table).T
-        inisoc_range = (
-            table[(table["SOC_LB"] <= inisoc[evid]) & (inisoc[evid] < table["SOC_UB"])]
-        ).index[0]
+        inisoc_range = (table[(table["SOC_LB"] <= inisoc[evid]) 
+                              & (inisoc[evid] < table["SOC_UB"])]).index[0]
         p_re[evid] = min(PEV, table.loc[inisoc_range, "P_UB"])
 
-    print("The cluster with total installed capacity of:", N * PEV)
+    print("The cluster with total installed capacity of:", N * PEV,"kW")
     print()
-    print("...has a power limit of:", upperlimit)
+    print("...has a power limit of:", upperlimit,"kW")
     print()
+    
+    print("...controlling the real-time chaging rates of the EVs with charging demands:")
+    inputs = pd.DataFrame(columns=["Current SOC","Target SOC","Estimate Departure"])
+    inputs["Current SOC"] = pd.Series(inisoc)
+    inputs["Target SOC"] = pd.Series(tarsoc)
+    inputs["Estimate Departure"] = pd.Series(leadtime)
+    print(inputs)
+    print()
+    
+    print("Executing the control algorithm...")
+    p_ref = leastlaxityfirst(inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit)
 
-    print(
-        "...controlling the real-time chaging rates of the EVs with charging demands:"
-    )
-    p_ref = leastlaxityfirst(
-        inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit
-    )
-
-    demand_data = pd.DataFrame(
-        columns=[
-            "Initial SOC",
-            "Target SOC",
-            "Estimated Departure",
-            "Controlled Consumption",
-        ]
-    )
-    demand_data["Initial SOC"] = pd.Series(inisoc)
-    demand_data["Target SOC"] = pd.Series(tarsoc)
-    demand_data["Estimated Departure"] = pd.Series(leadtime)
-    demand_data["Controlled Consumption"] = pd.Series(p_ref)
-    print((demand_data.sort_values(by=["Estimated Departure", "Initial SOC"])))
+    print("Resulting profile:")
+    result=inputs.copy()    
+    result["Controlled Consumption"] = pd.Series(p_ref)
+    print(result)
     print()

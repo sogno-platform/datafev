@@ -45,36 +45,63 @@ def reschedule(
 ):
     """
     This function reschedules the charging operations of a cluster by considering
-    1) upper-lower limits of aggregate power consumption of the cluster
+    1) upper-lower limits of aggregate power consumption of the cluster.
     2) pre-defined reference schedules of the individual EVs in the system.
-    This is run typically when some events require deviations from previously determined schedules.
+    This is run typically when some events require deviations from previously 
+    determined schedules.
+    
 
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    solver      : optimization solver                                           pyomo SolverFactory object
-    opt_step    : size of one time step in the optimization (seconds)           int
-    opt_horizon : time step identifiers in the optimization horizon             list of integers
-    upperlimit  : soft upper limit of cluster power consumption (kW series)     dict of float
-    lowerlimit  : soft lower limit of cluster power consumption (kW series)     dict of float
-    tolerance   : maximum allowed violation of oth upper-lower limits (kW)      float
-    bcap        : battery capactiy of EVs (kWs)                                 dict of float
-    inisoc      : initial SOCs of EV batteries                                  dict of float
-    tarsoc      : target SOCs of EV batteries                                   dict of float
-    minsoc      : minimum allowed SOCs                                          dict of float
-    maxsoc      : maximum allowed SOCs                                          dict of float
-    ch_eff      : charging efficiency of chargers                               dict of float
-    ds_eff      : discharging efficiency of chargers                            dict of float
-    pmax_pos    : maximum charge power that EV can take                         dict of float
-    pmax_neg    : maximum discharge power that EV can supply                    dict of float
-    rho_y       : penalty factor for deviation of reference schedules           float
-    rho_eps     : penalty factor for violation of upper-lower soft limits       float
-    ------------------------------------------------------------------------------------------------------------------
+    Parameters
+    ----------
+    solver : pyomo SolverFactory object
+        Optimization solver.
+    opt_step : int
+        Size of one time step in the optimization (seconds).
+    opt_horizon : list of integers
+        Time step identifiers in the optimization horizon.
+    upperlimit :  dict of float
+        Soft upper limit of cluster power consumption (kW).
+    lowerlimit :  dict of float
+        Soft lower limit of cluster power consumption (kW).
+    tolerance : float
+        Maximum allowed violation of oth upper-lower limits (kW).
+    bcap : dict of float
+        Battery capactiy of EVs (kWs).
+    inisoc : dict of float
+        Initial SOCs of EV batteries (0<inisoc[key]<1).
+    tarsoc : dict of float
+        Target SOCs of EVs (0<inisoc[key]<1).
+    minsoc : dict of float
+        Minimum allowed SOCs.
+    maxsoc : dict of float
+        Maximum allowed SOCs .
+    ch_eff : dict of float
+        Charging efficiency of chargers.
+    ds_eff : dict of float
+        Discharging efficiency of chargers.
+    pmax_pos : dict of float
+        Maximum charge power that EV battery can withdraw (kW).
+    pmax_neg : dict of float
+        Maximum discharge power that EV battery can supply (kW).
+    deptime : TYPE
+        DESCRIPTION.
+    rho_y : float
+        Penalty factor for deviation of reference schedules (unitless).
+    rho_eps : float
+        Penalty factor for violation of upper-lower soft limits (unitless).
 
-    Outputs
-    ------------------------------------------------------------------------------------------------------------------
-    p_schedule  : timeseries of new charging schedule                           dict
-    s_schedule  : timeseries of new reference SOC trajectory                    dict
-    ------------------------------------------------------------------------------------------------------------------
+    Returns
+    -------
+    p_schedule : dict
+        Power schedule. 
+        It contains a dictionary for each EV. Each item in the EV dictionary 
+        indicates the power to be supplied to the EV(kW) during a particular 
+        time step.
+    s_schedule : dict
+        SOC schedule.    
+        It contains a dictionary for each EV. Each item in the EV dictionary 
+        indicates the SOC to be achieved by the EV by a particular time step.
+        
     """
 
     ###########################################################################
@@ -229,21 +256,12 @@ def reschedule(
 
     model.indev_neg = Constraint(model.V, rule=individual_neg_deviation)
 
+    # OBJECTIVE FUNCTION    
     def obj_rule(model):
         return (
             model.rho_y * (sum(model.y[v] * model.E[v] / 3600 for v in model.V))
             + model.rho_eps * model.eps
-        )
-
-    # OBJECTIVE FUNCTION
-    """
-    def obj_rule(model):  
-        return model.rho_y*\
-               sum((model.s_ref[v]-model.s[v,max(horizon)])*
-                   (model.s_ref[v]-model.s[v,max(horizon)]) 
-                   for v in model.V)\
-               +model.rho_eps*model.eps
-    """
+        )   
     model.obj = Objective(rule=obj_rule, sense=minimize)
 
     ###########################################################################
@@ -275,6 +293,8 @@ if __name__ == "__main__":
     import numpy as np
     from pyomo.environ import SolverFactory
 
+    ###########################################################################
+    #Import parameters
     PCU = 11
     eff = 1.0
     N = 4
@@ -323,10 +343,14 @@ if __name__ == "__main__":
 
     rho_y = 1
     rho_eps = 1
+    ###########################################################################
+
+    #To show only two decimals in the table
+    pd.options.display.float_format = "{:,.2f}".format
 
     print("The cluster with total installed capacity of:", N * PCU)
     print()
-    print("...has a power limit of:")
+    print("...has power limits of:")
     limit_data = pd.DataFrame(
         columns=["Upper Limit", "Lower Limit", "Violation Tolerance"]
     )
@@ -336,7 +360,7 @@ if __name__ == "__main__":
     print(limit_data)
     print()
 
-    print("...optimizing the charging profiles of the EVs with charging demands:")
+    print("...must control the charging profiles of the EVs with the demands:")
     demand_data = pd.DataFrame(
         columns=["Battery Capacity", "Initial SOC", "Target SOC", "Estimated Departure"]
     )
@@ -347,7 +371,8 @@ if __name__ == "__main__":
     print(demand_data)
     print()
 
-    print("Optimized charging profiles:")
+    
+    print("Solving the optimization problem...")
     p_ref, s_ref = reschedule(
         solver,
         opt_step,
@@ -368,10 +393,13 @@ if __name__ == "__main__":
         rho_y,
         rho_eps,
     )
+    print()
 
+   
+    print("Printing optimal schedules:")
     results = {}
     for v in demand_data.index:
-        results[v] = pd.DataFrame(columns=["P", "S"], index=sorted(s_ref[v].keys()))
-        results[v]["P"] = pd.Series(p_ref[v])
-        results[v]["S"] = pd.Series(s_ref[v])
+        results[v] = pd.DataFrame(columns=["P (kW)", "SOC (%)"], index=sorted(s_ref[v].keys()))
+        results[v]["P (kW)"] = pd.Series(p_ref[v])
+        results[v]["SOC (%)"] = pd.Series(s_ref[v])*100
     print(pd.concat(results, axis=1))

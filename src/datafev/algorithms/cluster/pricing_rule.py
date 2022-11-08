@@ -31,21 +31,34 @@ def idp(schedule, upper_bound, lower_bound, tou_tariff, f_discount, f_markup):
     This function compares the commitments with the desired power consumption range of the cluster to
     #1) increase the charging price for time steps where the schedule exceeds the upper bound of the desired range
     #2) decrease the charging price for time steps where the schedule is below the lower bound of the desired range
+    
+    Parameters
+    ----------
+    schedule : dict of float
+        Aggregate schedule of the cluster. Dictionary values are the scheduled 
+        aggregate consumption of the cluster (kW) in particular time steps.    
+    upper_bound : dict of float
+        Upper bound of the desired consumption range. Dictionary values are 
+        the upper limits of net consumption (kW) in particular time steps.
+    lower_bound : dict of float
+        Lower bound of the desired consumption range. Dictionary values are 
+        the lower limits of net consumption (kW) in particular time steps.
+    tou_tariff : dict of float
+        Standard TOU tariff of the cluster operator. Dictionary values denote
+        the normal charging price (Eur/kWh) in a particular time step in case
+        the scheduled net consumption of the cluster is within desired range.
+    f_discount : float
+        Discount factor to compensate each kW of deficit consumption (Eur/kW).
+    f_markup : float
+        Markup factor to compensate each kW of excessive consumption (Eur/kW).
 
-    Inputs
-    ---------------------------------------------------------------------------
-    schedule    : Aggregate schedule of the cluster                                 dict of float
-    upper_bound : Upper bound of the desired consumption range                      dict of float
-    lower_bound : Lower bound of the desired consumption range                      dict of float
-    tou_tariff  : Standard TOU tariff of the cluster operator (Eur/kWh)             dict of float
-    f_discount  : Discount factor to compensate each kW of deficit consumption      float
-    f_markup    : Markup factor to compensate each kW of excessive consumption      float
-    ---------------------------------------------------------------------------
-
-    Outputs
-    ---------------------------------------------------------------------------
-    omega       : Dynamic price signal                                              dict
-    ---------------------------------------------------------------------------
+    Returns
+    -------
+    omega : dict of float
+        Dynamic price signal.
+        key: time step identifier
+        value: charging price (Eur/kWh) for a particular time step
+            
     """
 
     sc = pd.Series(schedule)
@@ -74,22 +87,47 @@ if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
 
+    #Setting the optimization parameters
     np.random.seed(0)
 
     schedule = dict(enumerate(np.random.uniform(low=44, high=88, size=12)))
     upper_b = dict(enumerate(np.ones(12) * 70))
     lower_b = dict(enumerate(np.zeros(12)))
-    tou = np.random.uniform(low=0.4, high=0.8, size=12)
+    tou = dict(enumerate(np.random.uniform(low=0.4, high=0.8, size=12)))
     f_disc = 0.05
     f_mark = 0.05
-
+    
+    
+    print("Input parameters of the algorithm are presented in tabular form")
+    inputs=pd.DataFrame(columns=
+                        ['Schedule', #Current consumption schedule (kW)
+                         'LB', #Lower bound of desired consumption range (kW)
+                         'UB', #Upper bound of desired consumption range (kW)
+                         'sTOU', #Standard time-of-use tariff (Eur/kWh)
+                         ])
+    inputs['Schedule']=pd.Series(schedule)
+    inputs['LB']=pd.Series(lower_b)
+    inputs['UB']=pd.Series(upper_b)
+    inputs['sTOU']=pd.Series(tou)
+    
+    print(inputs)
+    print()
+    
+    print("When the scheduled consumption is within desired range, charging price is equal to the corresponding TOU price")
+    print("When the scheduled consumption is larger than upper bound, charging price is incresed by", f_mark,"Eur for each kW of excessive consumption")
+    print("When the scheduled consumption is smaller than upper bound, charging price is decreased by", f_disc,"Eur for each kW deficit consumption")
+    print()
+    print()
+    
+    
+    print("Execution of individualized dynamic pricing algorithm...")
     omega = idp(schedule, upper_b, lower_b, tou, f_disc, f_mark)
+    print("The standar TOU tariff and dynamic price signal calculated for given inputs:")
+    
+    results=pd.DataFrame(columns=['sTOU',#Standard time-of-use tariff (Eur/kWh)         
+                                  'DP signal', #Dynamic price calculated by the algorithm (Eur/kWh)
+                                  ])
+    results['sTOU']=pd.Series(tou)
+    results['DP signal']=pd.Series(omega)
+    print(results)
 
-    df = pd.DataFrame(columns=["Schedule", "UB", "LB", "TOU", "DP"])
-    df["Schedule"] = pd.Series(schedule)
-    df["UB"] = pd.Series(upper_b)
-    df["LB"] = pd.Series(lower_b)
-    df["TOU"] = pd.Series(tou)
-    df["DP"] = pd.Series(omega)
-
-    print(df)

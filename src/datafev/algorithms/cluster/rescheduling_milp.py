@@ -64,7 +64,7 @@ def reschedule(
     lowerlimit :  dict of float
         Soft lower limit of cluster power consumption (kW).
     tolerance : float
-        Maximum allowed violation of oth upper-lower limits (kW).
+        Maximum allowed violation of upper-lower limits (kW).
     bcap : dict of float
         Battery capactiy of EVs (kWs).
     inisoc : dict of float
@@ -83,8 +83,8 @@ def reschedule(
         Maximum charge power that EV battery can withdraw (kW).
     pmax_neg : dict of float
         Maximum discharge power that EV battery can supply (kW).
-    deptime : TYPE
-        DESCRIPTION.
+    deptime : dict of int
+        Number of time steps until departures of EVs.
     rho_y : float
         Penalty factor for deviation of reference schedules (unitless).
     rho_eps : float

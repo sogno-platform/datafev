@@ -53,38 +53,75 @@ def reschedule(
     unbalance_limits=None,
 ):
     """
-    This function reschedules the charging operations of all clusters in a multicluster system by considering
-    1) upper-lower limits of aggregate power consumption of the multi-cluster system
-    2) upper-lower limits of aggregate power consumption of individual clusters
+    This function reschedules the charging operations of all clusters in 
+    a multicluster system by considering:
+    1) upper-lower limits of aggregate consumption of the multi-cluster system
+    2) upper-lower limits of aggregate consumption of individual clusters
     3) inter-cluster unbalances between aggregate power consumption of clusters
     4) pre-defined reference schedules of the individual EVs in the system.
-    This is run typically when some events require deviations from previously determined schedules.
+    This is run typically when some events require deviations from previously 
+    determined schedules.
+    
+    Parameters
+    ----------
+    solver : pyomo SolverFactory object
+        Optimization solver.
+    opt_step : int
+        Size of one time step in the optimization (seconds).
+    opt_horizon : list of integers
+        Time step identifiers in the optimization horizon.
+    bcap : dict of float
+        Battery capactiy of EVs (kWs).
+    inisoc : dict of float
+        Initial SOCs of EV batteries (0<inisoc[key]<1).
+    tarsoc : dict of float
+        Target SOCs of EVs (0<inisoc[key]<1).
+    minsoc : dict of float
+        Minimum allowed SOCs.
+    maxsoc : dict of float
+        Maximum allowed SOCs .
+    ch_eff : dict of float
+        Charging efficiency of chargers.
+    ds_eff : dict of float
+        Discharging efficiency of chargers.
+    pmax_pos : dict of float
+        Maximum charge power that EV battery can withdraw (kW).
+    pmax_neg : dict of float
+        Maximum discharge power that EV battery can supply (kW).
+    deptime : dict of int
+        Number of time steps until departures of EVs.
+    location : dict of tuples
+        The tuples indicating the location of the EV in the multicluter system.
+        'ev_id':(cluster_id,charger_id).
+    system_upperlimit: dict of float
+        Upper limit of net power consumption of multi-cluster system(kW).
+    system_lowerlimit: dict of float
+        Lower limit of net power consumption of multi-cluster system(kW).
+    clusters : list
+        List of clusters in the system.
+    cluster_upperlimits : dict of dict
+        Soft upper limit of cluster power consumption (kW).
+    cluster_lowerlimits : dict of dict
+        Soft upper limit of cluster power consumption (kW).
+    cluster_violationlimits : dict of float
+        Maximum allowed violation of upper-lower limits of clusters (kW).     
+    rho_y : dict of float
+        Penalty factors for deviation of reference schedules (unitless).
+    rho_eps : dict of float
+        Penalty factors for violation of upper-lower soft limits (unitless).
 
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    solver      : optimization solver                                                   pyomo SolverFactory object
-    opt_step    : size of one time step in the optimization (seconds)                   float
-    opt_horizon : time step identifiers in the optimization horizon                     list of integers
-    powerlimits : power consumption limits                                              dict of dict
-    bcap        : battery capactiy of EVs (kWs)                                 dict of float
-    inisoc      : initial SOCs of EV batteries                                  dict of float
-    tarsoc      : target SOCs of EV batteries                                   dict of float
-    minsoc      : minimum allowed SOCs                                          dict of float
-    maxsoc      : maximum allowed SOCs                                          dict of float
-    ch_eff      : charging efficiency of chargers                               dict of float
-    ds_eff      : discharging efficiency of chargers                            dict of float
-    pmax_pos    : maximum charge power that EV can take                         dict of float
-    pmax_neg    : maximum discharge power that EV can supply                    dict of float
-    clusters    : clusters in the multi-cluster system                                  list
-    rho_y       : penalty factors for deviation of reference schedules                  dict of float
-    rho_eps     : penalty factors for violation of clusters' upper-lower soft limits    dict of float
-    ------------------------------------------------------------------------------------------------------------------
+    Returns
+    -------
+    p_schedule : dict
+        Power schedule. 
+        It contains a dictionary for each EV. Each item in the EV dictionary 
+        indicates the power to be supplied to the EV(kW) during a particular 
+        time step.
+    s_schedule : dict
+        SOC schedule.    
+        It contains a dictionary for each EV. Each item in the EV dictionary 
+        indicates the SOC to be achieved by the EV by a particular time step.
 
-    Outputs
-    ------------------------------------------------------------------------------------------------------------------
-    p_schedule  : timeseries of new charging schedule                           dict
-    s_schedule  : timeseries of new reference SOC trajectory                    dict
-    ------------------------------------------------------------------------------------------------------------------
     """
 
     P_CC_up_lim = cluster_upperlimits
@@ -329,6 +366,8 @@ if __name__ == "__main__":
     import numpy as np
     from pyomo.environ import SolverFactory
 
+    ###########################################################################
+    #Import parameters
     solver = SolverFactory("cplex")
 
     clusters = ["CC1", "CC2"]  # System has two clusters
@@ -382,6 +421,7 @@ if __name__ == "__main__":
 
     rho_y = {"CC1": 1, "CC2": 1}
     rho_eps = {"CC1": 1, "CC2": 1}
+    ###########################################################################
 
     print("A system with two clusters:", clusters)
     print()
@@ -393,7 +433,7 @@ if __name__ == "__main__":
     print(limit_data)
     print()
 
-    print("...optimizing the charging profiles of the EVs with charging demands:")
+    print("...must control the charging profiles of the EVs with the demands:")
     demand_data = pd.DataFrame(
         columns=["Battery Capacity", "Initial SOC", "Target SOC", "Estimated Departure"]
     )
@@ -405,7 +445,7 @@ if __name__ == "__main__":
     print(demand_data)
     print()
 
-    print("Optimized charging profiles of EVs:")
+    print("Solving the optimization problem...")
     p_ref, s_ref = reschedule(
         solver,
         opt_step,
@@ -430,7 +470,9 @@ if __name__ == "__main__":
         rho_y,
         rho_eps,
     )
+    print()
 
+    print("Printing optimal schedules of EVs:")
     results = {}
     for v in demand_data.index:
         results[v] = pd.DataFrame(columns=["P", "S"], index=sorted(s_ref[v].keys()))
@@ -439,7 +481,7 @@ if __name__ == "__main__":
     print(pd.concat(results, axis=1))
     print()
 
-    print("Optimized power profiles of clusters:")
+    print("Printing optimal schedules of clusters:")
     clust_prof = pd.DataFrame()
     clust_prof["CC1"] = pd.Series(p_ref["v11"]) + pd.Series(p_ref["v12"])
     clust_prof["CC2"] = pd.Series(p_ref["v21"]) + pd.Series(p_ref["v22"])

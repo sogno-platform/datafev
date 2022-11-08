@@ -367,7 +367,7 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
 
     ###########################################################################
-    #Import parameters
+    #Input parameters
     solver = SolverFactory("cplex")
 
     clusters = ["CC1", "CC2"]  # System has two clusters

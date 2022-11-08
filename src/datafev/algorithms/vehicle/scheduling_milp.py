@@ -41,32 +41,52 @@ def minimize_cost(
     v2g_dps,
 ):
     """
-    This function optimizes the charging schedule of a single EV with the objective of charging cost minimization
-    for the given G2V and V2G price signals. The losses in power transfer are considered.
+    This function optimizes the charging schedule of a single EV with the 
+    objective of charging cost minimization for the given G2V and V2G price 
+    signals. The losses in power transfer are considered.
     
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    opt_step    : size of one time step in the optimization (seconds)   float
-    opt_horizon : time step identifiers in the optimization horizon     list of integers
-    ecap        : energy capacity of battery (kWs)                      float
-    v2gall      : V2G allowance discharge (kWs)                         float
-    tarsoc      : target final soc   (0<inisoc<1)                       float
-    minsoc      : minimum soc                                           float
-    maxsoc      : maximum soc                                           float
-    crtsoc      : target soc at crttime                                 float
-    crttime     : critical time s.t. s(srttime)> crtsoc                 int
-    inisoc      : initial soc (0<inisoc<1)                              float
-    p_ch        : nominal charging power     (kW)                       float
-    p_ds        : nominal charging power     (kW)                       float
-    g2v_dps     : G2V dynamic price signals (Eur/kWh)                   dict of float
-    v2g_dps     : V2G dynamic price signals (Eur/kWh) for V2G           dict of float
-    ------------------------------------------------------------------------------------------------------------------
+    Parameters
+    ----------
+    opt_step : float
+        Size of one time step in the optimization (seconds)   
+    opt_horizon : list of integers
+        Time step identifiers in the optimization horizon     
+    ecap : float
+        Energy capacity of battery (kWs).
+    v2gall : float
+        V2G allowance discharge (kWs).
+    tarsoc : float
+        Target final soc (0<inisoc<1).
+	minsoc : float
+        Minimum soc.
+    maxsoc : float 
+        Maximum soc.
+    crtsoc : float
+        Target soc at crttime.
+    crttime : int
+        Critical time s.t. s(srttime)> crtsoc
+    inisoc : dict of float
+        Initial soc \in [0,1)
+    p_ch : dict of float
+        Nominal charging power (kW).
+    p_ds : dict of float
+        Nominal charging power (kW)
+    g2v_dps : dict of float
+        G2V dynamic price signal (Eur/kWh).
+    v2g_dps : dict of float 
+        V2G dynamic price signal (Eur/kWh)
     
-    Outputs
-    ------------------------------------------------------------------------------------------------------------------
-    p_schedule  : timeseries of charge power                            dict
-    s_schedule  : timeseries of SOC reference                           dict
-    ------------------------------------------------------------------------------------------------------------------
+    Returns
+    -------
+    p_schedule : dict
+        Power schedule. 
+        Each item in the EV dictionary indicates the power to be supplied to 
+        the EV(kW) during a particular time step.
+    s_schedule : dict
+        SOC schedule.    
+        Each item in the EV dictionary indicates the SOC to be achieved by the 
+        EV by a particular time step.
+        
     """
 
     conf_period = {}
@@ -180,6 +200,8 @@ if __name__ == "__main__":
     import pandas as pd
     import numpy as np
 
+    ###########################################################################
+    #Input parameters    
     solver = SolverFactory("cplex")
     step = 300  # Time step size= 300 seconds = 5 minutes
     horizon = list(range(13))  # Optimization horizon= 12 steps = 60 minutes
@@ -193,6 +215,11 @@ if __name__ == "__main__":
     inisoc = 0.5  # Initial SOC
     pch = 22  # Maximum charge power
     pds = 22  # Maximum discharge power
+    
+    g2v_tariff = np.random.uniform(low=0.4, high=0.8, size=12)
+    g2v_dps = dict(enumerate(g2v_tariff))           #grid-to-vehicle tariff
+    v2g_dps = dict(enumerate(g2v_tariff * 0.9))     #vehicle-to-grid tariff
+    ###########################################################################
 
     print("Size of one time step:", step, "seconds")
     print("Optimization horizon covers", max(horizon), "time steps")
@@ -207,13 +234,9 @@ if __name__ == "__main__":
         "and must be maintained afterwards",
     )
     print("V2G allowance:", v2gall / 3600, "kWh")
-    print("Optimization is run G2V-V2G distinguishing price signals")
     print()
-
-    g2v_tariff = np.random.uniform(low=0.4, high=0.8, size=12)
-    g2v_dps = dict(enumerate(g2v_tariff))
-    v2g_dps = dict(enumerate(g2v_tariff * 0.9))
-
+    
+    print("Optimization is run G2V-V2G distinguishing price signals")
     p, soc = minimize_cost(
         solver,
         step,
@@ -231,18 +254,23 @@ if __name__ == "__main__":
         g2v_dps,
         v2g_dps,
     )
+    print()
 
+    print("Results are written in table")
+    print("SOC (%): SOC trajectory in optimized schedule")
+    print("P (kW): Power supply to the EV in optimized schedule")
+    print()    
     results = pd.DataFrame(
         columns=[
             "G2V Tariff",
             "V2G Tariff",
-            "Optimal Pow Profile",
-            "Optimal SOC Profile",
+            "P (kW)",
+            "SOC (%)",
         ],
         index=sorted(soc.keys()),
     )
     results["G2V Tariff"] = pd.Series(g2v_dps)
     results["V2G Tariff"] = pd.Series(v2g_dps)
-    results["Optimal Pow Profile"] = pd.Series(p)
-    results["Optimal SOC Profile"] = pd.Series(soc)
+    results["P (kW)"] = pd.Series(p)
+    results["SOC (%)"] = pd.Series(soc)*100
     print(results)

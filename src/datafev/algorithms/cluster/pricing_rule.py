@@ -87,7 +87,9 @@ if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
 
-    #Setting the optimization parameters
+    ###########################################################################
+    #Input parameters
+    
     np.random.seed(0)
 
     schedule = dict(enumerate(np.random.uniform(low=44, high=88, size=12)))
@@ -96,6 +98,7 @@ if __name__ == "__main__":
     tou = dict(enumerate(np.random.uniform(low=0.4, high=0.8, size=12)))
     f_disc = 0.05
     f_mark = 0.05
+    ###########################################################################
     
     
     print("Input parameters of the algorithm are presented in tabular form")

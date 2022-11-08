@@ -211,6 +211,9 @@ if __name__ == "__main__":
     import pandas as pd
     import numpy as np
 
+    ###########################################################################
+    #Input parameters    
+
     PEV = 50  # Maximum charge power that the EV battery can accept
     ch_eff = 1.0  # Power conversion efficiency of the charger
     N = 16  # Number of connected EVs in the system
@@ -270,6 +273,8 @@ if __name__ == "__main__":
         inisoc_range = (table[(table["SOC_LB"] <= inisoc[evid]) 
                               & (inisoc[evid] < table["SOC_UB"])]).index[0]
         p_re[evid] = min(PEV, table.loc[inisoc_range, "P_UB"])
+        
+    ###########################################################################
 
     print("The cluster with total installed capacity of:", N * PEV,"kW")
     print()

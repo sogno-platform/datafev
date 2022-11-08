@@ -48,32 +48,54 @@ def smart_routing(
     2) the charging schedule in the given parking duration
     considering cluster differentiated dynamic price signals.
     
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    opt_step    : size of one time step in the optimization (seconds)   float
-    opt_horizon : time step identifiers in the optimization horizon     list of integers
-    ecap        : energy capacity of battery (kWs)                      float
-    v2gall      : V2G allowance discharge (kWs)                         float
-    tarsoc      : target final soc   (0<inisoc<1)                       float
-	minsoc      : minimum soc                                           float
-    maxsoc      : maximum soc                                           float
-    crtsoc      : target soc at crttime                                 float
-    crttime     : critical time s.t. s(srttime)> crtsoc                 int
-    arrtime     : cluster differentiating arrival times                 dict of int
-    deptime     : cluster differentiating departure times               dict of int
-    arrsoc      : cluster differentiating arrival soc \in [0,1)         dict of float
-    p_ch        : nominal charging power     (kW)                       dict of float
-    p_ds        : nominal charging power     (kW)                       dict of float
-    g2v_dps     : G2V dynamic price signals (Eur/kWh)                   dict of dict of float
-    v2g_dps     : V2G dynamic price signals (Eur/kWh) for V2G           dict of dict of float
-    ------------------------------------------------------------------------------------------------------------------
+    Parameters
+    ----------
+    opt_step : float
+        Size of one time step in the optimization (seconds)   
+    opt_horizon : list of integers
+        Time step identifiers in the optimization horizon     
+    ecap : float
+        Energy capacity of battery (kWs).
+    v2gall : float
+        V2G allowance discharge (kWs).
+    tarsoc : float
+        Target final soc (0<inisoc<1).
+	minsoc : float
+        Minimum soc.
+    maxsoc : float 
+        Maximum soc.
+    crtsoc : float
+        Target soc at crttime.
+    crttime : int
+        Critical time s.t. s(srttime)> crtsoc
+    arrtime : dict of int
+        Cluster differentiating arrival times.
+    deptime : dict of int
+        Cluster differentiating departure times.
+    arrsoc : dict of float
+        Cluster differentiating arrival soc \in [0,1)
+    p_ch : dict of float
+        Nominal charging power (kW).
+    p_ds : dict of float
+        Nominal charging power (kW)
+    g2v_dps : dict of dict
+        G2V dynamic price signals of clusters (Eur/kWh).
+    v2g_dps : dict of dict 
+        V2G dynamic price signals of clusters (Eur/kWh)
     
-    Outputs
-    ------------------------------------------------------------------------------------------------------------------
-    p_schedule  : timeseries of charge power                            dict
-    s_schedule  : timeseries of SOC reference                           dict
-    target_cc   : cluster to send the EV                                string
-    ------------------------------------------------------------------------------------------------------------------
+    Returns
+    -------
+    p_schedule : dict
+        Power schedule. 
+        Each item in the EV dictionary indicates the power to be supplied to 
+        the EV(kW) during a particular time step.
+    s_schedule : dict
+        SOC schedule.    
+        Each item in the EV dictionary indicates the SOC to be achieved by the 
+        EV by a particular time step.
+    target_cc : string 
+        Cluster to send the EV.
+    
     """
 
     conf_period = {}
@@ -248,7 +270,9 @@ if __name__ == "__main__":
     import pandas as pd
     import numpy as np
     from pyomo.environ import SolverFactory
-
+   
+    ###########################################################################
+    #Input parameters
     solver = SolverFactory("cplex")
     opt_step = 300  # seconds
     opt_horizon = range(13)  # [0 1 2 3 4 .. 12]  == 1 hour for opt_step=300 seconds
@@ -278,15 +302,14 @@ if __name__ == "__main__":
         dps[c] = pd.DataFrame(columns=["G2V", "V2G"])
         dps[c]["G2V"] = pd.Series(g2v_dps[c])
         dps[c]["V2G"] = pd.Series(v2g_dps[c])
+    ###########################################################################
 
     print("Reservation request of an EV with")
     print("Battery capacity   :", ecap / 3600, "kWh")
     print("Target SOC         :", tarsoc)
     print("V2G allowance      :", v2gall / 3600, "kWh")
     print()
-    print(
-        "Since the available clusters are at different distances, some parameters are cluster dependent"
-    )
+    print("Since the available clusters are at different distances, some parameters are cluster dependent")
     print("Estimated arrival SOCs        :", arrsoc)
     print("Estimated arrival time steps  :", arrtime)
     print("Estimated departure time steps:", deptime)
@@ -294,6 +317,7 @@ if __name__ == "__main__":
     print(pd.concat(dps, axis=1))
     print()
 
+    print("Smart routing optimization problem is solved...")
     p, s, c = smart_routing(
         solver,
         opt_horizon,
@@ -313,13 +337,15 @@ if __name__ == "__main__":
         g2v_dps,
         v2g_dps,
     )
-    print(
-        "Under the given price signals, the optimal decision is to go to the cluster", c
-    )
     print()
-    print("And charge with the profile")
-    results = pd.DataFrame(columns=["P", "SOC"], index=sorted(s.keys()))
-    results["P"] = pd.Series(p)
-    results["SOC"] = pd.Series(s)
+    print("The result:")
+    print("Under the given price signals, the optimal decision is to go to the cluster", c)
+    print()
+    print("And charge with the profile is printed in table")
+    print("SOC (%): SOC trajectory in optimized schedule")
+    print("P (kW): Power supply to the EV in optimized schedule")
+    results = pd.DataFrame(columns=["P", "SOC (%)"], index=sorted(s.keys()))
+    results["P (kW)"] = pd.Series(p)
+    results["SOC (%)"] = pd.Series(s)*100
     print(results)
     print()

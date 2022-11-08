@@ -294,7 +294,7 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
 
     ###########################################################################
-    #Import parameters
+    #Input parameters
     PCU = 11
     eff = 1.0
     N = 4

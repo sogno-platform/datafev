@@ -41,27 +41,45 @@ def minimize_cost(
     This function optimizes the charging schedule of a single EV with the objective of charging cost minimization
     for the given price signal. The losses in power transfer are neglected.
 
-    Inputs
-    ------------------------------------------------------------------------------------------------------------------
-    opt_step    : size of one time step in the optimization (seconds)   float
-    opt_horizon : time step identifiers in the optimization horizon     list of integers
-    ecap        : energy capacity of battery (kWs)                      float
-    tarsoc      : target final soc   (0<inisoc<1)                       float
-    minsoc      : minimum soc                                           float
-    maxsoc      : maximum soc                                           float
-    crtsoc      : target soc at crttime                                 float
-    crttime     : critical time s.t. s(srttime)> crtsoc                 int
-    inisoc      : initial soc (0<inisoc<1)                              float
-    p_ch        : nominal charging power     (kW)                       float
-    p_ds        : nominal discharging power  (kW)                       float
-    dps         : G2V dynamic price signals (Eur/kWh)                   dict
-    ------------------------------------------------------------------------------------------------------------------
-
-    Outputs
-    ------------------------------------------------------------------------------------------------------------------
-    p_schedule  : timeseries of charge power                            dict
-    s_schedule  : timeseries of SOC reference                           dict
-    ------------------------------------------------------------------------------------------------------------------
+    Parameters
+    ----------
+    opt_step : float
+        Size of one time step in the optimization (seconds)   
+    opt_horizon : list of integers
+        Time step identifiers in the optimization horizon     
+    ecap : float
+        Energy capacity of battery (kWs).
+    v2gall : float
+        V2G allowance discharge (kWs).
+    tarsoc : float
+        Target final soc (0<inisoc<1).
+	minsoc : float
+        Minimum soc.
+    maxsoc : float 
+        Maximum soc.
+    crtsoc : float
+        Target soc at crttime.
+    crttime : int
+        Critical time s.t. s(srttime)> crtsoc
+    inisoc : dict of float
+        Initial soc \in [0,1)
+    p_ch : dict of float
+        Nominal charging power (kW).
+    p_ds : dict of float
+        Nominal charging power (kW)
+    dps : dict of float
+        Dynamic price signal (Eur/kWh).
+    
+    Returns
+    -------
+    p_schedule : dict
+        Power schedule. 
+        Each item in the EV dictionary indicates the power to be supplied to 
+        the EV(kW) during a particular time step.
+    s_schedule : dict
+        SOC schedule.    
+        Each item in the EV dictionary indicates the SOC to be achieved by the 
+        EV by a particular time step.
     """
 
     conf_period = {}
@@ -139,6 +157,8 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
     import pandas as pd
 
+    ###########################################################################
+    #Input parameters
     solver = SolverFactory("cplex")
     step = 600  # Time step size= 600 seconds = 10 minutes
     horizon = list(range(7))  # Optimization horizon= 6 steps = 60 minutes
@@ -151,6 +171,7 @@ if __name__ == "__main__":
     inisoc = 0.5  # Initial SOC
     pch = 22  # Maximum charge power
     pds = 22  # Maximum discharge power
+    ###########################################################################
 
     print("Size of one time step:", step, "seconds")
     print("Optimization horizon covers", max(horizon), "time steps")
@@ -164,6 +185,7 @@ if __name__ == "__main__":
         crttime,
         "and must be maintained afterwards",
     )
+    print()
     print("Optimization is run for three dynamic price signals")
     print()
 
@@ -171,6 +193,8 @@ if __name__ == "__main__":
     dps2 = dict(enumerate([0, 0, 1, 1, 1, 0]))  # Dynamic price signal 2
     dps3 = dict(enumerate([0, 0, 0, 1, 1, 1]))  # Dynamic price signal 3
 
+    print("For the profile dps1:")
+    print(dps1)
     p1, s1 = minimize_cost(
         solver,
         step,
@@ -186,6 +210,9 @@ if __name__ == "__main__":
         pds,
         dps1,
     )
+    
+    print("For the profile dps2:")
+    print(dps2)
     p2, s2 = minimize_cost(
         solver,
         step,
@@ -201,6 +228,9 @@ if __name__ == "__main__":
         pds,
         dps2,
     )
+    
+    print("For the profile dps2:")
+    print(dps2)
     p3, s3 = minimize_cost(
         solver,
         step,
@@ -217,27 +247,35 @@ if __name__ == "__main__":
         dps3,
     )
 
-    sched1 = pd.DataFrame(columns=["DPS", "SoC"])
-    sched2 = pd.DataFrame(columns=["DPS", "SoC"])
-    sched3 = pd.DataFrame(columns=["DPS", "SoC"])
-
-    sched1["Pow"] = pd.Series(p1)
-    sched1["SoC"] = pd.Series(s1)
-    sched1["DPS"] = pd.Series(dps1)
-    print("Case 1")
-    print(sched1)
+    print()
+    
+    
+    print("Printing optimization results in tables:")
+    sched1 = pd.DataFrame(columns=["DPS", "SOC (%)"])
+    sched2 = pd.DataFrame(columns=["DPS", "SOC (%)"])
+    sched3 = pd.DataFrame(columns=["DPS", "SOC (%)"])
+    print("SOC (%): SOC trajectory in optimized schedule")
+    print("P (kW): Power supply to the EV in optimized schedule")
     print()
 
-    sched2["Pow"] = pd.Series(p2)
-    sched2["SoC"] = pd.Series(s2)
+       
+    print("dps1")
+    sched1["P (kW)"] = pd.Series(p1)
+    sched1["SOC (%)"] = pd.Series(s1)*100
+    sched1["DPS"] = pd.Series(dps1)  
+    print(sched1) 
+    print()
+
+    print("dps2")
+    sched2["P (kW)"] = pd.Series(p2)
+    sched2["SOC (%)"] = pd.Series(s2)*100
     sched2["DPS"] = pd.Series(dps2)
-    print("Case 2")
     print(sched2)
     print()
 
-    sched3["Pow"] = pd.Series(p3)
-    sched3["SoC"] = pd.Series(s3)
+    print("dps3")
+    sched3["P (kW)"] = pd.Series(p3)
+    sched3["SOC (%)"] = pd.Series(s3)*100
     sched3["DPS"] = pd.Series(dps3)
-    print("Case 3")
     print(sched3)
     print()

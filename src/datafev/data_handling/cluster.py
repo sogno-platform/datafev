@@ -19,7 +19,6 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -33,7 +32,7 @@ class ChargerCluster(object):
     (e.g., a charging station operator, micro-grid controller, aggregator) is 
     responsible for management of a cluster. 
     """
-    
+
     def __init__(self, cluster_id, topology_data):
         """
         Clusters are defined by the EV chargers that they consist of.
@@ -43,8 +42,11 @@ class ChargerCluster(object):
         cluster_id : str
             String identifier of the cluster.
         topology_data : pandas.DataFrame
-            A table containing 1) string identifiers, 2) maximum charge powers,
-            3) maximum discharge powers, 4) power conversion efficiencies of
+            A table containing:
+                1) string identifiers,
+                2) maximum charge powers,
+                3) maximum discharge powers,
+                4) power conversion efficiencies of
             charging units in the cluster.
 
         Returns
@@ -56,7 +58,7 @@ class ChargerCluster(object):
         self.type = "CC"
         self.id = cluster_id
 
-        self.power_installed = 0  # Total installed power of the CUs 
+        self.power_installed = 0  # Total installed power of the CUs
 
         self.cc_dataset = pd.DataFrame(
             columns=[
@@ -115,7 +117,7 @@ class ChargerCluster(object):
         None.
 
         """
-        
+
         self.power_installed += charging_unit.p_max_ch
         self.chargers[charging_unit.id] = charging_unit
 
@@ -161,9 +163,9 @@ class ChargerCluster(object):
         n_of_steps = int((end - start) / step)
         timerange = [start + t * step for t in range(n_of_steps + 1)]
 
-        lower = _lb.reindex(timerange)        
+        lower = _lb.reindex(timerange)
         upper = _ub.reindex(timerange)
-        
+
         self.upper_limit = upper.fillna(upper.fillna(method="ffill"))
         self.lower_limit = lower.fillna(lower.fillna(method="ffill"))
         self.violation_tolerance = tolerance
@@ -263,7 +265,7 @@ class ChargerCluster(object):
         """
         self.re_dataset.loc[reservation_id, "Cancelled At"] = ts
         self.re_dataset.loc[reservation_id, "Active"] = False
-        
+
     def uncontrolled_supply(self, ts, step):
         """
         This method is run to execute the uncontrolled charging behavior.
@@ -273,13 +275,13 @@ class ChargerCluster(object):
         ts : datetime.datetime
             Current time.
         step : datetime.timedelta
-            Length of time step..
+            Length of time step.
 
         Returns
         -------
         None.
         """
-        
+
         for cu_id, cu in self.chargers.items():
             if cu.connected_ev != None:
                 cu.uncontrolled_supply(ts, step)
@@ -514,7 +516,6 @@ class ChargerCluster(object):
 
         return available_chargers
 
-
     def analyze_consumption_profile(self, start, end, step):
         """
         This method is run after simulation to analyze the power consumption
@@ -540,7 +541,7 @@ class ChargerCluster(object):
             or to the grid in a particular time step.
 
         """
-        
+
         df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step))
         for cu_id, cu in self.chargers.items():
             df[cu_id] = (cu.consumed_power.reindex(df.index)).fillna(0)
@@ -571,7 +572,7 @@ class ChargerCluster(object):
             time step.
 
         """
-              
+
         df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step))
         for cu_id, cu in self.chargers.items():
             df[cu_id] = (

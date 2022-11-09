@@ -21,9 +21,9 @@
 
 class ElectricVehicle(object):
     """
-    Simulation model of electric vehicles
+    Simulation model of electric vehicles.
     """
-    
+
     def __init__(
         self,
         carID,
@@ -35,7 +35,7 @@ class ElectricVehicle(object):
         pow_soc_table=None,
     ):
         """
-        ElectricVehicle objects are initialized by relevant data
+        ElectricVehicle objects are initialized by relevant data.
         
 
         Parameters
@@ -62,8 +62,7 @@ class ElectricVehicle(object):
         None.
 
         """
-        
-        
+
         self.type = "Vehicle"
         self.vehicle_id = carID
         self.bCapacity = bCapacity * 3600  # kWh to kWs
@@ -99,7 +98,7 @@ class ElectricVehicle(object):
         None.
 
         """
-        
+
         self.soc[ts + tdelta] = self.soc[ts] + p_in * tdelta.seconds / self.bCapacity
         self.v2g[ts] = -p_in if p_in < 0 else 0
         self.g2v[ts] = p_in if p_in > 0 else 0

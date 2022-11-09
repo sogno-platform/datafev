@@ -22,8 +22,9 @@
 import pandas as pd
 
 
-def leastlaxityfirst(inisoc, tarsoc, bcap, efficiency, 
-                     p_socdep, p_chmax, p_re, leadtime, upperlimit):
+def leastlaxityfirst(
+    inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit
+):
     """
     This is a control algorithm that manages the real-time charging rates of
     the EV chargers in a cluster under given power limits. The control is 
@@ -212,7 +213,7 @@ if __name__ == "__main__":
     import numpy as np
 
     ###########################################################################
-    #Input parameters    
+    # Input parameters
 
     PEV = 50  # Maximum charge power that the EV battery can accept
     ch_eff = 1.0  # Power conversion efficiency of the charger
@@ -239,61 +240,65 @@ if __name__ == "__main__":
     leadtime = {}
     inisoc = {}
     p_socdep = {}
-    
+
     for n in range(1, N + 1):
-        
-        #EV IDs
+
+        # EV IDs
         evid = "EV" + str(n)
 
         # Maximum charge power to EV
         p_chmax[evid] = PEV
-        
+
         # Conversion efficiency
-        efficiency[evid] = ch_eff  
-        
+        efficiency[evid] = ch_eff
+
         # Battery capacity (given in kWs)
-        bcap[evid] = CAP  
-        
+        bcap[evid] = CAP
+
         # Current SOCs are between 40%-60%
-        inisoc[evid] = np.random.uniform(low=0.4, high=0.8)  
-        
+        inisoc[evid] = np.random.uniform(low=0.4, high=0.8)
+
         # Target SOCs are 90%
-        tarsoc[evid] = 0.9 
-        
-        # EVs have 5-10 min till departure. 
+        tarsoc[evid] = 0.9
+
+        # EVs have 5-10 min till departure.
         # The values are given in number of time steps until departure times
-        leadtime[evid] = int(np.random.uniform(low=sch_horizon, 
-                                               high=sch_horizon * 2))  
-        
+        leadtime[evid] = int(np.random.uniform(low=sch_horizon, high=sch_horizon * 2))
+
         # SOC dependency of power capability of EV batteries
-        p_socdep[evid] = pow_soc_dep_table  
+        p_socdep[evid] = pow_soc_dep_table
 
         # EVs want to consume the maximum feasible power in their SOC range
         table = pd.DataFrame(pow_soc_dep_table).T
-        inisoc_range = (table[(table["SOC_LB"] <= inisoc[evid]) 
-                              & (inisoc[evid] < table["SOC_UB"])]).index[0]
+        inisoc_range = (
+            table[(table["SOC_LB"] <= inisoc[evid]) & (inisoc[evid] < table["SOC_UB"])]
+        ).index[0]
         p_re[evid] = min(PEV, table.loc[inisoc_range, "P_UB"])
-        
+
     ###########################################################################
 
-    print("The cluster with total installed capacity of:", N * PEV,"kW")
+    print("The cluster with total installed capacity of:", N * PEV, "kW")
     print()
-    print("...has a power limit of:", upperlimit,"kW")
+    print("...has a power limit of:", upperlimit, "kW")
     print()
-    
-    print("...controlling the real-time chaging rates of the EVs with charging demands:")
-    inputs = pd.DataFrame(columns=["Current SOC","Target SOC","Estimate Departure"])
+
+    print(
+        "...controlling the real-time chaging rates of the EVs with charging demands:"
+    )
+    inputs = pd.DataFrame(columns=["Current SOC", "Target SOC", "Estimate Departure"])
     inputs["Current SOC"] = pd.Series(inisoc)
     inputs["Target SOC"] = pd.Series(tarsoc)
     inputs["Estimate Departure"] = pd.Series(leadtime)
     print(inputs)
     print()
-    
+
     print("Executing the control algorithm...")
-    p_ref = leastlaxityfirst(inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit)
+    p_ref = leastlaxityfirst(
+        inisoc, tarsoc, bcap, efficiency, p_socdep, p_chmax, p_re, leadtime, upperlimit
+    )
 
     print("Resulting profile:")
-    result=inputs.copy()    
+    result = inputs.copy()
     result["Controlled Consumption"] = pd.Series(p_ref)
     print(result)
     print()

@@ -1,21 +1,21 @@
-datafev.protocols.simplereservation package
+datafev.protocols.simple_reservation package
 ===========================================
 
 Submodules
 ----------
 
-datafev.protocols.simplereservation.arrival module
+datafev.protocols.simple_reservation.arrival module
 --------------------------------------------------
 
-.. automodule:: src.datafev.protocols.simplereservation.arrival
+.. automodule:: src.datafev.protocols.simple_reservation.arrival
    :members:
    :undoc-members:
    :show-inheritance:
 
-datafev.protocols.simplereservation.reservation module
+datafev.protocols.simple_reservation.reservation module
 ------------------------------------------------------
 
-.. automodule:: src.datafev.protocols.simplereservation.reservation
+.. automodule:: src.datafev.protocols.simple_reservation.reservation
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ datafev.protocols.simplereservation.reservation module
 Module contents
 ---------------
 
-.. automodule:: src.datafev.protocols.simplereservation
+.. automodule:: src.datafev.protocols.simple_reservation
    :members:
    :undoc-members:
    :show-inheritance:

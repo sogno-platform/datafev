@@ -43,9 +43,9 @@ def smart_routing(
     v2g_dps,
 ):
     """
-    This function optimizes 
-    1) the allocation of an incoming EV to a cluster
-    2) the charging schedule in the given parking duration
+    This function optimizes:
+        1) the allocation of an incoming EV to a cluster,
+        2) the charging schedule in the given parking duration
     considering cluster differentiated dynamic price signals.
     
     Parameters
@@ -270,9 +270,9 @@ if __name__ == "__main__":
     import pandas as pd
     import numpy as np
     from pyomo.environ import SolverFactory
-   
+
     ###########################################################################
-    #Input parameters
+    # Input parameters
     solver = SolverFactory("cplex")
     opt_step = 300  # seconds
     opt_horizon = range(13)  # [0 1 2 3 4 .. 12]  == 1 hour for opt_step=300 seconds
@@ -309,7 +309,9 @@ if __name__ == "__main__":
     print("Target SOC         :", tarsoc)
     print("V2G allowance      :", v2gall / 3600, "kWh")
     print()
-    print("Since the available clusters are at different distances, some parameters are cluster dependent")
+    print(
+        "Since the available clusters are at different distances, some parameters are cluster dependent"
+    )
     print("Estimated arrival SOCs        :", arrsoc)
     print("Estimated arrival time steps  :", arrtime)
     print("Estimated departure time steps:", deptime)
@@ -339,13 +341,15 @@ if __name__ == "__main__":
     )
     print()
     print("The result:")
-    print("Under the given price signals, the optimal decision is to go to the cluster", c)
+    print(
+        "Under the given price signals, the optimal decision is to go to the cluster", c
+    )
     print()
     print("And charge with the profile is printed in table")
     print("SOC (%): SOC trajectory in optimized schedule")
     print("P (kW): Power supply to the EV in optimized schedule")
     results = pd.DataFrame(columns=["P", "SOC (%)"], index=sorted(s.keys()))
     results["P (kW)"] = pd.Series(p)
-    results["SOC (%)"] = pd.Series(s)*100
+    results["SOC (%)"] = pd.Series(s) * 100
     print(results)
     print()

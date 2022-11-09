@@ -23,12 +23,12 @@ import pandas as pd
 
 class ChargingUnit(object):
     """
-    Simulation model of EV chargers 
+    Simulation model of EV chargers.
     """
-    
+
     def __init__(self, cu_id, p_max_ch, p_max_ds, efficiency):
         """
-        EV chargers are defined by power capability parameters
+        EV chargers are defined by power capability parameters.
 
         Parameters
         ----------
@@ -159,7 +159,7 @@ class ChargingUnit(object):
         None.
 
         """
-        
+
         self.schedule_pow[ts] = schedule_pow
         self.schedule_soc[ts] = schedule_soc
         self.set_active_schedule(ts)
@@ -183,7 +183,7 @@ class ChargingUnit(object):
 
         """
         self.active_schedule_instance = ts
-        
+
     def uncontrolled_supply(self, ts, step):
         """
         This method is run to execute the uncontrolled charging behavior.
@@ -208,45 +208,45 @@ class ChargingUnit(object):
         # Then EV would charge with max feasible power
         if ev_soc < 1:
 
-            # EV battery capacity            
+            # EV battery capacity
             ev_bcap = self.connected_ev.bCapacity
-            
+
             # Limit due to the battery capacity of EV
-            lim_ev_batcap = (1 - ev_soc) * ev_bcap 
-            
+            lim_ev_batcap = (1 - ev_soc) * ev_bcap
+
             # Limit due to the charger power capability
-            lim_ch_pow = (self.p_max_ch * step.seconds)  
+            lim_ch_pow = self.p_max_ch * step.seconds
 
             if self.connected_ev.pow_soc_table != None:
-                
-                # The EV battery has a specific charger power-SOC dependency 
+
+                # The EV battery has a specific charger power-SOC dependency
                 # limiting the power transfer
                 table = self.connected_ev.pow_soc_table
-                soc_range = (table[(table["SOC_LB"] <= ev_soc) 
-                                   & (ev_soc < table["SOC_UB"])]).index[0]
-                
+                soc_range = (
+                    table[(table["SOC_LB"] <= ev_soc) & (ev_soc < table["SOC_UB"])]
+                ).index[0]
+
                 # Limit due to the SOC dependency of charge power
                 p_max = table.loc[soc_range, "P_UB"]
-                lim_ev_socdep = (p_max * step.seconds)  
+                lim_ev_socdep = p_max * step.seconds
                 e_max = min(lim_ev_batcap, lim_ch_pow, lim_ev_socdep)
 
             else:
-                # The power transfer is only limited by the charger's power 
+                # The power transfer is only limited by the charger's power
                 # and battery capacity
                 e_max = min(lim_ev_batcap, lim_ch_pow)
 
             # Average charge power during the simulation step
-            p_avr = (e_max / step.seconds)  
+            p_avr = e_max / step.seconds
 
-        
         # If the current SOC is 1
         # Then the EV would not charge
         else:
             p_avr = 0
-        
+
         # Execution of the uncontrolled behavior in the simulation
         self.supply(ts, step, p_avr)
-        
+
     def occupation_record(self, start, end, step):
         """
         This method is run after simulation to analyze the occupation profile 
@@ -279,5 +279,3 @@ class ChargingUnit(object):
             connections.loc[con_start:con_end, _id] = 1
         record = connections.sum(axis=1)
         return record
-
-

@@ -30,7 +30,8 @@ import os
 
 def excel_to_sceneration_input_independent_times(file_path):
     """
-    This method converts the excel inputs into inputs suitable for the generate_fleet_data_independent_times function under sceneration.py.
+    This method converts the excel inputs into inputs suitable for the
+    generate_fleet_data_independent_times function under sceneration.py.
 
     Parameters
     ----------
@@ -145,7 +146,8 @@ def excel_to_sceneration_input_independent_times(file_path):
 
 def excel_to_sceneration_input_dependent_times(file_path):
     """
-    This method converts the excel inputs into inputs suitable for the generate_fleet_data_dependent_times function under sceneration.py.
+    This method converts the excel inputs into inputs suitable for the
+    generate_fleet_data_dependent_times function under sceneration.py.
 
     Parameters
     ----------

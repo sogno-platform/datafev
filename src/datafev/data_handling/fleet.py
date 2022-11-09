@@ -25,9 +25,9 @@ import pandas as pd
 
 class EVFleet(object):
     """
-    Class to define charging demand of an EV fleet
+    Class to define charging demand of an EV fleet.
     """
-    
+
     def __init__(self, fleet_id, behavior, sim_horizon):
         """
         EVFleet objects are initialized by three data
@@ -82,13 +82,12 @@ class EVFleet(object):
             ev.soc[ev.t_arr_real] = ev.soc_arr_real
 
             self.objects[evID] = ev
-            
+
             if pd.isna(ev.t_res):
                 self.reserving_at[None].append(ev)
             else:
                 self.reserving_at[ev.t_res].append(ev)
-            
-           
+
             self.incoming_at[ev.t_arr_real].append(ev)
 
             if pd.isna(ev.t_dep_real):

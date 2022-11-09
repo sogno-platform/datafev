@@ -127,11 +127,7 @@ def reservation_protocol(
                 cc_power_lb = dict(enumerate(cc.lower_limit[ts:deptime_max].values))
                 cc_schedule = dict(
                     enumerate(
-                        (
-                            cc.query_actual_schedule(
-                                ts, deptime_max, tdelta
-                            )
-                        ).values
+                        (cc.query_actual_schedule(ts, deptime_max, tdelta)).values
                     )
                 )
                 tou_tariff = dict(

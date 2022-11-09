@@ -27,7 +27,7 @@ from pathlib import Path
 long_description = (Path(__file__).parent / "README.md").read_text()
 
 
-with open('README.md') as f:
+with open("README.md") as f:
     long_description = f.read()
 
 setuptools.setup(
@@ -35,29 +35,29 @@ setuptools.setup(
     description="A Python framework for development and testing of management algorithms for electric vehicle charging infrastructures",
     version="1.0.0",
     author="Institute for Automation of Complex Power Systems (ACS),"
-           "E.ON Energy Research Center (E.ON ERC),"
-           "RWTH Aachen University",
+    "E.ON Energy Research Center (E.ON ERC),"
+    "RWTH Aachen University",
     author_email="post_acs@eonerc.rwth-aachen.de",
     url="https://git.rwth-aachen.de/acs/public/automation/datafev",
     license="MIT",
     packages=setuptools.find_packages(where="src"),
     package_dir={"": "src"},
-    #package_data={"pycity_scheduling": ["data/*.txt"], "examples": ["*.ipynb"]},
-    #data_files=[(".", ["LICENSE.txt", "README.md"])],
+    # package_data={"pycity_scheduling": ["data/*.txt"], "examples": ["*.ipynb"]},
+    # data_files=[(".", ["LICENSE.txt", "README.md"])],
     install_requires=[
-		"matplotlib==3.5.1",
-		"numpy==1.21.5",
-		"openpyxl==3.0.9",
-		"pandas==1.4.2",
-		"pyomo==6.4.1",
-		"sphinx==4.4.0",
+        "matplotlib==3.5.1",
+        "numpy==1.21.5",
+        "openpyxl==3.0.9",
+        "pandas==1.4.2",
+        "pyomo==6.4.1",
+        "sphinx==4.4.0",
     ],
     # extras_require={
     #     "test": ["pytest==6.2.4"]
     # },
     platforms="any",
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Operating System :: OS Independent",

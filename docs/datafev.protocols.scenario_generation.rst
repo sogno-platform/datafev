@@ -1,21 +1,21 @@
-datafev.protocols.scenariogeneration package
+datafev.protocols.scenario_generation package
 ============================================
 
 Submodules
 ----------
 
-datafev.protocols.scenariogeneration.sceneration module
+datafev.protocols.scenario_generation.sceneration module
 -------------------------------------------------------
 
-.. automodule:: src.datafev.protocols.scenariogeneration.sceneration
+.. automodule:: src.datafev.protocols.scenario_generation.sceneration
    :members:
    :undoc-members:
    :show-inheritance:
 
-datafev.protocols.scenariogeneration.utils module
+datafev.protocols.scenario_generation.utils module
 -------------------------------------------------
 
-.. automodule:: src.datafev.protocols.scenariogeneration.utils
+.. automodule:: src.datafev.protocols.scenario_generation.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ datafev.protocols.scenariogeneration.utils module
 Module contents
 ---------------
 
-.. automodule:: src.datafev.protocols.scenariogeneration
+.. automodule:: src.datafev.protocols.scenario_generation
    :members:
    :undoc-members:
    :show-inheritance:

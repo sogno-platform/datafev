@@ -8,7 +8,7 @@ Subpackages
    :maxdepth: 4
 
    datafev.algorithms
-   datafev.datahandling
+   datafev.data_handling
    datafev.protocols
 
 Module contents

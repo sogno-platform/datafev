@@ -201,7 +201,7 @@ if __name__ == "__main__":
     import numpy as np
 
     ###########################################################################
-    #Input parameters    
+    # Input parameters
     solver = SolverFactory("cplex")
     step = 300  # Time step size= 300 seconds = 5 minutes
     horizon = list(range(13))  # Optimization horizon= 12 steps = 60 minutes
@@ -215,10 +215,10 @@ if __name__ == "__main__":
     inisoc = 0.5  # Initial SOC
     pch = 22  # Maximum charge power
     pds = 22  # Maximum discharge power
-    
+
     g2v_tariff = np.random.uniform(low=0.4, high=0.8, size=12)
-    g2v_dps = dict(enumerate(g2v_tariff))           #grid-to-vehicle tariff
-    v2g_dps = dict(enumerate(g2v_tariff * 0.9))     #vehicle-to-grid tariff
+    g2v_dps = dict(enumerate(g2v_tariff))  # grid-to-vehicle tariff
+    v2g_dps = dict(enumerate(g2v_tariff * 0.9))  # vehicle-to-grid tariff
     ###########################################################################
 
     print("Size of one time step:", step, "seconds")
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     )
     print("V2G allowance:", v2gall / 3600, "kWh")
     print()
-    
+
     print("Optimization is run G2V-V2G distinguishing price signals")
     p, soc = minimize_cost(
         solver,
@@ -259,18 +259,13 @@ if __name__ == "__main__":
     print("Results are written in table")
     print("SOC (%): SOC trajectory in optimized schedule")
     print("P (kW): Power supply to the EV in optimized schedule")
-    print()    
+    print()
     results = pd.DataFrame(
-        columns=[
-            "G2V Tariff",
-            "V2G Tariff",
-            "P (kW)",
-            "SOC (%)",
-        ],
+        columns=["G2V Tariff", "V2G Tariff", "P (kW)", "SOC (%)",],
         index=sorted(soc.keys()),
     )
     results["G2V Tariff"] = pd.Series(g2v_dps)
     results["V2G Tariff"] = pd.Series(v2g_dps)
     results["P (kW)"] = pd.Series(p)
-    results["SOC (%)"] = pd.Series(soc)*100
+    results["SOC (%)"] = pd.Series(soc) * 100
     print(results)

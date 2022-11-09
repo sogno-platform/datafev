@@ -44,10 +44,10 @@ def reschedule(
     rho_eps,
 ):
     """
-    This function reschedules the charging operations of a cluster by considering
-    1) upper-lower limits of aggregate power consumption of the cluster.
-    2) pre-defined reference schedules of the individual EVs in the system.
-    This is run typically when some events require deviations from previously 
+    This function reschedules the charging operations of a cluster by considering:
+        1) upper-lower limits of aggregate power consumption of the cluster,
+        2) pre-defined reference schedules of the individual EVs in the system.
+    This is run typically when some events require deviations from previously
     determined schedules.
     
 
@@ -256,12 +256,13 @@ def reschedule(
 
     model.indev_neg = Constraint(model.V, rule=individual_neg_deviation)
 
-    # OBJECTIVE FUNCTION    
+    # OBJECTIVE FUNCTION
     def obj_rule(model):
         return (
             model.rho_y * (sum(model.y[v] * model.E[v] / 3600 for v in model.V))
             + model.rho_eps * model.eps
-        )   
+        )
+
     model.obj = Objective(rule=obj_rule, sense=minimize)
 
     ###########################################################################
@@ -294,7 +295,7 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
 
     ###########################################################################
-    #Input parameters
+    # Input parameters
     PCU = 11
     eff = 1.0
     N = 4
@@ -345,7 +346,7 @@ if __name__ == "__main__":
     rho_eps = 1
     ###########################################################################
 
-    #To show only two decimals in the table
+    # To show only two decimals in the table
     pd.options.display.float_format = "{:,.2f}".format
 
     print("The cluster with total installed capacity of:", N * PCU)
@@ -371,7 +372,6 @@ if __name__ == "__main__":
     print(demand_data)
     print()
 
-    
     print("Solving the optimization problem...")
     p_ref, s_ref = reschedule(
         solver,
@@ -395,11 +395,12 @@ if __name__ == "__main__":
     )
     print()
 
-   
     print("Printing optimal schedules:")
     results = {}
     for v in demand_data.index:
-        results[v] = pd.DataFrame(columns=["P (kW)", "SOC (%)"], index=sorted(s_ref[v].keys()))
+        results[v] = pd.DataFrame(
+            columns=["P (kW)", "SOC (%)"], index=sorted(s_ref[v].keys())
+        )
         results[v]["P (kW)"] = pd.Series(p_ref[v])
-        results[v]["SOC (%)"] = pd.Series(s_ref[v])*100
+        results[v]["SOC (%)"] = pd.Series(s_ref[v]) * 100
     print(pd.concat(results, axis=1))

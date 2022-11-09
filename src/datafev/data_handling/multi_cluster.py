@@ -31,7 +31,7 @@ class MultiClusterSystem(object):
     It contains multiple controlling entities each being responsible for 
     management of a cluster. 
     """
-    
+
     def __init__(self, system_id):
         """
         Multi-cluster systems are defined by the clusters that they consist of.
@@ -65,7 +65,7 @@ class MultiClusterSystem(object):
         None.
 
         """
-        
+
         self.clusters[cluster.id] = cluster
         cluster.station = self
 
@@ -237,13 +237,13 @@ class MultiClusterSystem(object):
         ts : datetime.datetime
             Current time.
         step : datetime.timedelta
-            Length of time step..
+            Length of time step.
 
         Returns
         -------
         None.
         """
-        
+
         for cc_id, cc in self.clusters.items():
             cc.uncontrolled_supply(ts, step)
 

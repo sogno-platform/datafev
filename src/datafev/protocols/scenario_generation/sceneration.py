@@ -40,8 +40,10 @@ def generate_fleet_data_independent_times(
     dep_day_prob_distribution=None,
 ):
     """
-    This function is executed to generate a simulation scenario with given statistical EV fleet data, which has independent arrival and departure times.
-    The user must provide two different independent statistical distribution inputs for both arrival and departure times.
+    This function is executed to generate a simulation scenario with given statistical EV fleet data,
+    which has independent arrival and departure times.
+    The user must provide two different independent statistical distribution inputs
+    for both arrival and departure times.
 
     Parameters
     ----------
@@ -332,7 +334,8 @@ def generate_fleet_data_dependent_times(
     arr_dep_times_dict=None,
 ):
     """
-    This function is executed to generate a simulation scenario with given statistical EV fleet data, which has dependent arrival and departure times.
+    This function is executed to generate a simulation scenario with given statistical EV fleet data,
+    which has dependent arrival and departure times.
     The relationship between arrival and departure times is assumed to be predefined in that provided input.
 
     Parameters

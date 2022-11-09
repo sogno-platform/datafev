@@ -63,7 +63,7 @@ def arrival_protocol(ts, tdelta, fleet, system):
             target_cluster.enter_data_of_incoming_vehicle(ts, ev, selected_charger)
 
             ev.admitted = True
-            
+
         else:
 
             # There is no available charger

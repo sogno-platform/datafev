@@ -22,116 +22,146 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from pyomo.environ import SolverFactory
 
-from datafev.datahandling.fleet import EVFleet
-from datafev.datahandling.cluster import ChargerCluster
-from datafev.datahandling.multicluster import MultiClusterSystem
+from datafev.data_handling.fleet import EVFleet
+from datafev.data_handling.cluster import ChargerCluster
+from datafev.data_handling.multi_cluster import MultiClusterSystem
 
 from datafev.protocols.arrival import *
 from datafev.protocols.departure import *
-from datafev.protocols.chargingcontrol.decentralized_fcfs import charging_protocol
+from datafev.protocols.charging_control.decentralized_fcfs import charging_protocol
 
-# This tutorial aims to show the use of datafev framework in a small example scenario
-# In the following the steps to set up a simulation instance will be given
 
-# Simulation parameters
-print("Selecting the simulation parameters...")
+def main():
+    """
+    This tutorial aims to show the use of datafev framework in a small example scenario
+    in the following the steps to set up a simulation instance will be given.
+    """
 
-sim_start = datetime(2022, 1, 8, 7)
-sim_end = datetime(2022, 1, 8, 9)
-sim_length = sim_end - sim_start
-sim_step = timedelta(minutes=5)
-sim_horizon = [sim_start + t * sim_step for t in range(int(sim_length / sim_step))]
+    # Simulation parameters
+    print("Selecting the simulation parameters...")
 
-print("Simulation starts at:",sim_start)
-print("Simulation fininshes at:",sim_end)
-print("Length of one time step in simulation:",sim_step)
-print()
-print()
+    sim_start = datetime(2022, 1, 8, 7)
+    sim_end = datetime(2022, 1, 8, 9)
+    sim_length = sim_end - sim_start
+    sim_step = timedelta(minutes=5)
+    sim_horizon = [sim_start + t * sim_step for t in range(int(sim_length / sim_step))]
 
-# Simulation inputs
-print("Scenario inputs  are taken from an xlsx file...")
-print()
+    print("Simulation starts at:", sim_start)
+    print("Simulation fininshes at:", sim_end)
+    print("Length of one time step in simulation:", sim_step)
+    print()
+    print()
 
-inputs = pd.ExcelFile("scenario_without_reservation.xlsx")
-input_fleet = pd.read_excel(inputs, "Fleet")
-input_cluster1 = pd.read_excel(inputs, "Cluster1")
-input_capacity1 = pd.read_excel(inputs, "Capacity1")
+    # Simulation inputs
+    print("Scenario inputs  are taken from an xlsx file...")
+    print()
 
-print("The charging demands of the EVs in the simulation scenario are given in the following:")
-print(input_fleet[['Battery Capacity (kWh)','Real Arrival Time','Real Arrival SOC']])
-print()
-print("The system consists of one charger cluster with the following chargers:")
-print(input_cluster1)
-print()
-print("Aggregate net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)")
-print(input_capacity1)
-print()
-print()
+    inputs = pd.ExcelFile("scenario_without_reservation.xlsx")
+    input_fleet = pd.read_excel(inputs, "Fleet")
+    input_cluster1 = pd.read_excel(inputs, "Cluster1")
+    input_capacity1 = pd.read_excel(inputs, "Capacity1")
 
-print("This scenario is simulated for two cases:")
-print("1) Uncontrolled charging of the EVs")
-print("2) Controlled charging of the EVs --> charging control is based on first-come-first-served")
-print("...")
-print()
-# Dictionaries to store the simulation outputs
-consumption_profiles = {}
+    print(
+        "The charging demands of the EVs in the simulation scenario are given in the following:"
+    )
+    print(
+        input_fleet[["Battery Capacity (kWh)", "Real Arrival Time", "Real Arrival SOC"]]
+    )
+    print()
+    print("The system consists of one charger cluster with the following chargers:")
+    print(input_cluster1)
+    print()
+    print(
+        "Aggregate net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)"
+    )
+    print(input_capacity1)
+    print()
+    print()
 
-# Simulating the same scenario for three different cases
-for control in ["uncontrolled","controlled"]:
+    print("This scenario is simulated for two cases:")
+    print("1) Uncontrolled charging of the EVs")
+    print(
+        "2) Controlled charging of the EVs --> charging control is based on first-come-first-served"
+    )
+    print("...")
+    print()
+    # Dictionaries to store the simulation outputs
+    consumption_profiles = {}
 
-    print("Simulating the charging control approach:", control)
+    # Simulating the same scenario for three different cases
+    for control in ["uncontrolled", "controlled"]:
 
-    #######################################################################
-    # Multicluster charging system and EV fleet
-    cluster1 = ChargerCluster("cluster1", input_cluster1)
-    system = MultiClusterSystem("multicluster")
-    system.add_cc(cluster1)
+        print("Simulating the charging control approach:", control)
 
-    fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
-    #######################################################################
+        #######################################################################
+        # Multicluster charging system and EV fleet
+        cluster1 = ChargerCluster("cluster1", input_cluster1)
+        system = MultiClusterSystem("multicluster")
+        system.add_cc(cluster1)
 
-    #######################################################################
-    # Additional parameters for charging management protocol
-    cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
-    #######################################################################
+        fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
+        #######################################################################
 
-    #######################################################################
-    # Simulation starts
-    np.random.seed(0)
+        #######################################################################
+        # Additional parameters for charging management protocol
+        cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
+        #######################################################################
 
-    for ts in sim_horizon:
-        print("     Simulating time step:", ts)
+        #######################################################################
+        # Simulation starts
+        np.random.seed(0)
 
-        # The departure protocol for the EVs leaving the charger clusters
-        departure_protocol(ts, fleet)
+        for ts in sim_horizon:
+            print("     Simulating time step:", ts)
 
-        # The arrival protocol for the EVs incoming to the charger clusters
-        arrival_protocol(ts, sim_step, fleet, system)
+            # The departure protocol for the EVs leaving the charger clusters
+            departure_protocol(ts, fleet)
 
-        # Real-time charging control of the charger clusters
-        if control == "uncontrolled":
-            system.uncontrolled_supply(ts, sim_step)
-        if control == "controlled":
-            charging_protocol(ts, sim_step, system)
+            # The arrival protocol for the EVs incoming to the charger clusters
+            arrival_protocol(ts, sim_step, fleet, system)
 
-    # Simulation ends
-    #######################################################################
+            # Real-time charging control of the charger clusters
+            if control == "uncontrolled":
+                system.uncontrolled_supply(ts, sim_step)
+            if control == "controlled":
+                charging_protocol(ts, sim_step, system)
 
-    #######################################################################
-    # Printing the results to excel files
-    system.export_results(sim_start,sim_end,sim_step,"result_noreservation_" + control + "_clusters.xlsx")
-    fleet.export_results(sim_start,sim_end,sim_step,"result_noreservation_" + control + "_fleet.xlsx")
-    #######################################################################
+        # Simulation ends
+        #######################################################################
 
-    #######################################################################
-    # Storing the aggregate consumption profiles of individual clusters to dictionaries
-    consumption_profiles[control] = (cluster1.analyze_consumption_profile(sim_start, sim_end, sim_step)).sum(axis=1)
+        #######################################################################
+        # Printing the results to excel files
+        system.export_results(
+            sim_start,
+            sim_end,
+            sim_step,
+            "result_noreservation_" + control + "_clusters.xlsx",
+        )
+        fleet.export_results(
+            sim_start,
+            sim_end,
+            sim_step,
+            "result_noreservation_" + control + "_fleet.xlsx",
+        )
+        #######################################################################
+
+        #######################################################################
+        # Storing the aggregate consumption profiles of individual clusters to dictionaries
+        consumption_profiles[control] = (
+            cluster1.analyze_consumption_profile(sim_start, sim_end, sim_step)
+        ).sum(axis=1)
+
+        print()
+        #######################################################################
 
     print()
-    #######################################################################
+    print(
+        "Aggregate consumption profile of clusters in each management approach are plotted:"
+    )
+    fig, axs = plt.subplots(1, 1, tight_layout=True, sharex=True)
+    pd.concat(consumption_profiles, axis=1).plot(ax=axs, title="cluster1")
+    plt.show()
 
-print()
-print("Aggregate consumption profile of clusters in each management approach are plotted:")
-fig, axs = plt.subplots(1, 1, tight_layout=True, sharex=True)
-pd.concat(consumption_profiles, axis=1).plot(ax=axs, title="cluster1")
-plt.show()
+
+if __name__ == "__main__":
+    main()

@@ -1,21 +1,21 @@
-datafev.protocols.smartreservation package
+datafev.protocols.smart_reservation package
 ==========================================
 
 Submodules
 ----------
 
-datafev.protocols.smartreservation.arrival module
+datafev.protocols.smart_reservation.arrival module
 -------------------------------------------------
 
-.. automodule:: src.datafev.protocols.smartreservation.arrival
+.. automodule:: src.datafev.protocols.smart_reservation.arrival
    :members:
    :undoc-members:
    :show-inheritance:
 
-datafev.protocols.smartreservation.reservation module
+datafev.protocols.smart_reservation.reservation module
 -----------------------------------------------------
 
-.. automodule:: src.datafev.protocols.smartreservation.reservation
+.. automodule:: src.datafev.protocols.smart_reservation.reservation
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ datafev.protocols.smartreservation.reservation module
 Module contents
 ---------------
 
-.. automodule:: src.datafev.protocols.smartreservation
+.. automodule:: src.datafev.protocols.smart_reservation
    :members:
    :undoc-members:
    :show-inheritance:

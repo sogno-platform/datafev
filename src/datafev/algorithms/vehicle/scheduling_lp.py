@@ -158,7 +158,7 @@ if __name__ == "__main__":
     import pandas as pd
 
     ###########################################################################
-    #Input parameters
+    # Input parameters
     solver = SolverFactory("cplex")
     step = 600  # Time step size= 600 seconds = 10 minutes
     horizon = list(range(7))  # Optimization horizon= 6 steps = 60 minutes
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         pds,
         dps1,
     )
-    
+
     print("For the profile dps2:")
     print(dps2)
     p2, s2 = minimize_cost(
@@ -228,7 +228,7 @@ if __name__ == "__main__":
         pds,
         dps2,
     )
-    
+
     print("For the profile dps2:")
     print(dps2)
     p3, s3 = minimize_cost(
@@ -248,8 +248,7 @@ if __name__ == "__main__":
     )
 
     print()
-    
-    
+
     print("Printing optimization results in tables:")
     sched1 = pd.DataFrame(columns=["DPS", "SOC (%)"])
     sched2 = pd.DataFrame(columns=["DPS", "SOC (%)"])
@@ -258,24 +257,23 @@ if __name__ == "__main__":
     print("P (kW): Power supply to the EV in optimized schedule")
     print()
 
-       
     print("dps1")
     sched1["P (kW)"] = pd.Series(p1)
-    sched1["SOC (%)"] = pd.Series(s1)*100
-    sched1["DPS"] = pd.Series(dps1)  
-    print(sched1) 
+    sched1["SOC (%)"] = pd.Series(s1) * 100
+    sched1["DPS"] = pd.Series(dps1)
+    print(sched1)
     print()
 
     print("dps2")
     sched2["P (kW)"] = pd.Series(p2)
-    sched2["SOC (%)"] = pd.Series(s2)*100
+    sched2["SOC (%)"] = pd.Series(s2) * 100
     sched2["DPS"] = pd.Series(dps2)
     print(sched2)
     print()
 
     print("dps3")
     sched3["P (kW)"] = pd.Series(p3)
-    sched3["SOC (%)"] = pd.Series(s3)*100
+    sched3["SOC (%)"] = pd.Series(s3) * 100
     sched3["DPS"] = pd.Series(dps3)
     print(sched3)
     print()

@@ -7,10 +7,10 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   datafev.protocols.chargingcontrol
-   datafev.protocols.scenariogeneration
-   datafev.protocols.simplereservation
-   datafev.protocols.smartreservation
+   datafev.protocols.charging_control
+   datafev.protocols.scenario_generation
+   datafev.protocols.simple_reservation
+   datafev.protocols.smart_reservation
 
 Submodules
 ----------

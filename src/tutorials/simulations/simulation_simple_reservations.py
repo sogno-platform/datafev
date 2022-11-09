@@ -23,163 +23,192 @@ from datetime import datetime, timedelta
 from pyomo.environ import SolverFactory
 import matplotlib.pyplot as plt
 
-from datafev.datahandling.fleet import EVFleet
-from datafev.datahandling.cluster import ChargerCluster
-from datafev.datahandling.multicluster import MultiClusterSystem
+from datafev.data_handling.fleet import EVFleet
+from datafev.data_handling.cluster import ChargerCluster
+from datafev.data_handling.multi_cluster import MultiClusterSystem
 
-from datafev.protocols.simplereservation.reservation import *
-from datafev.protocols.simplereservation.arrival import *
+from datafev.protocols.simple_reservation.reservation import *
+from datafev.protocols.simple_reservation.arrival import *
 from datafev.protocols.departure import *
-from datafev.protocols.chargingcontrol.decentralized_llf import charging_protocol
+from datafev.protocols.charging_control.decentralized_llf import charging_protocol
 
-########################################################################################################################
-########################################################################################################################
-# This tutorial aims to show the use of datafev framework in an example scenario with
-# Simple reservations where EVs reserve chargers before their arrival to clusters
-# Smart charging where clusters' power consumption profiles are controlled based on least-laxity-first algorithm
-########################################################################################################################
-########################################################################################################################
 
-########################################################################################################################
-########################################################################################################################
-# Simulation parameters
-print("Selecting the simulation parameters...")
+def main():
+    """
+    This tutorial aims to show the use of datafev framework in an example scenario with
+    simple reservations where EVs reserve chargers before their arrival to clusters
+    smart charging where clusters' power consumption profiles are controlled based on least-laxity-first algorithm.
+    """
 
-sim_start = datetime(2022, 1, 8, 7)
-sim_end = datetime(2022, 1, 8, 9)
-sim_length = sim_end - sim_start
-sim_step = timedelta(minutes=5)
-sim_horizon = [sim_start + t * sim_step for t in range(int(sim_length / sim_step))]
+    ########################################################################################################################
+    ########################################################################################################################
+    # Simulation parameters
+    print("Selecting the simulation parameters...")
 
-print("Simulation starts at:",sim_start)
-print("Simulation fininshes at:",sim_end)
-print("Length of one time step in simulation:",sim_step)
-print()
-print()
+    sim_start = datetime(2022, 1, 8, 7)
+    sim_end = datetime(2022, 1, 8, 9)
+    sim_length = sim_end - sim_start
+    sim_step = timedelta(minutes=5)
+    sim_horizon = [sim_start + t * sim_step for t in range(int(sim_length / sim_step))]
 
-# Simulation inputs
-inputs = pd.ExcelFile("scenario_simple_reservation.xlsx")
-input_fleet = pd.read_excel(inputs, "Fleet")
-input_cluster1 = pd.read_excel(inputs, "Cluster1")
-input_capacity1 = pd.read_excel(inputs, "Capacity1")
+    print("Simulation starts at:", sim_start)
+    print("Simulation fininshes at:", sim_end)
+    print("Length of one time step in simulation:", sim_step)
+    print()
+    print()
 
-print("The system consists of one charger cluster with the following chargers:")
-print(input_cluster1)
-print()
-print("Aggregate net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)")
-print(input_capacity1)
-print()
+    # Simulation inputs
+    inputs = pd.ExcelFile("scenario_simple_reservation.xlsx")
+    input_fleet = pd.read_excel(inputs, "Fleet")
+    input_cluster1 = pd.read_excel(inputs, "Cluster1")
+    input_capacity1 = pd.read_excel(inputs, "Capacity1")
 
-print("The reservation requests of the EVs (as declared in reservation) are given in the following:")
-print(input_fleet[['ev_id','Reservation Time','Estimated Arrival Time','Estimated Departure Time']])
-print()
-print()
+    print("The system consists of one charger cluster with the following chargers:")
+    print(input_cluster1)
+    print()
+    print(
+        "Aggregate net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)"
+    )
+    print(input_capacity1)
+    print()
 
-# Additional parameters for reservation management
-soc_dev = {"cluster1": 0}
-arr_del = {"cluster1": timedelta(seconds=0)}
-dep_del = {"cluster1": timedelta(seconds=0)}
-traffic_forecast = {"soc_dec": soc_dev, "arr_del": arr_del, "dep_del": dep_del}
+    print(
+        "The reservation requests of the EVs (as declared in reservation) are given in the following:"
+    )
+    print(
+        input_fleet[
+            [
+                "ev_id",
+                "Reservation Time",
+                "Estimated Arrival Time",
+                "Estimated Departure Time",
+            ]
+        ]
+    )
+    print()
+    print()
 
-print("The reservation protocol is executed before arrival of EVs.")
-print("EV drivers declare their estimated arrival in the region of the simulated multi-cluster system")
-print("Traffic conditions for arriving at individual clusters may differ from each other. In the simulated case..")
-print("For the EVs driving to cluster 1...")
-print("...the arrival would delay by:",arr_del['cluster1'])
-print("...the departure would delay by:",dep_del['cluster1'])
-print("...the arrival SOC would change by:",soc_dev['cluster1'])
-print()
+    # Additional parameters for reservation management
+    soc_dev = {"cluster1": 0}
+    arr_del = {"cluster1": timedelta(seconds=0)}
+    dep_del = {"cluster1": timedelta(seconds=0)}
+    traffic_forecast = {"soc_dec": soc_dev, "arr_del": arr_del, "dep_del": dep_del}
 
-########################################################################################################################
-########################################################################################################################
-# Initialization of the simulation model
+    print("The reservation protocol is executed before arrival of EVs.")
+    print(
+        "EV drivers declare their estimated arrival in the region of the simulated multi-cluster system"
+    )
+    print(
+        "Traffic conditions for arriving at individual clusters may differ from each other. In the simulated case.."
+    )
+    print("For the EVs driving to cluster 1...")
+    print("...the arrival would delay by:", arr_del["cluster1"])
+    print("...the departure would delay by:", dep_del["cluster1"])
+    print("...the arrival SOC would change by:", soc_dev["cluster1"])
+    print()
 
-# Fleet behavior
-fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
+    ########################################################################################################################
+    ########################################################################################################################
+    # Initialization of the simulation model
 
-# Multicluster charging system and EV fleet
-cluster1 = ChargerCluster("cluster1", input_cluster1)
-system = MultiClusterSystem("multicluster")
-system.add_cc(cluster1)
-cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
+    # Fleet behavior
+    fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
 
-# Same random behavior (if randomness exists) in all runs
-np.random.seed(0)
+    # Multicluster charging system and EV fleet
+    cluster1 = ChargerCluster("cluster1", input_cluster1)
+    system = MultiClusterSystem("multicluster")
+    system.add_cc(cluster1)
+    cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
 
-print("Simulation scenario has been initalized")
-print()
+    # Same random behavior (if randomness exists) in all runs
+    np.random.seed(0)
 
-########################################################################################################################
-########################################################################################################################
+    print("Simulation scenario has been initalized")
+    print()
 
-#######################################################################
+    ########################################################################################################################
+    ########################################################################################################################
 
-#######################################################################
+    #######################################################################
 
-########################################################################################################################
-########################################################################################################################
-# Simulation
+    #######################################################################
 
-print("Simulation started...")
+    ########################################################################################################################
+    ########################################################################################################################
+    # Simulation
 
-for ts in sim_horizon:
-    print("Simulating time step:", ts)
+    print("Simulation started...")
 
-    # The departure protocol for the EVs leaving the chargerg clusters
-    departure_protocol(ts, fleet)
+    for ts in sim_horizon:
+        print("Simulating time step:", ts)
 
-    # The reservation protocol (including routing to a cluster in the multicluster system) for the EVs
-    reservation_protocol(ts, sim_step, system, fleet, traffic_forecast)
+        # The departure protocol for the EVs leaving the chargerg clusters
+        departure_protocol(ts, fleet)
 
-    # The arrival protocol for the EVs incoming to the charger clusters
-    arrival_protocol(ts, sim_step, fleet)
+        # The reservation protocol (including routing to a cluster in the multicluster system) for the EVs
+        reservation_protocol(ts, sim_step, system, fleet, traffic_forecast)
 
-    # Real-time charging control of the charger clusters is based on the decentralized least laxity first
-    charging_protocol(ts, sim_step, system)
+        # The arrival protocol for the EVs incoming to the charger clusters
+        arrival_protocol(ts, sim_step, fleet)
 
-print("Simulation finished...")
-print()
-print()
-########################################################################################################################
-########################################################################################################################
+        # Real-time charging control of the charger clusters is based on the decentralized least laxity first
+        charging_protocol(ts, sim_step, system)
 
-########################################################################################################################
-########################################################################################################################
+    print("Simulation finished...")
+    print()
+    print()
+    ########################################################################################################################
+    ########################################################################################################################
 
-# Displaying reservation and connection date of cluster1
-print("Reservation data")
-print(cluster1.re_dataset.iloc[:,1:6])
-print()
+    ########################################################################################################################
+    ########################################################################################################################
 
-print("Connection data")
-print(cluster1.cc_dataset[['EV ID','Arrival Time','Leave Time']])
-print()
+    # Displaying reservation and connection date of cluster1
+    print("Reservation data")
+    print(cluster1.re_dataset.iloc[:, 1:6])
+    print()
 
-########################################################################################################################
-########################################################################################################################
+    print("Connection data")
+    print(cluster1.cc_dataset[["EV ID", "Arrival Time", "Leave Time"]])
+    print()
 
-########################################################################################################################
-########################################################################################################################
-# Printing the results to excel files
-system.export_results(sim_start, sim_end, sim_step, "result_simplereservation_clusters.xlsx")
-fleet.export_results(sim_start, sim_end, sim_step, "result_simplereservation_fleet.xlsx")
-print("Simulation results have been exported to excel files.")
-########################################################################################################################
-########################################################################################################################
+    ########################################################################################################################
+    ########################################################################################################################
 
-########################################################################################################################
-########################################################################################################################
-# Plotting the results
-clu1_pow = cluster1.analyze_consumption_profile(sim_start, sim_end, sim_step).sum(axis=1)
-clu1_occ = cluster1.analyze_occupation_profile(sim_start, sim_end, sim_step).sum(axis=1)
+    ########################################################################################################################
+    ########################################################################################################################
+    # Printing the results to excel files
+    system.export_results(
+        sim_start, sim_end, sim_step, "result_simplereservation_clusters.xlsx"
+    )
+    fleet.export_results(
+        sim_start, sim_end, sim_step, "result_simplereservation_fleet.xlsx"
+    )
+    print("Simulation results have been exported to excel files.")
+    ########################################################################################################################
+    ########################################################################################################################
 
-fig1, ax1 = plt.subplots(2, 1, tight_layout=True)
-fig1.suptitle("cluster1")
-clu1_occ.plot(ax=ax1[0], title="Number of connceted EVs")
-clu1_pow.plot(ax=ax1[1], title="Aggregate consumption")
-cluster1.upper_limit[sim_start:sim_end].plot(ax=ax1[1], label="Constraint")
-plt.show()
+    ########################################################################################################################
+    ########################################################################################################################
+    # Plotting the results
+    clu1_pow = cluster1.analyze_consumption_profile(sim_start, sim_end, sim_step).sum(
+        axis=1
+    )
+    clu1_occ = cluster1.analyze_occupation_profile(sim_start, sim_end, sim_step).sum(
+        axis=1
+    )
 
-print("Aggregate consumption and occupation profiles of the clusters are plotted")
-########################################################################################################################
-########################################################################################################################
+    fig1, ax1 = plt.subplots(2, 1, tight_layout=True)
+    fig1.suptitle("cluster1")
+    clu1_occ.plot(ax=ax1[0], title="Number of connceted EVs")
+    clu1_pow.plot(ax=ax1[1], title="Aggregate consumption")
+    cluster1.upper_limit[sim_start:sim_end].plot(ax=ax1[1], label="Constraint")
+    plt.show()
+
+    print("Aggregate consumption and occupation profiles of the clusters are plotted")
+    ########################################################################################################################
+    ########################################################################################################################
+
+
+if __name__ == "__main__":
+    main()

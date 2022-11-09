@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   tutorials.scenariogeneration
+   tutorials.scenario_generation
    tutorials.simulations
 
 Module contents

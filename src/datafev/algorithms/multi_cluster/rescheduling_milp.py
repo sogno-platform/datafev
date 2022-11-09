@@ -55,10 +55,10 @@ def reschedule(
     """
     This function reschedules the charging operations of all clusters in 
     a multicluster system by considering:
-    1) upper-lower limits of aggregate consumption of the multi-cluster system
-    2) upper-lower limits of aggregate consumption of individual clusters
-    3) inter-cluster unbalances between aggregate power consumption of clusters
-    4) pre-defined reference schedules of the individual EVs in the system.
+        1) upper-lower limits of aggregate consumption of the multi-cluster system,
+        2) upper-lower limits of aggregate consumption of individual clusters,
+        3) inter-cluster unbalances between aggregate power consumption of clusters,
+        4) pre-defined reference schedules of the individual EVs in the system.
     This is run typically when some events require deviations from previously 
     determined schedules.
     
@@ -367,8 +367,8 @@ if __name__ == "__main__":
     from pyomo.environ import SolverFactory
 
     ###########################################################################
-    #Input parameters
-    solver = SolverFactory("cplex")
+    # Input parameters
+    solver = SolverFactory("gurobi")
 
     clusters = ["CC1", "CC2"]  # System has two clusters
     opt_horizon = list(range(13))  # 1 hour

@@ -107,7 +107,7 @@ def main():
     ########################################################################################################################
     # Optimization parameters
     solver = SolverFactory(
-        "gurobi"
+        "glpk"
     )  # Users have to declare an optimization solver that exists their file system
     print(
         "The management strategy tested in this tutorial includes optimization algorithms"

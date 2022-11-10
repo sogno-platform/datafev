@@ -44,7 +44,7 @@ def main():
         arr_soc_dict=arr_soc_dict,
         dep_soc_dict=dep_soc_dict,
         ev_dict=ev_dict,
-        number_of_evs=5,
+        number_of_evs=100,
         startdate=dt.date(2021, 6, 1),
         enddate=dt.date(2021, 6, 3),
         timedelta_in_min=15,

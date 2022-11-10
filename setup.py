@@ -45,6 +45,7 @@ setuptools.setup(
     # package_data={"pycity_scheduling": ["data/*.txt"], "examples": ["*.ipynb"]},
     # data_files=[(".", ["LICENSE.txt", "README.md"])],
     install_requires=[
+        "glpk==4.65"
         "matplotlib==3.5.1",
         "numpy==1.21.5",
         "openpyxl==3.0.9",

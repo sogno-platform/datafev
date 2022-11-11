@@ -22,7 +22,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-from datafev.datahandling.charger import ChargingUnit
+from datafev.data_handling.charger import ChargingUnit
 
 
 class ChargerCluster(object):

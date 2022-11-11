@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datafev"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
     { name="Erdem Gümrükcü, M.Sc.", email="erdem.guemruekcue@eonerc.rwth-aachen.de" },
     { name="Amir Ahmadifar, M.Sc.", email="aahmadifar@eonerc.rwth-aachen.de" },
@@ -12,7 +12,7 @@ authors = [
 ]
 description = "datafev is a framework for the development, testing, and assessment of managemant algorithms for EV charging scenarios."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.6"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

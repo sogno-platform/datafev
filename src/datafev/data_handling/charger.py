@@ -217,7 +217,7 @@ class ChargingUnit(object):
             # Limit due to the charger power capability
             lim_ch_pow = self.p_max_ch * step.seconds
 
-            if self.connected_ev.pow_soc_table != None:
+            if type(self.connected_ev.pow_soc_table) != type(None):
 
                 # The EV battery has a specific charger power-SOC dependency
                 # limiting the power transfer

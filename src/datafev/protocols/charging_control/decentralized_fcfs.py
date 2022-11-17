@@ -29,9 +29,18 @@ def charging_protocol(ts, t_delta, system):
     the power distribution to the chargers. The control architecture is decentralized; therefore, each cluster applies
     its own control. The applied control is based on "first-come-first-serve" logic.
 
-    :param ts:          Current time                    datetime
-    :param t_delta:     Control horizon                 timedelta
-    :param system:      Multi-cluster system object     datahandling.multicluster
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    t_delta : timedelta
+        Control horizon.
+    system : datahandling.multicluster
+        Multi-cluster system object.
+
+    Returns
+    -------
+    None.
 
     """
 

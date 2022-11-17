@@ -278,7 +278,7 @@ The datafev package is released by the Institute for Automation of Complex Power
 
 ## Contact
 
-- Erdem Gümrükcü, M.Sc. <erdem.guemruekcue@eonerc.rwth-aachen.de>
+- Erdem Gumrukcu, M.Sc. <erdem.guemruekcue@eonerc.rwth-aachen.de>
 - Amir Ahmadifar, M.Sc. <aahmadifar@eonerc.rwth-aachen.de>
 - Aytug Yavuzer, B.Sc. <aytug.yavuzer@rwth-aachen.de>
 - Univ.-Prof. Antonello Monti, Ph.D. <post_acs@eonerc.rwth-aachen.de>

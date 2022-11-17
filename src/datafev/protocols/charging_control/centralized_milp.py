@@ -32,15 +32,27 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
     centralized; therefore, all clusters are controlled by a single decision-maker. The applied control is based
     on MILP rescheduling.
 
-    :param ts:                      Current time                                            datetime
-    :param t_delta:                 Control horizon                                         timedelta
-    :param horizon:                 Optimization horizon of rescheduling                    timedelta
-    :param system:                  Multi-cluster system object                             datahandling.multicluster
-    :param solver:                  Optimization solver                                     pyomo SolverFactory object
-    :param penalty_parameters:      Cost parameters for capacity violation / devations      dict
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    t_delta : timedelta
+        Control horizon.
+    horizon : timedelta
+        Optimization horizon of rescheduling.
+    system : datahandling.multicluster
+        Multi-cluster system object.
+    solver : pyomo SolverFactory object
+        Optimization solver.
+    penalty_parameters : dict
+        Cost parameters for capacity violation/devations.
+
+    Returns
+    -------
+    None.
 
     """
-
+    
     schedule_horizon = pd.date_range(start=ts, end=ts + horizon, freq=t_delta)
     opt_horizon = list(range(len(schedule_horizon)))
     opt_step = t_delta.seconds

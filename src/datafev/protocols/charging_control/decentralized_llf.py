@@ -27,11 +27,20 @@ def charging_protocol(ts, t_delta, system):
 
     It addresses the scenarios where each cluster has a local power consumption constraint and therefore has to control
     the power distribution to the chargers. The control architecture is decentralized; therefore, each cluster applies
-    its own control. The applied control is based on "least-laxity-first" logic.
+    its own control. The applied control is based on "least-laxity-first" logic.    
 
-    :param ts:          Current time                    datetime
-    :param t_delta:     Control horizon                 timedelta
-    :param system:      Multi-cluster system object     datahandling.multicluster
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    t_delta : timedelta
+        Control horizon.
+    system : datahandling.multicluster
+        Multi-cluster system object.
+
+    Returns
+    -------
+    None.
 
     """
 

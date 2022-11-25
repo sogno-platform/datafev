@@ -52,7 +52,7 @@ def charging_routine(ts, t_delta, horizon, system, solver, penalty_parameters):
     None.
 
     """
-    
+
     schedule_horizon = pd.date_range(start=ts, end=ts + horizon, freq=t_delta)
     opt_horizon = list(range(len(schedule_horizon)))
     opt_step = t_delta.seconds

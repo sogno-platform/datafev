@@ -45,12 +45,11 @@ setuptools.setup(
     # package_data={"pycity_scheduling": ["data/*.txt"], "examples": ["*.ipynb"]},
     # data_files=[(".", ["LICENSE.txt", "README.md"])],
     install_requires=[
-        "matplotlib",
-        "numpy",
-        "openpyxl",
-        "pandas",
-        "pyomo",
-        "sphinx",
+        "matplotlib==3.5.1",
+        "numpy==1.21.5",
+        "openpyxl==3.0.9",
+        "pandas==1.4.2",
+        "pyomo==6.4.1",
     ],
     # extras_require={
     #     "test": ["pytest==6.2.4"]

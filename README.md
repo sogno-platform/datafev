@@ -20,12 +20,12 @@ Its target users are researchers in the field of smart grid applications and the
 
 ## Installation
 
-datafev requires the following Python packages:
-- matplotlib
-- numpy
-- openpyxl
-- pandas
-- pyomo
+datafev requires at least the following Python packages:
+- matplotlib==3.5.1
+- numpy==1.21.5
+- openpyxl==3.0.9
+- pandas==1.4.2
+- pyomo==6.4.1
 
 as well as the installation of at least one mathematical programming solver for convex and/or non-convex problems, which is supported by the [Pyomo](http://www.pyomo.org/) optimisation modelling library.
 We recommend one of the following solvers:
@@ -33,10 +33,6 @@ We recommend one of the following solvers:
 - [Gurobi (gurobipy)](https://www.gurobi.com/products/gurobi-optimizer/) (default)
 - [IBM ILOG CPLEX](https://www.ibm.com/products/ilog-cplex-optimization-studio)
 - [GLPK (GNU Linear Programming Kit)](https://www.gnu.org/software/glpk/)
-
-### Installation of pycity_scheduling
-
-The latest version of pycity_scheduling is v1.0.0.
 
 If all the abovementioned dependencies are installed, you should be able to install package datafev via [PyPI](https://pypi.org/) (using Python 3.X) as follows:
 

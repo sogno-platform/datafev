@@ -69,7 +69,7 @@ def reservation_routine(
     None.
 
     """
-    
+
     reserving_vehicles = fleet.reserving_vehicles_at(ts)
 
     for ev in reserving_vehicles:

@@ -23,7 +23,7 @@ import pandas as pd
 import numpy as np
 from datetime import timedelta
 import datetime as dt
-import datafev.protocols.scenario_generation.utils as ut
+import datafev.routines.scenario_generation.utils as ut
 
 
 def generate_fleet_data_independent_times(

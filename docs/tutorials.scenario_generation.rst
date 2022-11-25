@@ -20,8 +20,6 @@ tutorials.scenario_generation.scenario\_generation\_independent\_times module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
 
 .. automodule:: src.tutorials.scenario_generation
    :members:

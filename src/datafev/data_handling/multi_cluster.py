@@ -76,16 +76,17 @@ class MultiClusterSystem(object):
 
         Parameters
         ----------
-        series : TYPE
-            DESCRIPTION.
-        resolution : TYPE
-            DESCRIPTION.
+        series : pandas.Series
+            Electricity price data.
+        resolution : int
+            Desired resolution.
 
         Returns
         -------
         None.
         
         """
+
         start = min(series.index)
         end = max(series.index) + timedelta(hours=1)
         n_of_steps = int((end - start) / resolution)
@@ -111,10 +112,10 @@ class MultiClusterSystem(object):
         step : datetime.timedelta
             Time resolution of the target period.
         limits : pandas.DataFrame
-            Time indexed table indicating the lower and upper limits.
-            index --> Identifier of time steps
-            LB --> Lower bound of consumption limit at a particular time step
-            UB --> Upper bound of consumption limit at a particular time step
+            Time indexed table indicating the lower and upper limits:
+                index --> Identifier of time steps,
+                LB --> Lower bound of consumption limit at a particular time step,
+                UB --> Upper bound of consumption limit at a particular time step.
 
         Returns
         -------
@@ -174,7 +175,7 @@ class MultiClusterSystem(object):
         """
         This function creates a dataframe containing the data of the 
         available chargers for a specific period. It is usually called in 
-        execution of reservation protocols.
+        execution of reservation routines.
         
 
         Parameters
@@ -193,12 +194,12 @@ class MultiClusterSystem(object):
         Returns
         -------
         available_chargers : pandas.DataFrame
-            Table containing the data of available chargers in the system.
-            index --> string identifier of the charger
-            cluster --> string identifier of the cluster
-            max p_ch --> maximum charge power
-            max p_ds --> maximum discharge power
-            eff --> power conversion efficiency of the charger.
+            Table containing the data of available chargers in the system:
+                index --> string identifier of the charger
+                cluster --> string identifier of the cluster
+                max p_ch --> maximum charge power
+                max p_ds --> maximum discharge power
+                eff --> power conversion efficiency of the charger.
 
         
         """

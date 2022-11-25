@@ -79,7 +79,7 @@ def reschedule(
     minsoc : dict of float
         Minimum allowed SOCs.
     maxsoc : dict of float
-        Maximum allowed SOCs .
+        Maximum allowed SOCs.
     ch_eff : dict of float
         Charging efficiency of chargers.
     ds_eff : dict of float

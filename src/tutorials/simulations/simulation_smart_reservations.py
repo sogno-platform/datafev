@@ -27,10 +27,10 @@ from datafev.data_handling.fleet import EVFleet
 from datafev.data_handling.cluster import ChargerCluster
 from datafev.data_handling.multi_cluster import MultiClusterSystem
 
-from datafev.protocols.smart_reservation.reservation import *
-from datafev.protocols.smart_reservation.arrival import *
-from datafev.protocols.departure import *
-from datafev.protocols.charging_control.decentralized_milp import charging_protocol
+from datafev.routines.smart_reservation.reservation import *
+from datafev.routines.smart_reservation.arrival import *
+from datafev.routines.departure import *
+from datafev.routines.charging_control.decentralized_milp import charging_routine
 
 
 def main():
@@ -207,18 +207,18 @@ def main():
         print("Simulating time step:", ts)
 
         # The departure protocol for the EVs leaving the chargerg clusters
-        departure_protocol(ts, fleet)
+        departure_routine(ts, fleet)
 
         # The reservation protocol (including routing to a cluster in the multicluster system) for the EVs
-        reservation_protocol(
+        reservation_routine(
             ts, sim_step, system, fleet, solver, traffic_forecast, arbitrage_coeff=0.1
         )
 
         # The arrival protocol for the EVs incoming to the charger clusters
-        arrival_protocol(ts, sim_step, fleet)
+        arrival_routine(ts, sim_step, fleet)
 
         # Real-time charging control of the charger clusters is based on the decentralized MILP-based protocol
-        charging_protocol(
+        charging_routine(
             ts, sim_step, timedelta(minutes=10), system, solver, penalty_parameters
         )
 

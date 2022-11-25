@@ -44,9 +44,9 @@ def minimize_cost(
     Parameters
     ----------
     opt_step : float
-        Size of one time step in the optimization (seconds)   
+        Size of one time step in the optimization (seconds).
     opt_horizon : list of integers
-        Time step identifiers in the optimization horizon     
+        Time step identifiers in the optimization horizon.
     ecap : float
         Energy capacity of battery (kWs).
     v2gall : float
@@ -60,13 +60,13 @@ def minimize_cost(
     crtsoc : float
         Target soc at crttime.
     crttime : int
-        Critical time s.t. s(srttime)> crtsoc
+        Critical time s.t. s(srttime)> crtsoc.
     inisoc : dict of float
-        Initial soc \in [0,1)
+        Initial soc \in [0,1).
     p_ch : dict of float
         Nominal charging power (kW).
     p_ds : dict of float
-        Nominal charging power (kW)
+        Nominal charging power (kW).
     dps : dict of float
         Dynamic price signal (Eur/kWh).
     
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Input parameters
-    solver = SolverFactory("cplex")
+    solver = SolverFactory("gurobi")
     step = 600  # Time step size= 600 seconds = 10 minutes
     horizon = list(range(7))  # Optimization horizon= 6 steps = 60 minutes
     ecap = 55 * 3600  # Battery capacity= 55 kWh

@@ -118,12 +118,12 @@ class EVFleet(object):
         ----------
         table : pandas.DataFrame
             This table contains all EVs SOC dependency data.
-            Each EV's data has the following parameters.
-            index --> Identifier of the SOC range
-            SOC_LB --> Lower bound of a particular SOC range
-            SOC_UB --> Upper bound of a particular SOC range
-            P_LB --> Lower bound of power capability in a particular SOC range
-            P_UB --> Upper bound of power capability in a particular SOC range
+            Each EV's data has the following parameters:
+                index --> Identifier of the SOC range,
+                SOC_LB --> Lower bound of a particular SOC range,
+                SOC_UB --> Upper bound of a particular SOC range,
+                P_LB --> Lower bound of power capability in a particular SOC range,
+                P_UB --> Upper bound of power capability in a particular SOC range.
 
         Returns
         -------
@@ -146,7 +146,7 @@ class EVFleet(object):
         Returns
         -------
         list
-            the list of the objects that place reservation request at ts
+            The list of the objects that place reservation request at ts.
 
         """
         return self.reserving_at[ts]
@@ -164,7 +164,7 @@ class EVFleet(object):
         Returns
         -------
         list
-            the list of the objects that arrive in clusters at ts.
+            The list of the objects that arrive in clusters at ts.
 
         """
         return self.incoming_at[ts]
@@ -182,7 +182,7 @@ class EVFleet(object):
         Returns
         -------
         list
-            the list of the objects that leave clusters at ts.
+            The list of the objects that leave clusters at ts.
 
         """
         return self.outgoing_at[ts]
@@ -190,7 +190,7 @@ class EVFleet(object):
     def export_results(self, start, end, step, xlfile):
         """
         This method is run after simulation to analyze the simulation results 
-        related to the EV fleet. It exports simulation results to an xlsx file.
+        related to the EV fleet. It exports simulation results to a xlsx file.
 
         Parameters
         ----------
@@ -199,7 +199,7 @@ class EVFleet(object):
         end : datetime.datetime
             End of the period of investigation.
         step : datetime.timedelta
-            Time resolution of the period of investiation.
+            Time resolution of the period of investigation.
         xlfile : str
             The name of the xlsx file to export results.
 

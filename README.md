@@ -20,12 +20,12 @@ Its target users are researchers in the field of smart grid applications and the
 
 ## Installation
 
-pycity_scheduling requires at least the following Python packages:
-- matplotlib==3.5.1
-- numpy==1.21.5
-- openpyxl==3.0.9
-- pandas==1.4.2
-- pyomo==6.4.1
+datafev requires the following Python packages:
+- matplotlib
+- numpy
+- openpyxl
+- pandas
+- pyomo
 
 as well as the installation of at least one mathematical programming solver for convex and/or non-convex problems, which is supported by the [Pyomo](http://www.pyomo.org/) optimisation modelling library.
 We recommend one of the following solvers:
@@ -36,33 +36,30 @@ We recommend one of the following solvers:
 
 ### Installation of pycity_scheduling
 
-The latest version of pycity_scheduling is v1.0.2.
+The latest version of pycity_scheduling is v1.0.0.
 
-If all the abovementioned dependencies are installed, you should be able to install package pycity_scheduling via [PyPI](https://pypi.org/) (using Python 3.X) as follows:
+If all the abovementioned dependencies are installed, you should be able to install package datafev via [PyPI](https://pypi.org/) (using Python 3.X) as follows:
 
-`pip install pycity_scheduling`
-
-or:
-
-`pip install -e '<your_path_to_pycity_scheduling_git_folder>/src'`
+`pip install datafev`
 
 or:
 
-`<path_to_your_python_binary> -m pip install -e '<your_path_to_pycity_scheduling_git_folder>/src'`
+`pip install -e '<your_path_to_datafev_git_folder>/src'`
+
+or:
+
+`<path_to_your_python_binary> -m pip install -e '<your_path_to_datafev_git_folder>/src'`
 
 
-You can check if the installation has been successful by trying to import package pycity_scheduling into your Python environment.
+You can check if the installation has been successful by trying to import package datafev into your Python environment.
 This import should be possible without any errors.
 
-`import pycity_scheduling`
-
-
-You may also try to run the pycity_scheduling's unit tests located in folder ./src/testing using Python module pytest.
+`import datafev`
 
 
 ## Documentation
 
-The documentation for the latest pycity_scheduling release can be found in folder ./docs and on [this](https://acs.pages.rwth-aachen.de/public/simulation/pycity_scheduling/) GitLab page.
+The documentation for the latest datafev release can be found in folder ./docs and on [this](https://acs.pages.rwth-aachen.de/public/simulation/pycity_scheduling/) GitLab page.
 
 For further information, please also visit the [FEIN Aachen association website](https://fein-aachen.org/en/projects/pycity_scheduling/).
 
@@ -265,10 +262,7 @@ if __name__ == '__main__':
 
 ## Tutorial
 
-The pycity_scheduling package comes with several example/tutorial scripts in folder ./src/examples.
-The unit tests can be found in folder ./src/testing.
-
-Also see the pycity_base package's tutorials for the basic usage of the framework's core functionalities. 
+TO-DO
 
 
 ## License

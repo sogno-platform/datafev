@@ -43,15 +43,15 @@ class ElectricVehicle(object):
         carId : str
             Identifier of the EV.
         bCapacity : float
-            Energy capacit of EV battery (kWh)
+            Energy capacit of EV battery (kWh).
         p_max_ch : float
-            Maximum charge power EV battery can handle (kW)
+            Maximum charge power EV battery can handle (kW).
         p_max_ds : float
-            Maximum discharge power EV battery can handle (kW)
+            Maximum discharge power EV battery can handle (kW).
         minSoC : float
-            Minimum SOC that EV battery is allowed to reduce to (0<=minsoc<=1)
+            Minimum SOC that EV battery is allowed to reduce to (0<=minsoc<=1).
         maxSoC : float
-            Maximum SOC that EV battery is allowed to reach to (0<=maxsoc<=1)
+            Maximum SOC that EV battery is allowed to reach to (0<=maxsoc<=1).
         pow_soc_table : dataframe
             The table that contains the power capability limits of EV batteries
             In practice, power that can be charged/discharged by EV batteries 
@@ -84,14 +84,14 @@ class ElectricVehicle(object):
         Parameters
         ----------
         ts : datetime
-            DESCRIPTION.
+            Current time.
         tdelta : timedelta
-            DESCRIPTION.
+            Length of time step.
         p_in : float
             
-            Charge power to starting from ts for tdelta by p_in
-            p_in>0 charging
-            p_in<0 discharging.
+            Charge power to starting from ts for tdelta by p_in:
+                p_in>0 charging,
+                p_in<0 discharging.
 
         Returns
         -------

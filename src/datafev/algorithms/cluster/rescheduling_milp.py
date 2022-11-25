@@ -74,7 +74,7 @@ def reschedule(
     minsoc : dict of float
         Minimum allowed SOCs.
     maxsoc : dict of float
-        Maximum allowed SOCs .
+        Maximum allowed SOCs.
     ch_eff : dict of float
         Charging efficiency of chargers.
     ds_eff : dict of float
@@ -304,7 +304,7 @@ if __name__ == "__main__":
     PC = PPL * N * PCU
     nb_of_ts = 12
 
-    solver = SolverFactory("cplex")
+    solver = SolverFactory("gurobi")
     opt_step = 300
     opt_horizon = list(range(nb_of_ts + 1))
     upperlimit = dict(

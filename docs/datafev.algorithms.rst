@@ -10,8 +10,6 @@ Subpackages
    datafev.algorithms.cluster
    datafev.algorithms.vehicle
 
-Module contents
----------------
 
 .. automodule:: src.datafev.algorithms
    :members:

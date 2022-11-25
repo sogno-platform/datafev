@@ -28,8 +28,6 @@ datafev.algorithms.vehicle.scheduling\_milp module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
 
 .. automodule:: src.datafev.algorithms.vehicle
    :members:

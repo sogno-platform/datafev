@@ -56,8 +56,8 @@ def idp(schedule, upper_bound, lower_bound, tou_tariff, f_discount, f_markup):
     -------
     omega : dict of float
         Dynamic price signal.
-        key: time step identifier
-        value: charging price (Eur/kWh) for a particular time step
+        Key: Time step identifier,
+        Value: Charging price (Eur/kWh) for a particular time step.
             
     """
 

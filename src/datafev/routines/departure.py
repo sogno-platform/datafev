@@ -19,12 +19,20 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-def departure_protocol(ts, fleet):
+def departure_routine(ts, fleet):
     """
-    This protocol is executed for EVs leaving the charger clusters.
+    This routine is executed for EVs leaving the charger clusters.
 
-    :param ts:      Current time                datetime
-    :param fleet:   EV fleet object             datahandling.fleet
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    fleet : datahandling.fleet
+        EV fleet object.
+
+    Returns
+    -------
+    None.
 
     """
 

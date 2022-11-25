@@ -22,17 +22,27 @@ import numpy as np
 import pandas as pd
 
 
-def reservation_protocol(ts, tdelta, system, fleet, traffic_forecast):
+def reservation_routine(ts, tdelta, system, fleet, traffic_forecast):
     """
-    This protocol is executed to reserve chargers for the EVs approaching a multi-cluster system.
-
+    This routine is executed to reserve chargers for the EVs approaching a multi-cluster system.
     The smart reservations specifies the cluster and charger the approaching EVs must connect to.
 
-    :param ts:                Current time                                                      datetime
-    :param tdelta:            Resolution of scheduling                                          timedelta
-    :param system:            Multi-cluster system object                                       datahandling.multiclust
-    :param fleet:             EV fleet object                                                   datahandling.fleet
-    :param traffic_forecast:  Traffic forecast data                                             dict of dict
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    tdelta : timedelta
+        Resolution of scheduling.
+    system : data_handling.multi_cluster
+        Multi-cluster system object.
+    fleet : data_handling.fleet
+        EV fleet object.
+    traffic_forecast : dict of dict
+        Traffic forecast data.
+
+    Returns
+    -------
+    None.
 
     """
 

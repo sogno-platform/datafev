@@ -20,8 +20,8 @@
 
 
 import datetime as dt
-from datafev.protocols.scenario_generation import sceneration
-from datafev.protocols.scenario_generation import utils
+from datafev.routines.scenario_generation import sceneration
+from datafev.routines.scenario_generation import utils
 
 
 def main():

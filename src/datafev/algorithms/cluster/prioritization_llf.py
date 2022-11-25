@@ -55,7 +55,7 @@ def leastlaxityfirst(
     leadtime : dict of int
         How long EVs are expected to stay connected (seconds).
     upperlimit : dict of float
-        Upper limit of cluster power consumption (kW) .
+        Upper limit of cluster power consumption (kW).
 
     Returns
     -------

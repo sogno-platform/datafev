@@ -68,7 +68,7 @@ class ChargingUnit(object):
     def connect(self, ts, ev):
         """
         This method connects an EV to the charger. It is called in 
-        execution of arrival protocols.
+        execution of arrival routines.
 
         Parameters
         ----------
@@ -92,7 +92,7 @@ class ChargingUnit(object):
     def disconnect(self, ts):
         """
         This method disconnects the connected EV from the charger. It is called
-        in execution of departure protocols.
+        in execution of departure routines.
 
         Parameters
         ----------
@@ -193,7 +193,7 @@ class ChargingUnit(object):
         ts : datetime.datetime
             Current time.
         step : datetime.timedelta
-            Length of time step..
+            Length of time step.
 
         Returns
         -------

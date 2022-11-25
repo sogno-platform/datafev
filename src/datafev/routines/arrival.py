@@ -23,15 +23,24 @@ import numpy as np
 import pandas as pd
 
 
-def arrival_protocol(ts, tdelta, fleet, system):
+def arrival_routine(ts, tdelta, fleet, system):
     """
-    This protocol is executed for admission of the EVs that arrive in charger clusters without reservations.
+    This routine is executed for admission of the EVs that arrive in charger clusters without reservations.
 
-    :param ts:      Current time                    datetime
-    :param tdelta:  Resolution of scheduling        timedelta
-    :param fleet:   EV fleet object                 datahandling.fleet
-    :param system:  Multi-cluster system object     datahandling.multicluster
-    :param logging: If True the connection status is logged
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    tdelta : timedelta
+        Resolution of scheduling.
+    fleet : data_handling.fleet
+        EV fleet object.
+    system : data_handling.multi_cluster
+        Multi-cluster system object.
+
+    Returns
+    -------
+    None.
 
     """
 
@@ -67,5 +76,5 @@ def arrival_protocol(ts, tdelta, fleet, system):
         else:
 
             # There is no available charger
-            # TODO: Future work: add a re-routing protocol
+            # TODO: Future work: add a re-routing routine
             ev.admitted = False

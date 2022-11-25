@@ -51,9 +51,9 @@ def smart_routing(
     Parameters
     ----------
     opt_step : float
-        Size of one time step in the optimization (seconds)   
+        Size of one time step in the optimization (seconds).
     opt_horizon : list of integers
-        Time step identifiers in the optimization horizon     
+        Time step identifiers in the optimization horizon.
     ecap : float
         Energy capacity of battery (kWs).
     v2gall : float
@@ -67,21 +67,21 @@ def smart_routing(
     crtsoc : float
         Target soc at crttime.
     crttime : int
-        Critical time s.t. s(srttime)> crtsoc
+        Critical time s.t. s(srttime)> crtsoc.
     arrtime : dict of int
         Cluster differentiating arrival times.
     deptime : dict of int
         Cluster differentiating departure times.
     arrsoc : dict of float
-        Cluster differentiating arrival soc \in [0,1)
+        Cluster differentiating arrival soc \in [0,1).
     p_ch : dict of float
         Nominal charging power (kW).
     p_ds : dict of float
-        Nominal charging power (kW)
+        Nominal charging power (kW).
     g2v_dps : dict of dict
         G2V dynamic price signals of clusters (Eur/kWh).
     v2g_dps : dict of dict 
-        V2G dynamic price signals of clusters (Eur/kWh)
+        V2G dynamic price signals of clusters (Eur/kWh).
     
     Returns
     -------

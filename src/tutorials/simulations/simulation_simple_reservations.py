@@ -27,10 +27,10 @@ from datafev.data_handling.fleet import EVFleet
 from datafev.data_handling.cluster import ChargerCluster
 from datafev.data_handling.multi_cluster import MultiClusterSystem
 
-from datafev.protocols.simple_reservation.reservation import *
-from datafev.protocols.simple_reservation.arrival import *
-from datafev.protocols.departure import *
-from datafev.protocols.charging_control.decentralized_llf import charging_protocol
+from datafev.routines.simple_reservation.reservation import *
+from datafev.routines.simple_reservation.arrival import *
+from datafev.routines.departure import *
+from datafev.routines.charging_control.decentralized_llf import charging_routine
 
 
 def main():
@@ -143,16 +143,16 @@ def main():
         print("Simulating time step:", ts)
 
         # The departure protocol for the EVs leaving the chargerg clusters
-        departure_protocol(ts, fleet)
+        departure_routine(ts, fleet)
 
         # The reservation protocol (including routing to a cluster in the multicluster system) for the EVs
-        reservation_protocol(ts, sim_step, system, fleet, traffic_forecast)
+        reservation_routine(ts, sim_step, system, fleet, traffic_forecast)
 
         # The arrival protocol for the EVs incoming to the charger clusters
-        arrival_protocol(ts, sim_step, fleet)
+        arrival_routine(ts, sim_step, fleet)
 
         # Real-time charging control of the charger clusters is based on the decentralized least laxity first
-        charging_protocol(ts, sim_step, system)
+        charging_routine(ts, sim_step, system)
 
     print("Simulation finished...")
     print()

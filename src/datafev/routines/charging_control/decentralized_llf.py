@@ -21,9 +21,9 @@
 from datafev.algorithms.cluster.prioritization_llf import leastlaxityfirst
 
 
-def charging_protocol(ts, t_delta, system):
+def charging_routine(ts, t_delta, system):
     """
-    This protocol is executed periodically during operation of charger clusters.
+    This routine is executed periodically during operation of charger clusters.
 
     It addresses the scenarios where each cluster has a local power consumption constraint and therefore has to control
     the power distribution to the chargers. The control architecture is decentralized; therefore, each cluster applies
@@ -35,7 +35,7 @@ def charging_protocol(ts, t_delta, system):
         Current time.
     t_delta : timedelta
         Control horizon.
-    system : datahandling.multicluster
+    system : data_handling.multi_cluster
         Multi-cluster system object.
 
     Returns

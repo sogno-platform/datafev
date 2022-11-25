@@ -44,8 +44,6 @@ datafev.datahandling.vehicle module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
 
 .. automodule:: src.datafev.data_handling
    :members:

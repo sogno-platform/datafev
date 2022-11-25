@@ -23,9 +23,9 @@ import pandas as pd
 from datafev.algorithms.cluster.rescheduling_milp import reschedule
 
 
-def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
+def charging_routine(ts, t_delta, horizon, system, solver, penalty_parameters):
     """
-    This protocol is executed periodically during operation of charger clusters.
+    This routine is executed periodically during operation of charger clusters.
 
     It addresses the scenarios where EVs connected in clusters have previously defined charging schedules that may
     require deviations due to the local power consumption constraints of clusters. The control architecture is
@@ -39,7 +39,7 @@ def charging_protocol(ts, t_delta, horizon, system, solver, penalty_parameters):
         Control horizon.
     horizon : timedelta
         Optimization horizon of rescheduling.
-    system : datahandling.multicluster
+    system : data_handling.multi_cluster
         Multi-cluster system object.
     solver : pyomo SolverFactory object
         Optimization solver.

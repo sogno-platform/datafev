@@ -249,7 +249,7 @@ class ChargerCluster(object):
     def unreserve(self, ts, reservation_id):
         """
         This method cancels a particular reservation. It is usually called 
-        in execution of departure protocols. 
+        in execution of departure routines.
 
         Parameters
         ----------
@@ -289,7 +289,7 @@ class ChargerCluster(object):
     def enter_data_of_incoming_vehicle(self, ts, ev, cu):
         """
         This method adds an entry in cc_dataset for the incoming EV. It is 
-        called in execution of arrival protocols.
+        called in execution of arrival routines.
 
         Parameters
         ----------
@@ -333,7 +333,7 @@ class ChargerCluster(object):
         """
         This method enters the data about the charging event to the cc_dataset 
         for an outgoing EV. It is usually called in execution of departure 
-        protocols.
+        routines.
 
         Parameters
         ----------
@@ -421,7 +421,7 @@ class ChargerCluster(object):
     def query_actual_occupation(self, ts):
         """
         This function identifies currently occupied chargers. It  is usually
-        called in execution of arrival protocols.
+        called in execution of arrival routines.
 
         Parameters
         ----------
@@ -445,7 +445,7 @@ class ChargerCluster(object):
         """
         This function creates a dataframe containing the data of the 
         available chargers for a specific period. It is usually called in 
-        execution of reservation protocols.
+        execution of reservation routines.
         
 
         Parameters

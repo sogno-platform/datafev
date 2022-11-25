@@ -19,17 +19,26 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-import numpy as np
 import pandas as pd
+import numpy as np
 
 
-def arrival_protocol(ts, tdelta, fleet):
+def arrival_routine(ts, tdelta, fleet):
     """
-    This protocol is executed upon arrival of EVs that have smart reservations.
+    This routine is executed upon arrival of EVs that have smart reservations.
+    
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    tdelta : timedelta
+        Resolution of scheduling.
+    fleet : data_handling.fleet
+        EV fleet object.
 
-    :param ts:      Current time                datetime
-    :param tdelta:  Resolution of scheduling    timedelta
-    :param fleet:   EV fleet object             datahandling.fleet
+    Returns
+    -------
+    None.
 
     """
 
@@ -59,7 +68,6 @@ def arrival_protocol(ts, tdelta, fleet):
 
                 # The reserved charger is occupied by another EV
                 old_reservation_id = ev.reservation_id
-                old_reservation = reserved_cluster.re_dataset.loc[old_reservation_id]
 
                 # Look for another available charger with same characteristics (identical)
                 available_cus = reserved_cluster.query_availability(
@@ -67,37 +75,13 @@ def arrival_protocol(ts, tdelta, fleet):
                 )
 
                 if len(available_cus) > 0:
+
                     # There are available chargers
-                    identical_cus = available_cus[
-                        (available_cus["max p_ch"] == reserved_charger.p_max_ch)
-                        & (available_cus["max p_ds"] == reserved_charger.p_max_ds)
-                        & (available_cus["eff"] == reserved_charger.eff)
-                    ]
-
-                    if len(identical_cus) > 0:
-                        # There are available chargers with same characteristics as the previously reserved one
-                        # An identicle charger to be reserved
-                        new_reserved_charger_id = identical_cus.idxmin()
-
-                    else:
-                        # There is no available charger identical to the reserved one
-                        # The charger with maximum power capability to be reserved
-                        new_reserved_charger_id = available_cus["max p_ch"].idxmax()
-
+                    new_reserved_charger_id = np.random.choice(
+                        list(available_cus.index)
+                    )
                     new_reserved_charger = reserved_cluster.chargers[
                         new_reserved_charger_id
-                    ]
-
-                    # The conditions of old reservations will be aimed in the new reservation
-                    old_reservation_time = old_reservation["Reserved At"]
-                    old_reservation_scheduled_g2v = old_reservation["Scheduled G2V"]
-                    old_reservation_scheduled_v2g = old_reservation["Scheduled V2G"]
-                    old_reservation_price = old_reservation["Price"]
-                    old_reservation_p_schedule = reserved_charger.schedule_pow[
-                        old_reservation_time
-                    ]
-                    old_reservation_s_schedule = reserved_charger.schedule_soc[
-                        old_reservation_time
                     ]
 
                     # Reserve the charger until estimated departure time
@@ -105,22 +89,8 @@ def arrival_protocol(ts, tdelta, fleet):
                         ts, ts, ev.t_dep_est, ev, new_reserved_charger
                     )
 
-                    # Add the smart reservation details
-                    reserved_cluster.re_dataset.loc[
-                        ev.reservation_id, "Scheduled G2V"
-                    ] = old_reservation_scheduled_g2v
-                    reserved_cluster.re_dataset.loc[
-                        ev.reservation_id, "Scheduled V2G"
-                    ] = old_reservation_scheduled_v2g
-                    reserved_cluster.re_dataset.loc[
-                        ev.reservation_id, "Price V2G"
-                    ] = old_reservation_price
-
                     # Enter the data of the EV to the connection dataset of the cluster
                     new_reserved_charger.connect(ts, ev)
-                    new_reserved_charger.set_schedule(
-                        ts, old_reservation_p_schedule, old_reservation_s_schedule
-                    )
 
                     # Enter the data of the EV to the connection dataset of the cluster
                     reserved_cluster.enter_data_of_incoming_vehicle(
@@ -133,8 +103,9 @@ def arrival_protocol(ts, tdelta, fleet):
                     ev.admitted = True
 
                 else:
+
                     # There is no available charger
-                    # TODO: Future work: add a re-routing protocol
+                    # TODO: Future work: add a re-routing routine
                     ev.admitted = False
 
         else:

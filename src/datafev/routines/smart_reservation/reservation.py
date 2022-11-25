@@ -24,7 +24,7 @@ from datafev.algorithms.cluster.pricing_rule import idp
 from datafev.algorithms.vehicle.routing_milp import smart_routing
 
 
-def reservation_protocol(
+def reservation_routine(
     ts,
     tdelta,
     system,
@@ -36,25 +36,40 @@ def reservation_protocol(
     arbitrage_coeff=0.0,
 ):
     """
-    This protocol is executed to reserve chargers for the EVs approaching a multi-cluster system.
+    This routine is executed to reserve chargers for the EVs approaching a multi-cluster system.
 
     The smart reservations specify:
-    1) Which cluster and which charger the approaching EVs must connect to
-    2) Optimal charging schedule of EVs
-    3) Payment for agreed charging service
+        1) Which cluster and which charger the approaching EVs must connect to
+        2) Optimal charging schedule of EVs
+        3) Payment for agreed charging service
 
-    :param ts:                Current time                                                      datetime
-    :param tdelta:            Resolution of scheduling                                          timedelta
-    :param system:            Multi-cluster system object                                       datahandling.multiclust
-    :param fleet:             EV fleet object                                                   datahandling.fleet
-    :param solver:            Optimization solver                                               pyomo.SolverFactory
-    :param traffic_forecast:  Traffic forecast data                                             dict of dict
-    :param f_discount:        Discount factor (to motivate load increase) in dynamic pricing    dict of float
-    :param f_markup:          Markup factor (to motivate load decrease) in dynamic pricing      dict of float
-    :param arbitrage_coeff:   Arbitrage coefficient to distinguish G2V/V2G prices               float
+    Parameters
+    ----------
+    ts : datetime
+        Current time.
+    tdelta : timedelta
+        Resolution of scheduling.
+    system : data_handling.multi_cluster
+        Multi-cluster system object.
+    fleet : data_handling.fleet
+        EV fleet object.
+    solver : pyomo.SolverFactory
+        Optimization solver.
+    traffic_forecast : dict of dict
+        Traffic forecast data.
+    f_discount : dict of float, optional
+        Discount factor (to motivate load increase) in dynamic pricing. The default is 0.05.
+    f_markup : dict of float, optional
+        Markup factor (to motivate load decrease) in dynamic pricing. The default is 0.05.
+    arbitrage_coeff : float, optional
+        Arbitrage coefficient to distinguish G2V/V2G prices. The default is 0.0.
+
+    Returns
+    -------
+    None.
 
     """
-
+    
     reserving_vehicles = fleet.reserving_vehicles_at(ts)
 
     for ev in reserving_vehicles:

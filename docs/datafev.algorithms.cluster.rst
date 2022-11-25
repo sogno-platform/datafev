@@ -28,8 +28,6 @@ datafev.algorithms.cluster.rescheduling\_milp module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
 
 .. automodule:: src.datafev.algorithms.cluster
    :members:

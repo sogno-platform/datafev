@@ -1,5 +1,3 @@
-<img src="https://fein-aachen.org/img/logos/pycity_scheduling.png" width="150"/>
-
 # datafev
 
 Python package datafev is a framework for the development, testing, and assessment of managemant algorithms for EV charging scenarios. The framework allows to develop scenario-oriented management strategies. It includes a portfolio of optimization- and rule-based algorithms to coordinate charging and routing operations in clustered charging systems. Furthermore, it provides statistical scenario generation tool to create EV fleet demand profiles.
@@ -34,7 +32,7 @@ We recommend one of the following solvers:
 - [IBM ILOG CPLEX](https://www.ibm.com/products/ilog-cplex-optimization-studio)
 - [GLPK (GNU Linear Programming Kit)](https://www.gnu.org/software/glpk/)
 
-If all the abovementioned dependencies are installed, you should be able to install package datafev via [PyPI](https://pypi.org/) (using Python 3.X) as follows:
+If all the above-mentioned dependencies are installed, you should be able to install package datafev via [PyPI](https://pypi.org/) (using Python 3.X) as follows:
 
 `pip install datafev`
 

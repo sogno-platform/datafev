@@ -175,8 +175,8 @@ def excel_to_sceneration_input_dependent_times(file_path):
     """
 
     # Read excel file
-    times_df = pd.read_excel(file_path, "TimeIDDependentTime")
-    arr_dep_times_df = pd.read_excel(file_path, "DependentTime")
+    times_df = pd.read_excel(file_path, "TimeID")
+    arr_dep_times_df = pd.read_excel(file_path, "ProbabilityDistribution")
     arr_soc_df = pd.read_excel(file_path, "ArrivalSoC")
     dep_soc_df = pd.read_excel(file_path, "DepartureSoC")
     ev_df = pd.read_excel(file_path, "EVData")
@@ -185,6 +185,7 @@ def excel_to_sceneration_input_dependent_times(file_path):
     times_df["TimeLowerBound"] = times_df["TimeLowerBound"].round("S")
     times_df["TimeUpperBound"] = times_df["TimeUpperBound"].round("S")
     times_dict = times_df.T.to_dict("list")
+    end_time = list(times_dict.values())[-1][-1]
     arr_dep_times_df = arr_dep_times_df.set_index("TimeID")
     arr_dep_times_dict = {}
     for arr_time_id, row in arr_dep_times_df.iterrows():
@@ -214,7 +215,7 @@ def excel_to_sceneration_input_dependent_times(file_path):
     ev_df = ev_df.set_index("Model")
     ev_dict = ev_df.to_dict(orient="index")
 
-    return times_dict, arr_dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict
+    return end_time, times_dict, arr_dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict
 
 
 def generate_time_list(time_lowerb, time_upperb, timedelta_in_min, date):

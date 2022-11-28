@@ -135,13 +135,13 @@ def main():
             sim_start,
             sim_end,
             sim_step,
-            "result_noreservation_" + control + "_clusters.xlsx",
+            "results/result_noreservation_" + control + "_clusters.xlsx",
         )
         fleet.export_results(
             sim_start,
             sim_end,
             sim_step,
-            "result_noreservation_" + control + "_fleet.xlsx",
+            "results/result_noreservation_" + control + "_fleet.xlsx",
         )
         #######################################################################
 

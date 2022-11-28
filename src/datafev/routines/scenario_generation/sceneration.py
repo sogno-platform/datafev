@@ -31,13 +31,12 @@ def generate_fleet_data_independent_times(
     dep_soc_dict,
     ev_dict,
     number_of_evs_per_day,
-    startdate=dt.date(2020, 5, 17),
-    enddate=dt.date(2020, 5, 19),
+    startdate,
+    enddate,
     timedelta_in_min=15,
     diff_arr_dep_in_min=0,
     arr_times_dict=None,
     dep_times_dict=None,
-    dep_day_prob_distribution=None,
 ):
     """
     This function is executed to generate a simulation scenario with given statistical EV fleet data,
@@ -62,7 +61,7 @@ def generate_fleet_data_independent_times(
         The start date of the simulation. The default is dt.date(2020, 5, 17).
     enddate : datetime.date, optional
         The end date of the simulation. The default is dt.date(2020, 5, 19).
-    timedelta_in_min : int, optional
+    timedelta_in_min : int
         Resolution of the simulation in minutes. The default is 15.
     diff_arr_dep_in_min : int, optional
         Minimum time between arrival and departure for each EV in minutes. The default is 0.
@@ -75,11 +74,7 @@ def generate_fleet_data_independent_times(
         Departure times nested dictionary.
         keys: weekend or weekday,
         values: {keys: time identifier, values: time lower bound, time upper bounds and departure probabilities}.
-        The default is None..
-    dep_day_prob_distribution : list
-        List consist of two elements:
-            The first element of the list should be the possibility of departure on the same day as arrival.
-            The second element of the list should be the possibility of not departing on the same day as arrival.
+        The default is None.
     Returns
     -------
     gen_ev_df : pandas.core.frame.DataFrame
@@ -88,11 +83,10 @@ def generate_fleet_data_independent_times(
     """
 
     # Create date list
-    date_list = pd.date_range(startdate, enddate - timedelta(days=1), freq="d")
-
+    date_list = pd.date_range(startdate, enddate, freq="d")
     # Convert date to datetime format for future use
     temp_time = dt.datetime.min.time()
-    endtime = dt.datetime.combine(enddate, temp_time)
+    endtime = dt.datetime.combine(enddate + timedelta(days=1), temp_time)
 
     ###################################################################################################################
     # Generating arrival and departure times
@@ -170,13 +164,6 @@ def generate_fleet_data_independent_times(
     # 3. ...
     dep_assignment = {}
     for ev_id, arrival_dt in arr_assignment.items():
-        # Randomly select EV to stay overnight or leave on the same day as arrival
-        # according to the probability distribution
-        assigned_date = np.random.choice(
-            [arrival_dt, arrival_dt + dt.timedelta(days=1)],
-            1,
-            dep_day_prob_distribution,
-        )[0]
         # If date is weekday
         if arrival_dt.weekday() <= 4:
             while True:
@@ -184,10 +171,10 @@ def generate_fleet_data_independent_times(
                     dep_time_lowerb_array, 1, p=weekday_dep_prob_list
                 )[0]
                 dep_datetime_lowerb = dt.datetime.combine(
-                    assigned_date, dep_time_lowerb
+                    arrival_dt, dep_time_lowerb
                 )
                 dep_datetime_upperb = dt.datetime.combine(
-                    assigned_date, dep_time_bounds_dict[dep_time_lowerb]
+                    arrival_dt, dep_time_bounds_dict[dep_time_lowerb]
                 )
                 if dep_datetime_upperb < dep_datetime_lowerb:
                     dep_datetime_upperb += dt.timedelta(days=1)
@@ -195,27 +182,29 @@ def generate_fleet_data_independent_times(
                     dep_datetime_lowerb,
                     dep_datetime_upperb,
                     timedelta_in_min,
-                    assigned_date,
+                    arrival_dt,
                 )
                 departure_possibility = np.random.choice(time_lst, 1)[0]
-                if departure_possibility > assigned_date + dt.timedelta(
+                if departure_possibility > arrival_dt + dt.timedelta(
                     minutes=diff_arr_dep_in_min
                 ):
-                    if departure_possibility <= endtime:
+                    if departure_possibility > arrival_dt:
                         dep_assignment[ev_id] = departure_possibility
+                        break
                     else:
-                        dep_assignment[ev_id] = endtime
-                    break
+                        departure_possibility = arrival_dt + dt.timedelta(days=1)
+                        dep_assignment[ev_id] = departure_possibility
+                        break
         else:
             while True:
                 dep_time_lowerb = np.random.choice(
                     dep_time_lowerb_array, 1, p=weekend_dep_prob_list
                 )[0]
                 dep_datetime_lowerb = dt.datetime.combine(
-                    assigned_date, dep_time_lowerb
+                    arrival_dt, dep_time_lowerb
                 )
                 dep_datetime_upperb = dt.datetime.combine(
-                    assigned_date, dep_time_bounds_dict[dep_time_lowerb]
+                    arrival_dt, dep_time_bounds_dict[dep_time_lowerb]
                 )
                 if dep_datetime_upperb < dep_datetime_lowerb:
                     dep_datetime_upperb += dt.timedelta(days=1)
@@ -223,14 +212,19 @@ def generate_fleet_data_independent_times(
                     dep_datetime_lowerb,
                     dep_datetime_upperb,
                     timedelta_in_min,
-                    assigned_date,
+                    arrival_dt,
                 )
                 departure_possibility = np.random.choice(time_lst, 1)[0]
-                if departure_possibility > assigned_date + dt.timedelta(
+                if departure_possibility > arrival_dt + dt.timedelta(
                     minutes=diff_arr_dep_in_min
                 ):
-                    dep_assignment[ev_id] = departure_possibility
-                    break
+                    if departure_possibility > arrival_dt:
+                        dep_assignment[ev_id] = departure_possibility
+                        break
+                    else:
+                        departure_possibility = arrival_dt + dt.timedelta(days=1)
+                        dep_assignment[ev_id] = departure_possibility
+                        break
 
     # Merge arrival and departure assignments into a pandas dataframe
     ev_assigned_times_dict = {}
@@ -326,8 +320,7 @@ def generate_fleet_data_dependent_times(
     dep_soc_dict,
     ev_dict,
     number_of_evs,
-    startdate=dt.date(2020, 5, 17),
-    enddate=dt.date(2020, 5, 19),
+    endtime,
     timedelta_in_min=15,
     diff_arr_dep_in_min=0,
     times_dict=None,
@@ -354,12 +347,10 @@ def generate_fleet_data_dependent_times(
             1. If user is using independent arrival and departure times:
                 Number of desired EVs per day for the simulation
             2. If the user is using dependent arrival and departure times:
-                Number of desired EVs for the simulation 
-    startdate : datetime.date, optional
-        The start date of the simulation. The default is dt.date(2020, 5, 17).
-    enddate : TYPE, datetime.date
-        The end date of the simulation. The default is dt.date(2020, 5, 19).
-    timedelta_in_min : int, optional
+                Number of desired EVs for the simulation
+    endtime : TYPE, datetime.datetime
+        The last timestamp of the simulation.
+    timedelta_in_min : int
         Resolution of the simulation in minutes. The default is 15.
     diff_arr_dep_in_min : int, optional
         Minimum time between arrival and departure for each EV in minutes. The default is 0.
@@ -377,9 +368,6 @@ def generate_fleet_data_dependent_times(
         Generated EV dataset for future use in any simulation.
 
     """
-    # Convert date to datetime format for future use
-    temp_time = dt.datetime.min.time()
-    endtime = dt.datetime.combine(enddate, temp_time)
 
     ###################################################################################################################
     # Generating arrival and departure times
@@ -438,12 +426,7 @@ def generate_fleet_data_dependent_times(
                 if departure_possibility > arrival_possibility + dt.timedelta(
                     minutes=diff_arr_dep_in_min
                 ):
-                    if departure_possibility <= endtime:
-                        dep_assignment[ev_id] = departure_possibility
-                    # if a car can not be assigned before the simulation end time,
-                    # assign end time as departure time
-                    else:
-                        dep_assignment[ev_id] = endtime
+                    dep_assignment[ev_id] = departure_possibility
                     break
             ev_id += 1
             break

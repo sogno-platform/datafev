@@ -33,7 +33,7 @@ with open("README.md") as f:
 setuptools.setup(
     name="datafev",
     description="A Python framework for development and testing of management algorithms for electric vehicle charging infrastructures",
-    version="0.1",
+    version="0.1.1",
     author="Institute for Automation of Complex Power Systems (ACS),"
     "E.ON Energy Research Center (E.ON ERC),"
     "RWTH Aachen University",
@@ -51,9 +51,6 @@ setuptools.setup(
         "pandas==1.4.2",
         "pyomo==6.4.1",
     ],
-    # extras_require={
-    #     "test": ["pytest==6.2.4"]
-    # },
     platforms="any",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -31,13 +31,14 @@ def main():
     """
 
     (
+        end_time,
         times_dict,
         arr_dep_times_dict,
         arr_soc_dict,
         dep_soc_dict,
         ev_dict,
     ) = utils.excel_to_sceneration_input_dependent_times(
-        file_path="input_generator.xlsx"
+        file_path="input_generator_dependent_times.xlsx"
     )
 
     ev_df = sceneration.generate_fleet_data_dependent_times(
@@ -45,22 +46,21 @@ def main():
         dep_soc_dict=dep_soc_dict,
         ev_dict=ev_dict,
         number_of_evs=100,
-        startdate=dt.date(2021, 6, 1),
-        enddate=dt.date(2021, 6, 3),
+        endtime=end_time,
         timedelta_in_min=15,
         diff_arr_dep_in_min=0,
         times_dict=times_dict,
         arr_dep_times_dict=arr_dep_times_dict,
     )
 
-    utils.visualize_statistical_time_generation("", ev_df, timedelta_in_min=15)
+    utils.visualize_statistical_time_generation("results/", ev_df, timedelta_in_min=15)
 
     # Unlocalize datetimes, as Excel does not support datetimes with timezones
     ev_df["ArrivalTime"] = ev_df["ArrivalTime"].dt.tz_localize(None)
     ev_df["DepartureTime"] = ev_df["DepartureTime"].dt.tz_localize(None)
-    ev_df.to_excel("output_generator_dependent_times.xlsx")
+    ev_df.to_excel("results/output_generator_dependent_times.xlsx")
 
-    utils.output_to_sim_input(ev_df, "input_simulator_dependent_times.xlsx")
+    utils.output_to_sim_input(ev_df, "results/input_simulator_dependent_times.xlsx")
 
 
 if __name__ == "__main__":

@@ -179,10 +179,10 @@ def main():
     ########################################################################################################################
     # Printing the results to excel files
     system.export_results(
-        sim_start, sim_end, sim_step, "result_simplereservation_clusters.xlsx"
+        sim_start, sim_end, sim_step, "results/result_simplereservation_clusters.xlsx"
     )
     fleet.export_results(
-        sim_start, sim_end, sim_step, "result_simplereservation_fleet.xlsx"
+        sim_start, sim_end, sim_step, "results/result_simplereservation_fleet.xlsx"
     )
     print("Simulation results have been exported to excel files.")
     ########################################################################################################################

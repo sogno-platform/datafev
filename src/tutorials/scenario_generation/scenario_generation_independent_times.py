@@ -35,11 +35,13 @@ def main():
         arr_soc_dict,
         dep_soc_dict,
         ev_dict,
-    ) = utils.excel_to_sceneration_input_independent_times(
-        file_path="input_generator_independent_times.xlsx"
+    ) = utils.excel_to_sceneration_input_simple_pdfs(
+        file_path="input_generator_simple_pdfs.xlsx"
     )
 
-    ev_df = sceneration.generate_fleet_data_independent_times(
+    ev_df = sceneration.generate_fleet_from_simple_pdfs(
+        arr_times_dict=arr_times_dict,
+        dep_times_dict=dep_times_dict,
         arr_soc_dict=arr_soc_dict,
         dep_soc_dict=dep_soc_dict,
         ev_dict=ev_dict,
@@ -48,8 +50,6 @@ def main():
         enddate=dt.date(2021, 6, 2),
         timedelta_in_min=15,
         diff_arr_dep_in_min=0,
-        arr_times_dict=arr_times_dict,
-        dep_times_dict=dep_times_dict,
     )
 
     utils.visualize_statistical_time_generation("results/", ev_df, timedelta_in_min=15)
@@ -57,9 +57,9 @@ def main():
     # Unlocalize datetimes, as Excel does not support datetimes with timezones
     ev_df["ArrivalTime"] = ev_df["ArrivalTime"].dt.tz_localize(None)
     ev_df["DepartureTime"] = ev_df["DepartureTime"].dt.tz_localize(None)
-    ev_df.to_excel("results/output_generator_independent_times.xlsx")
+    ev_df.to_excel("results/output_generator_simple_pdfs.xlsx")
 
-    utils.output_to_sim_input(ev_df, "results/input_simulator_independent_times.xlsx")
+    utils.output_to_sim_input(ev_df, "results/input_simulator_simple_pdfs.xlsx")
 
 
 if __name__ == "__main__":

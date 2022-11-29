@@ -26,7 +26,9 @@ import datetime as dt
 import datafev.routines.scenario_generation.utils as ut
 
 
-def generate_fleet_data_independent_times(
+def generate_fleet_from_simple_pdfs(
+    arr_times_dict,
+    dep_times_dict,
     arr_soc_dict,
     dep_soc_dict,
     ev_dict,
@@ -35,17 +37,25 @@ def generate_fleet_data_independent_times(
     enddate,
     timedelta_in_min=15,
     diff_arr_dep_in_min=0,
-    arr_times_dict=None,
-    dep_times_dict=None,
 ):
     """
     This function is executed to generate a simulation scenario with given statistical EV fleet data,
-    which has independent arrival and departure times.
+    which has independent arrival and departure times and SoCs.
     The user must provide two different independent statistical distribution inputs
-    for both arrival and departure times.
+    for both arrival and departure times and SoCs.
 
     Parameters
     ----------
+    arr_times_dict : dict
+        Arrival times nested dictionary.
+        keys: weekend or weekday,
+        values: {keys: time identifier, values: time lower bound, time upper bounds and arrival probabilities}.
+        The default is None.
+    dep_times_dict : dict
+        Departure times nested dictionary.
+        keys: weekend or weekday,
+        values: {keys: time identifier, values: time lower bound, time upper bounds and departure probabilities}.
+        The default is None.
     arr_soc_dict : dict
         SoC nested dictionaries for arrival.
         keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
@@ -58,23 +68,14 @@ def generate_fleet_data_independent_times(
     number_of_evs_per_day : int
         Number of desired EVs per day for the simulation.
     startdate : datetime.date, optional
-        The start date of the simulation. The default is dt.date(2020, 5, 17).
+        The start date of the simulation.
     enddate : datetime.date, optional
-        The end date of the simulation. The default is dt.date(2020, 5, 19).
+        The end date of the simulation.
     timedelta_in_min : int
         Resolution of the simulation in minutes. The default is 15.
     diff_arr_dep_in_min : int, optional
         Minimum time between arrival and departure for each EV in minutes. The default is 0.
-    arr_times_dict : dict, optional
-        Arrival times nested dictionary.
-        keys: weekend or weekday,
-        values: {keys: time identifier, values: time lower bound, time upper bounds and arrival probabilities}.
-        The default is None.
-    dep_times_dict : dict, optional
-        Departure times nested dictionary.
-        keys: weekend or weekday,
-        values: {keys: time identifier, values: time lower bound, time upper bounds and departure probabilities}.
-        The default is None.
+
     Returns
     -------
     gen_ev_df : pandas.core.frame.DataFrame
@@ -315,30 +316,39 @@ def generate_fleet_data_independent_times(
     return gen_ev_df
 
 
-def generate_fleet_data_dependent_times(
-    arr_soc_dict,
-    dep_soc_dict,
+def generate_fleet_from_conditional_pdfs(
+    times_dict,
+    times_prob_dict,
+    soc_dict,
+    soc_prob_dict,
     ev_dict,
     number_of_evs,
     endtime,
     timedelta_in_min=15,
     diff_arr_dep_in_min=0,
-    times_dict=None,
-    arr_dep_times_dict=None,
 ):
     """
     This function is executed to generate a simulation scenario with given statistical EV fleet data,
-    which has dependent arrival and departure times.
-    The relationship between arrival and departure times is assumed to be predefined in that provided input.
+    which has dependent arrival and departure times and SoCs.
+    The relationships between arrival and departure times and SoCs are assumed to be predefined in that provided input.
 
     Parameters
     ----------
-    arr_soc_dict : dict
-        SoC nested dictionaries for arrival.
-        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
-    dep_soc_dict : dict
-        SoC nested dictionaries for departure.
-        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
+
+    times_dict : dict, optional
+        Arrival-departure time combinations nested dictionary.
+        keys: Arrival-departure time combination identifier, values: time upper and lower bounds.
+        The default is None.
+    times_prob_dict : dict, optional
+        Arrival-departure time combinations' probabilities nested dictionary.
+        keys: Arrival-departure time combination identifier, values: their probabilities.
+        The default is None.
+    soc_dict : dict
+        Arrival-departure SoC combinations nested dictionary.
+        keys: SoC Identifier, values: SoC upper and lower bounds.
+    soc_prob_dict : dict
+        Arrival-departure SoC combinations' probabilities nested dictionary.
+        keys: Arrival-departure SoC combination identifier, values: their probabilities.
     ev_dict : dict
         EV nested dictionary.
         keys: EV models, values: their data and probability.
@@ -348,20 +358,13 @@ def generate_fleet_data_dependent_times(
                 Number of desired EVs per day for the simulation
             2. If the user is using dependent arrival and departure times:
                 Number of desired EVs for the simulation
-    endtime : TYPE, datetime.datetime
+    endtime : datetime.datetime
         The last timestamp of the simulation.
     timedelta_in_min : int
         Resolution of the simulation in minutes. The default is 15.
     diff_arr_dep_in_min : int, optional
         Minimum time between arrival and departure for each EV in minutes. The default is 0.
-    times_dict : dict, optional
-        Arrival-departure time combinations nested dictionary.
-        keys: Arrival-departure time combination identifier, values: time upper and lower bounds.
-        The default is None.
-    arr_dep_times_dict : dict, optional
-        Arrival-departure time combinations' probabilities nested dictionary.
-        keys: Arrival-departure time combination identifier, values: their probabilities.
-        The default is None.
+
     Returns
     -------
     gen_ev_df : pandas.core.frame.DataFrame
@@ -373,16 +376,15 @@ def generate_fleet_data_dependent_times(
     # Generating arrival and departure times
     ###################################################################################################################
 
-    prob_list = list(arr_dep_times_dict.values())
+    times_prob_list = list(times_prob_dict.values())
     # Time pairs dictionary, keys: keys to be used in choice function, values: arr/dep timeID pairs
     time_pairs_dict = {}
-    for index, value in enumerate(list(arr_dep_times_dict.keys())):
+    for index, value in enumerate(list(times_prob_dict.keys())):
         time_pairs_dict[index] = value
     # Pre assignment list, consist of assigned time pair's ID
-    pre_assignment = list(
-        np.random.choice(list(time_pairs_dict.keys()), number_of_evs, p=prob_list)
+    times_pre_assignment = list(
+        np.random.choice(list(time_pairs_dict.keys()), number_of_evs, p=times_prob_list)
     )
-    # Dictionary -- keys: dates, values: assigned time stamps
     # Assign possible arrival datetimes
     # Find a datetime which satisfies following conditions
     # 1. arrival at least one timedelta earlier than end time
@@ -391,9 +393,8 @@ def generate_fleet_data_dependent_times(
     dep_assignment = {}
     ev_id = 0
     # Dictionary, keys: EV ids, values: assigned arrival lower bounds
-    # This dictionary will be used when calculating the arrival-dependent departure times
     ev_arr_time_lowerbs = {}
-    for time_pair_id in pre_assignment:
+    for time_pair_id in times_pre_assignment:
         time_pair = time_pairs_dict[time_pair_id]
         # Arrival time
         arr_datetime_lowerb = times_dict[time_pair[0]][0]
@@ -431,7 +432,7 @@ def generate_fleet_data_dependent_times(
             ev_id += 1
             break
 
-    # Merge arrival and departure assignments into a pandas dataframe
+    # Merge arrival and departure assignments into EV pandas dataframe
     ev_assigned_times_dict = {}
     for ev_id in arr_assignment.keys() | dep_assignment.keys():
         if ev_id in arr_assignment:
@@ -448,51 +449,56 @@ def generate_fleet_data_dependent_times(
     ###################################################################################################################
     # Generating arrival and departure SoCs
     ###################################################################################################################
-    # Arrival SoC probabilities
-    arr_soc_df = pd.DataFrame(arr_soc_dict).T
-    arr_soc_lowerb_array = arr_soc_df["SoCLowerBound"].to_numpy()
-    arr_soc_prob_list = arr_soc_df["Probability"].tolist()
-    # Departure SoC probabilities
-    dep_soc_df = pd.DataFrame(dep_soc_dict).T
-    dep_soc_lowerb_array = dep_soc_df["SoCLowerBound"].to_numpy()
-    dep_soc_prob_list = dep_soc_df["Probability"].tolist()
-    # Arrival and departure SoC bounds dictionary for future use
-    arr_soc_bounds_dict = pd.Series(
-        arr_soc_df["SoCUpperBound"].values, index=arr_soc_df["SoCLowerBound"]
-    ).to_dict()
-    dep_soc_bounds_dict = pd.Series(
-        dep_soc_df["SoCUpperBound"].values, index=dep_soc_df["SoCLowerBound"]
-    ).to_dict()
-    for ev_id, row in gen_ev_df.iterrows():
-        # Arrival SoCs
-        ev_arr_soc_lowerb = np.random.choice(
-            arr_soc_lowerb_array, 1, p=arr_soc_prob_list
-        )[0]
+
+    soc_prob_list = list(soc_prob_dict.values())
+    # SoC pairs dictionary, keys: keys to be used in choice function, values: arr/dep SoCID pairs
+    soc_pairs_dict = {}
+    for index, value in enumerate(list(soc_prob_dict.keys())):
+        soc_pairs_dict[index] = value
+    # Pre assignment list, consist of assigned time pair's ID
+    soc_pre_assignment = list(
+        np.random.choice(list(soc_pairs_dict.keys()), number_of_evs, p=soc_prob_list)
+    )
+    # Assign possible arrival SoCs
+    arr_soc_assignment = {}
+    dep_soc_assignment = {}
+    ev_id = 0
+    # Dictionary, keys: EV ids, values: assigned arrival lower bounds
+    ev_arr_soc_lowerbs = {}
+    for soc_pair_id in soc_pre_assignment:
+        soc_pair = soc_pairs_dict[soc_pair_id]
+        # Arrival SoC
+        arr_soc_lowerb = soc_dict[soc_pair[0]][0]
+        arr_soc_upperb = soc_dict[soc_pair[0]][1]
         ev_arr_soc_possibilities = list(
             ut.drange(
-                ev_arr_soc_lowerb, arr_soc_bounds_dict[ev_arr_soc_lowerb], "0.001"
+                arr_soc_lowerb, arr_soc_upperb, "0.001"
             )
         )
         ev_arr_soc = np.random.choice(ev_arr_soc_possibilities, 1)[0]
-        gen_ev_df.at[ev_id, "ArrivalSoC"] = ev_arr_soc
-        # Departure SoCs
-        while True:
-            # Be sure that departure SoC is higher than arrival
-            ev_dep_soc_lowerb = np.random.choice(
-                dep_soc_lowerb_array, 1, p=dep_soc_prob_list
-            )[0]
-            if ev_dep_soc_lowerb > ev_arr_soc:
-                ev_dep_soc_possibilities = list(
-                    ut.drange(
-                        ev_dep_soc_lowerb,
-                        dep_soc_bounds_dict[ev_dep_soc_lowerb],
-                        "0.001",
-                    )
-                )
-                gen_ev_df.at[ev_id, "DepartureSoC"] = np.random.choice(
-                    ev_dep_soc_possibilities, 1
-                )[0]
-                break
+        arr_soc_assignment[ev_id] = ev_arr_soc
+        # Departure SoC
+        dep_soc_lowerb = soc_dict[soc_pair[1]][0]
+        dep_soc_upperb = soc_dict[soc_pair[1]][1]
+        ev_dep_soc_possibilities = list(
+            ut.drange(
+                dep_soc_lowerb, dep_soc_upperb, "0.001"
+            )
+        )
+        ev_dep_soc = np.random.choice(ev_dep_soc_possibilities, 1)[0]
+        dep_soc_assignment[ev_id] = ev_dep_soc
+        ev_id += 1
+
+    # Merge arrival and departure assignments into EV pandas dataframe
+    for id, arr_soc in arr_soc_assignment.items():
+        for ev_id, row in gen_ev_df.iterrows():
+            if ev_id == id:
+                gen_ev_df.at[ev_id, "ArrivalSoC"] = arr_soc
+    for id, dep_soc in dep_soc_assignment.items():
+        for ev_id, row in gen_ev_df.iterrows():
+            if ev_id == id:
+                gen_ev_df.at[ev_id, "DepartureSoC"] = dep_soc
+
 
     ###################################################################################################################
     # Generating EV Data

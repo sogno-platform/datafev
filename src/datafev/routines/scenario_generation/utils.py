@@ -28,7 +28,7 @@ import matplotlib.ticker as tck
 import os
 
 
-def excel_to_sceneration_input_independent_times(file_path):
+def excel_to_sceneration_input_simple_pdfs(file_path):
     """
     This method converts the excel inputs into inputs suitable for the
     generate_fleet_data_independent_times function under sceneration.py.
@@ -144,7 +144,7 @@ def excel_to_sceneration_input_independent_times(file_path):
     return arr_times_dict, dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict
 
 
-def excel_to_sceneration_input_dependent_times(file_path):
+def excel_to_sceneration_input_conditional_pdfs(file_path):
     """
     This method converts the excel inputs into inputs suitable for the
     generate_fleet_data_dependent_times function under sceneration.py.
@@ -159,15 +159,15 @@ def excel_to_sceneration_input_dependent_times(file_path):
     times_dict : dict
         Arrival-departure time combinations nested dictionary.
         keys: Arrival-departure time combination identifier, values: time upper and lower bounds.
-    arr_dep_times_dict : dict
+    times_prob_dict : dict
         Arrival-departure time combinations' probabilities nested dictionary.
         keys: Arrival-departure time combination identifier, values: their probabilities.
-    arr_soc_dict : dict
-        SoC nested dictionaries for arrival.
-        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
-    dep_soc_dict : dict
-        SoC nested dictionaries for departure.
-        keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities.
+    soc_dict : dict
+        Arrival-departure SoC combinations nested dictionary.
+        keys: SoC Identifier, values: SoC upper and lower bounds.
+    soc_prob_dict : dict
+        Arrival-departure SoC combinations' probabilities nested dictionary.
+        keys: Arrival-departure SoC combination identifier, values: their probabilities.
     ev_dict : dict
         EV nested dictionary.
         keys: EV models, values: their data and probability.
@@ -176,9 +176,9 @@ def excel_to_sceneration_input_dependent_times(file_path):
 
     # Read excel file
     times_df = pd.read_excel(file_path, "TimeID")
-    arr_dep_times_df = pd.read_excel(file_path, "ProbabilityDistribution")
-    arr_soc_df = pd.read_excel(file_path, "ArrivalSoC")
-    dep_soc_df = pd.read_excel(file_path, "DepartureSoC")
+    times_prob_df = pd.read_excel(file_path, "TimeProbabilityDistribution")
+    soc_df = pd.read_excel(file_path, "SoCID")
+    soc_prob_df = pd.read_excel(file_path, "SoCProbabilityDistribution")
     ev_df = pd.read_excel(file_path, "EVData")
 
     times_df = times_df.set_index("TimeID")
@@ -186,36 +186,39 @@ def excel_to_sceneration_input_dependent_times(file_path):
     times_df["TimeUpperBound"] = times_df["TimeUpperBound"].round("S")
     times_dict = times_df.T.to_dict("list")
     end_time = list(times_dict.values())[-1][-1]
-    arr_dep_times_df = arr_dep_times_df.set_index("TimeID")
-    arr_dep_times_dict = {}
-    for arr_time_id, row in arr_dep_times_df.iterrows():
+    times_prob_df = times_prob_df.set_index("TimeID")
+    times_prob_dict = {}
+    for arr_time_id, row in times_prob_df.iterrows():
         id_list = []
         for dep_time_id, probability in row.items():
             id_list.append(arr_time_id)
             id_list.append(dep_time_id)
             id_tuple = tuple(id_list)
-            arr_dep_times_dict[id_tuple] = probability
+            times_prob_dict[id_tuple] = probability
             id_list.clear()
 
+    soc_df = soc_df.set_index("SoCID")
     # Convert percent SoCs to values between 0 and 1
-    arr_soc_df["SoCLowerBound"] = arr_soc_df["SoCLowerBound"].div(100)
-    arr_soc_df["SoCUpperBound"] = arr_soc_df["SoCUpperBound"].div(100)
-    dep_soc_df["SoCLowerBound"] = dep_soc_df["SoCLowerBound"].div(100)
-    dep_soc_df["SoCUpperBound"] = dep_soc_df["SoCUpperBound"].div(100)
-
-    # SoC nested dictionaries for both arrival and departure
-    # keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities
-    arr_soc_df = arr_soc_df.set_index("SoCID")
-    arr_soc_dict = arr_soc_df.to_dict(orient="index")
-    dep_soc_df = dep_soc_df.set_index("SoCID")
-    dep_soc_dict = dep_soc_df.to_dict(orient="index")
+    soc_df["SoCLowerBound"] = soc_df["SoCLowerBound"].div(100)
+    soc_df["SoCUpperBound"] = soc_df["SoCUpperBound"].div(100)
+    soc_dict = soc_df.T.to_dict("list")
+    soc_prob_df = soc_prob_df.set_index("SoCID")
+    soc_prob_dict = {}
+    for arr_soc_id, row in soc_prob_df.iterrows():
+        id_list = []
+        for dep_soc_id, probability in row.items():
+            id_list.append(arr_soc_id)
+            id_list.append(dep_soc_id)
+            id_tuple = tuple(id_list)
+            soc_prob_dict[id_tuple] = probability
+            id_list.clear()
 
     # EV nested dictionary
     # keys: EV models, values: their data and probability
     ev_df = ev_df.set_index("Model")
     ev_dict = ev_df.to_dict(orient="index")
 
-    return end_time, times_dict, arr_dep_times_dict, arr_soc_dict, dep_soc_dict, ev_dict
+    return end_time, times_dict, times_prob_dict, soc_dict, soc_prob_dict, ev_dict
 
 
 def generate_time_list(time_lowerb, time_upperb, timedelta_in_min, date):

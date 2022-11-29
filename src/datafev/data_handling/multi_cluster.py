@@ -314,13 +314,13 @@ class MultiClusterSystem(object):
 
             consu_cu_df = pd.concat(con_cu_dict, axis=1)
             consu_cu_df.to_excel(writer, sheet_name="Consumption (Units)")
-            (consu_cu_df.sum(level=0, axis=1)).to_excel(
+            (consu_cu_df.groupby(level=0, axis=1).sum()).to_excel(
                 writer, sheet_name="Consumption (Aggregate)"
             )
 
             occup_cu_df = pd.concat(occ_cu_dict, axis=1)
             occup_cu_df.to_excel(writer, sheet_name="Occupation (Units)")
-            (occup_cu_df.sum(level=0, axis=1)).to_excel(
+            (occup_cu_df.groupby(level=0, axis=1).sum()).to_excel(
                 writer, sheet_name="Occupation (Aggregate)"
             )
 

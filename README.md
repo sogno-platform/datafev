@@ -44,7 +44,7 @@ or:
 
 `<path_to_your_python_binary> -m pip install -e '<your_path_to_datafev_git_folder>/src'`
 
-Another option rather than installing via [PyPI] would be installing via setup.py:
+Another option rather than installing via PyPI would be installing via setup.py:
 
 `py <your_path_to_datafev_git_folder>/setup.py install`
 

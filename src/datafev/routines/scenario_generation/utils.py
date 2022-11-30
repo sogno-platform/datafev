@@ -19,6 +19,7 @@
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+import numpy as np
 import pandas as pd
 from datetime import timedelta
 import datetime as dt
@@ -26,12 +27,18 @@ import decimal
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 import os
+import matplotlib.dates as mdates
+
+
 
 
 def excel_to_sceneration_input_simple_pdfs(file_path):
     """
     This method converts the excel inputs into inputs suitable for the
-    generate_fleet_data_independent_times function under sceneration.py.
+    generate_fleet_from_simple_pdfs function under sceneration.py.
+
+    Excel file structure, especially Sheet and Column names should be
+    as it's in the 'tutorials/scenario_generation/input_generator_simple_pdfs.xlsx'
 
     Parameters
     ----------
@@ -147,7 +154,10 @@ def excel_to_sceneration_input_simple_pdfs(file_path):
 def excel_to_sceneration_input_conditional_pdfs(file_path):
     """
     This method converts the excel inputs into inputs suitable for the
-    generate_fleet_data_dependent_times function under sceneration.py.
+    generate_fleet_from_conditional_pdfs function under sceneration.py.
+
+    Excel file structure, especially Sheet and Column names should be
+    as it's in the 'tutorials/scenario_generation/input_generator_conditional_pdfs.xlsx'
 
     Parameters
     ----------
@@ -310,9 +320,10 @@ def drange(x, y, jump):
         x = decimal.Decimal(x) + decimal.Decimal(jump)
 
 
-def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min=15):
+def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
     """
-    This method visualizes generated distribution of arrival and departure times of the generated fleet behavior.
+    This method visualizes generated distribution of arrival and departure times and SoCs of the generated
+    fleet behavior.
 
     Parameters
     ----------
@@ -320,8 +331,9 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
         The file path for image files to be saved.
     gen_ev_df : pandas.core.frame.DataFrame
         Output data frame from generate_fleet_data function.
-    timedelta_in_min : int, optional
+    timedelta_in_min : int
         Resolution of the simulation in minutes. The default is 15.
+        Note: The resolution must be equal to the resolution of the scenario generator!
 
     Returns
     -------
@@ -329,6 +341,7 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
 
     """
 
+    # Times
     # Create times dicts for arrival and departure Keys: All possible time assignments, Values: number of assigned EVs
     current = dt.datetime(2022, 1, 1)  # arbitrary day
     datetime_lst = [
@@ -347,33 +360,67 @@ def visualize_statistical_time_generation(file_path, gen_ev_df, timedelta_in_min
         for time, value in dep_times_dict.items():
             if time == gen_ev_df.at[ev_id, "DepartureTime"].strftime("%H:%M"):
                 dep_times_dict[time] += 1
+
+    times_df = pd.DataFrame.from_dict([arr_times_dict, dep_times_dict]).transpose()
+    times_df = times_df.rename(columns={0: 'Arrival Times', 1: 'Departure Times'})
     # Plotting
-    # Arrival times of EVs
-    arr_times = list(arr_times_dict.keys())
-    arr_values = list(arr_times_dict.values())
-    plt.title("Arrival Times of EVs", size=16)
-    plt.xlabel("Time", size=12)
+    times_df.plot(kind='bar', alpha=0.5, width=1)
+    plt.xticks(np.arange(0, len(times_df), 6))
     plt.ylabel("Number of EVs", size=12)
-    plt.bar(arr_times, arr_values, color="g", width=0.4)
-    plt.gca().yaxis.set_major_locator(tck.MultipleLocator(1))
-    plt.gca().xaxis.set_major_locator(tck.MultipleLocator(10))
-    plot_name = "arrival_times_of_EVs"
+    plot_name = "generated_time_distribution"
     plot_path = os.path.join(file_path, plot_name)
     plt.savefig(plot_path)
     # Clear memory
     plt.clf()
-    # Departure times of EVs
-    dep_times = list(dep_times_dict.keys())
-    dep_values = list(dep_times_dict.values())
-    plt.title("Departure Times of EVs", size=16)
-    plt.xlabel("Time", size=12)
+
+    # SoCs
+    soc_df = gen_ev_df.filter(['ArrivalSoC', 'DepartureSoC'])
+    plot_name = "generated_soc_distribution"
+    soc_df.plot(kind='hist', alpha=0.5)
     plt.ylabel("Number of EVs", size=12)
-    plt.bar(dep_times, dep_values, color="r", width=0.4)
-    plt.gca().yaxis.set_major_locator(tck.MultipleLocator(1))
-    plt.gca().xaxis.set_major_locator(tck.MultipleLocator(10))
-    plot_name = "departure_times_of_EVs"
     plot_path = os.path.join(file_path, plot_name)
     plt.savefig(plot_path)
+    # Clear memory
+    plt.clf()
+
+    '''
+def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
+    times_df = gen_ev_df.filter(['ArrivalTime', 'DepartureTime'])
+    print(times_df)
+    plot_name = "times"
+    fig, ax = plt.subplots()
+
+    # Create times dicts for arrival and departure Keys: All possible time assignments, Values: number of assigned EVs
+    current = dt.datetime(2022, 1, 1)  # arbitrary day
+    datetime_lst = [
+        current + timedelta(minutes=m) for m in range(0, 24 * 60, timedelta_in_min)
+    ]
+    times_plot_df = pd.DataFrame()
+    for ev_id, row in gen_ev_df.iterrows():
+        for time in datetime_lst:
+            if time.strftime("%H:%M") == gen_ev_df.at[ev_id, "ArrivalTime"].strftime("%H:%M"):
+                times_plot_df.at[ev_id, 'ArrivalTime'] = time.strftime("%H:%M")
+        for time in datetime_lst:
+            if time.strftime("%H:%M") == gen_ev_df.at[ev_id, "DepartureTime"].strftime("%H:%M"):
+                times_plot_df.at[ev_id, 'DepartureTime'] = time.strftime("%H:%M")
+
+    #times_df = times_df.apply(pd.to_numeric)
+    #times_plot_df.astype(np.int64).plot(kind='hist', alpha=0.5, ax=ax)
+    print(times_plot_df)
+    times_plot_df.plot()
+
+    #labels = ax.get_xticks().tolist()
+    #labels = pd.to_datetime(labels)
+    #ax.set_xticklabels(labels)
+    plot_path = os.path.join(file_path, plot_name)
+    plt.savefig(plot_path)
+
+    soc_df = gen_ev_df.filter(['ArrivalSoC', 'DepartureSoC'])
+    plot_name = "socs"
+    soc_df.plot(kind='hist', alpha=0.5)
+    plot_path = os.path.join(file_path, plot_name)
+    plt.savefig(plot_path)
+    '''
 
 
 def output_to_sim_input(sce_output_df, xlfile, dc_power=False):

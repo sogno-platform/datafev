@@ -85,6 +85,7 @@ def generate_fleet_from_simple_pdfs(
 
     # Create date list
     date_list = pd.date_range(startdate, enddate, freq="d")
+
     # Convert date to datetime format for future use
     temp_time = dt.datetime.min.time()
     endtime = dt.datetime.combine(enddate + timedelta(days=1), temp_time)
@@ -106,6 +107,7 @@ def generate_fleet_from_simple_pdfs(
     weekend_arr_prob_list = arr_times_weekend_df["Probability"].to_list()
     weekday_dep_prob_list = dep_times_weekday_df["Probability"].to_list()
     weekend_dep_prob_list = dep_times_weekend_df["Probability"].to_list()
+
     # Arrival and departure time bounds dictionary for future use
     arr_time_bounds_dict = pd.Series(
         arr_times_weekday_df["TimeUpperBound"].values,
@@ -115,6 +117,7 @@ def generate_fleet_from_simple_pdfs(
         dep_times_weekday_df["TimeUpperBound"].values,
         index=dep_times_weekday_df["TimeLowerBound"],
     ).to_dict()
+
     # Dictionary -- keys: dates, values: assigned arrival time intervals
     pre_arr_assignment = {}
     # Loop through dates and assign generated datetimes
@@ -129,6 +132,7 @@ def generate_fleet_from_simple_pdfs(
             pre_arr_assignment[date] = np.random.choice(
                 arr_time_lowerb_array, number_of_evs_per_day, p=weekend_arr_prob_list
             )
+
     # Dictionary -- keys: dates, values: assigned arrival time stamp
     # Assign possible arrival datetimes
     # Find a datetime which satisfies following conditions
@@ -158,6 +162,7 @@ def generate_fleet_from_simple_pdfs(
                     ev_arr_time_lowerbs[ev_id] = arr_datetime_upperb
                     ev_id += 1
                     break
+
     # Assign possible departures from statistic input data
     # Find a datetime which satisfies following conditions
     # 1. departure after arrival
@@ -171,9 +176,7 @@ def generate_fleet_from_simple_pdfs(
                 dep_time_lowerb = np.random.choice(
                     dep_time_lowerb_array, 1, p=weekday_dep_prob_list
                 )[0]
-                dep_datetime_lowerb = dt.datetime.combine(
-                    arrival_dt, dep_time_lowerb
-                )
+                dep_datetime_lowerb = dt.datetime.combine(arrival_dt, dep_time_lowerb)
                 dep_datetime_upperb = dt.datetime.combine(
                     arrival_dt, dep_time_bounds_dict[dep_time_lowerb]
                 )
@@ -201,9 +204,7 @@ def generate_fleet_from_simple_pdfs(
                 dep_time_lowerb = np.random.choice(
                     dep_time_lowerb_array, 1, p=weekend_dep_prob_list
                 )[0]
-                dep_datetime_lowerb = dt.datetime.combine(
-                    arrival_dt, dep_time_lowerb
-                )
+                dep_datetime_lowerb = dt.datetime.combine(arrival_dt, dep_time_lowerb)
                 dep_datetime_upperb = dt.datetime.combine(
                     arrival_dt, dep_time_bounds_dict[dep_time_lowerb]
                 )
@@ -237,6 +238,7 @@ def generate_fleet_from_simple_pdfs(
     gen_ev_df = pd.DataFrame.from_dict(
         ev_assigned_times_dict, orient="index", columns=["ArrivalTime", "DepartureTime"]
     )
+
     # Localize time entries
     gen_ev_df["ArrivalTime"] = gen_ev_df["ArrivalTime"].dt.tz_localize(tz="GMT+0")
     gen_ev_df["DepartureTime"] = gen_ev_df["DepartureTime"].dt.tz_localize(tz="GMT+0")
@@ -244,14 +246,17 @@ def generate_fleet_from_simple_pdfs(
     ###################################################################################################################
     # Generating arrival and departure SoCs
     ###################################################################################################################
+
     # Arrival SoC probabilities
     arr_soc_df = pd.DataFrame(arr_soc_dict).T
     arr_soc_lowerb_array = arr_soc_df["SoCLowerBound"].to_numpy()
     arr_soc_prob_list = arr_soc_df["Probability"].tolist()
+
     # Departure SoC probabilities
     dep_soc_df = pd.DataFrame(dep_soc_dict).T
     dep_soc_lowerb_array = dep_soc_df["SoCLowerBound"].to_numpy()
     dep_soc_prob_list = dep_soc_df["Probability"].tolist()
+
     # Arrival and departure SoC bounds dictionary for future use
     arr_soc_bounds_dict = pd.Series(
         arr_soc_df["SoCUpperBound"].values, index=arr_soc_df["SoCLowerBound"]
@@ -293,6 +298,7 @@ def generate_fleet_from_simple_pdfs(
     ###################################################################################################################
     # Generating EV Data
     ###################################################################################################################
+
     # EV dictionary to Dataframe
     ev_df = pd.DataFrame(ev_dict).T
     ev_prob_array = ev_df["Probability"].to_numpy()
@@ -377,14 +383,17 @@ def generate_fleet_from_conditional_pdfs(
     ###################################################################################################################
 
     times_prob_list = list(times_prob_dict.values())
+
     # Time pairs dictionary, keys: keys to be used in choice function, values: arr/dep timeID pairs
     time_pairs_dict = {}
     for index, value in enumerate(list(times_prob_dict.keys())):
         time_pairs_dict[index] = value
+
     # Pre assignment list, consist of assigned time pair's ID
     times_pre_assignment = list(
         np.random.choice(list(time_pairs_dict.keys()), number_of_evs, p=times_prob_list)
     )
+
     # Assign possible arrival datetimes
     # Find a datetime which satisfies following conditions
     # 1. arrival at least one timedelta earlier than end time
@@ -392,6 +401,7 @@ def generate_fleet_from_conditional_pdfs(
     arr_assignment = {}
     dep_assignment = {}
     ev_id = 0
+
     # Dictionary, keys: EV ids, values: assigned arrival lower bounds
     ev_arr_time_lowerbs = {}
     for time_pair_id in times_pre_assignment:
@@ -407,6 +417,7 @@ def generate_fleet_from_conditional_pdfs(
         arr_time_lst = ut.generate_datetime_list(
             arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min
         )
+
         # Assign generated departure time if:
         # 1. time difference between arrival and departure is satisfied
         # 2. ...
@@ -459,21 +470,18 @@ def generate_fleet_from_conditional_pdfs(
     soc_pre_assignment = list(
         np.random.choice(list(soc_pairs_dict.keys()), number_of_evs, p=soc_prob_list)
     )
+
     # Assign possible arrival SoCs
     arr_soc_assignment = {}
     dep_soc_assignment = {}
     ev_id = 0
-    # Dictionary, keys: EV ids, values: assigned arrival lower bounds
-    ev_arr_soc_lowerbs = {}
     for soc_pair_id in soc_pre_assignment:
         soc_pair = soc_pairs_dict[soc_pair_id]
         # Arrival SoC
         arr_soc_lowerb = soc_dict[soc_pair[0]][0]
         arr_soc_upperb = soc_dict[soc_pair[0]][1]
         ev_arr_soc_possibilities = list(
-            ut.drange(
-                arr_soc_lowerb, arr_soc_upperb, "0.001"
-            )
+            ut.drange(arr_soc_lowerb, arr_soc_upperb, "0.001")
         )
         ev_arr_soc = np.random.choice(ev_arr_soc_possibilities, 1)[0]
         arr_soc_assignment[ev_id] = ev_arr_soc
@@ -481,9 +489,7 @@ def generate_fleet_from_conditional_pdfs(
         dep_soc_lowerb = soc_dict[soc_pair[1]][0]
         dep_soc_upperb = soc_dict[soc_pair[1]][1]
         ev_dep_soc_possibilities = list(
-            ut.drange(
-                dep_soc_lowerb, dep_soc_upperb, "0.001"
-            )
+            ut.drange(dep_soc_lowerb, dep_soc_upperb, "0.001")
         )
         ev_dep_soc = np.random.choice(ev_dep_soc_possibilities, 1)[0]
         dep_soc_assignment[ev_id] = ev_dep_soc
@@ -499,10 +505,10 @@ def generate_fleet_from_conditional_pdfs(
             if ev_id == id:
                 gen_ev_df.at[ev_id, "DepartureSoC"] = dep_soc
 
-
     ###################################################################################################################
     # Generating EV Data
     ###################################################################################################################
+
     # EV dictionary to Dataframe
     ev_df = pd.DataFrame(ev_dict).T
     ev_prob_array = ev_df["Probability"].to_numpy()

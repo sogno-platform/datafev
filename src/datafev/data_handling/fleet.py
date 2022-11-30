@@ -214,7 +214,7 @@ class EVFleet(object):
         soc = pd.DataFrame(index=sim_horizon)
         g2v = pd.DataFrame(index=sim_horizon)
         v2g = pd.DataFrame(index=sim_horizon)
-        status = pd.Series(dtype='float64')
+        status = pd.Series(dtype="float64")
 
         with pd.ExcelWriter(xlfile) as writer:
 
@@ -222,9 +222,9 @@ class EVFleet(object):
 
                 ev = self.objects[ev_id]
 
-                soc.loc[:, ev_id] = pd.Series(ev.soc, dtype='float64')
-                g2v.loc[:, ev_id] = pd.Series(ev.g2v, dtype='float64')
-                v2g.loc[:, ev_id] = pd.Series(ev.v2g, dtype='float64')
+                soc.loc[:, ev_id] = pd.Series(ev.soc, dtype="float64")
+                g2v.loc[:, ev_id] = pd.Series(ev.g2v, dtype="float64")
+                v2g.loc[:, ev_id] = pd.Series(ev.v2g, dtype="float64")
                 status[ev_id] = ev.admitted
 
             soc.to_excel(writer, sheet_name="SOC Trajectory")

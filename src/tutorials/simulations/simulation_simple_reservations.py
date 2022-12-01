@@ -22,6 +22,7 @@
 from datetime import datetime, timedelta
 from pyomo.environ import SolverFactory
 import matplotlib.pyplot as plt
+import matplotlib
 
 from datafev.data_handling.fleet import EVFleet
 from datafev.data_handling.cluster import ChargerCluster
@@ -32,12 +33,13 @@ from datafev.routines.simple_reservation.arrival import *
 from datafev.routines.departure import *
 from datafev.routines.charging_control.decentralized_llf import charging_routine
 
+matplotlib.interactive(True)
 
 def main():
     """
     This tutorial aims to show the use of datafev framework in an example scenario with
-    simple reservations where EVs reserve chargers before their arrival to clusters
-    smart charging where clusters' power consumption profiles are controlled based on least-laxity-first algorithm.
+        -simple reservations where EVs reserve chargers before their arrival to clusters
+        -smart charging where clusters' power consumption profiles are controlled based on least-laxity-first algorithm.
     """
 
     ########################################################################################################################

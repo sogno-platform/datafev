@@ -18,7 +18,9 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 import matplotlib.pyplot as plt
+import matplotlib
 from datetime import datetime, timedelta
 from pyomo.environ import SolverFactory
 
@@ -29,6 +31,9 @@ from datafev.data_handling.multi_cluster import MultiClusterSystem
 from datafev.routines.arrival import *
 from datafev.routines.departure import *
 from datafev.routines.charging_control.decentralized_fcfs import charging_routine
+
+matplotlib.interactive(True)
+
 
 
 def main():

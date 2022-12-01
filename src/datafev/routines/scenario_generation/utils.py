@@ -30,8 +30,6 @@ import os
 import matplotlib.dates as mdates
 
 
-
-
 def excel_to_sceneration_input_simple_pdfs(file_path):
     """
     This method converts the excel inputs into inputs suitable for the
@@ -362,9 +360,9 @@ def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
                 dep_times_dict[time] += 1
 
     times_df = pd.DataFrame.from_dict([arr_times_dict, dep_times_dict]).transpose()
-    times_df = times_df.rename(columns={0: 'Arrival Times', 1: 'Departure Times'})
+    times_df = times_df.rename(columns={0: "Arrival Times", 1: "Departure Times"})
     # Plotting
-    times_df.plot(kind='bar', alpha=0.5, width=1)
+    times_df.plot(kind="bar", alpha=0.5, width=1)
     plt.xticks(np.arange(0, len(times_df), 6))
     plt.ylabel("Number of EVs", size=12)
     plot_name = "generated_time_distribution"
@@ -374,16 +372,16 @@ def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
     plt.clf()
 
     # SoCs
-    soc_df = gen_ev_df.filter(['ArrivalSoC', 'DepartureSoC'])
+    soc_df = gen_ev_df.filter(["ArrivalSoC", "DepartureSoC"])
     plot_name = "generated_soc_distribution"
-    soc_df.plot(kind='hist', alpha=0.5)
+    soc_df.plot(kind="hist", alpha=0.5)
     plt.ylabel("Number of EVs", size=12)
     plot_path = os.path.join(file_path, plot_name)
     plt.savefig(plot_path)
     # Clear memory
     plt.clf()
 
-    '''
+    """
 def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
     times_df = gen_ev_df.filter(['ArrivalTime', 'DepartureTime'])
     print(times_df)
@@ -420,7 +418,7 @@ def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
     soc_df.plot(kind='hist', alpha=0.5)
     plot_path = os.path.join(file_path, plot_name)
     plt.savefig(plot_path)
-    '''
+    """
 
 
 def output_to_sim_input(sce_output_df, xlfile, dc_power=False):

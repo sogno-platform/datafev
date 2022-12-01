@@ -35,6 +35,7 @@ from datafev.routines.charging_control.decentralized_llf import charging_routine
 
 matplotlib.interactive(True)
 
+
 def main():
     """
     This tutorial aims to show the use of datafev framework in an example scenario with

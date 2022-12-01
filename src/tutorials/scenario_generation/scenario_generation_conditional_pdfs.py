@@ -58,7 +58,7 @@ def main():
         times_dict=times_dict,
         times_prob_dict=times_prob_dict,
         ev_dict=ev_dict,
-        number_of_evs=100,
+        number_of_evs=20,
         endtime=end_time,
         timedelta_in_min=15,
         diff_arr_dep_in_min=0,

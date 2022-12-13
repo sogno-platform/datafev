@@ -41,13 +41,13 @@ def main():
     # SIMULATION SET-UP
 
     # Simulation inputs
-    filename = os.path.join(src_path, 'inputs','example_01.xlsx')
-    print("Scenario inputs  are taken from the xlsx file:",filename)
-    input_file = pd.ExcelFile("scenario_without_reservation.xlsx")
+    input_file = pd.ExcelFile("inputs/example_01.xlsx")
     input_fleet = pd.read_excel(input_file, "Fleet")
     input_cluster1 = pd.read_excel(input_file, "Cluster1")
     input_capacity1 = pd.read_excel(input_file, "Capacity1")
+    print("Scenario inputs  are taken from the xlsx file:",input_file)
     print()
+
 
     #Printing the input parameters related to the EV fleet 
     print("The charging demands of the EVs in the simulation scenario are given in the following:")

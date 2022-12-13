@@ -47,7 +47,7 @@ def main():
     input_fleet = pd.read_excel(input_file, "Fleet")
     input_cluster1 = pd.read_excel(input_file, "Cluster1")
     input_capacity1 = pd.read_excel(input_file, "Capacity1")
-    print("Scenario inputs  are taken from the xlsx file:",filename)
+    print("Scenario inputs  are taken from the xlsx file:",input_file)
     print()
 
 

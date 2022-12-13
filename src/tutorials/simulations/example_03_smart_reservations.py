@@ -85,7 +85,7 @@ def main():
     print("All clusters in the system purchase electricity based on a time-of-use tariff (taken from input xlsx")
     price = pd.read_excel(input_file, "Price")
     price_t_steps = price["TimeStep"].round("S")
-    tou_tariff = pd.Series(price["Price"].values, index=price_t_steps)
+    tou_tariff = pd.Series(price["Price (per/kWh)"].values, index=price_t_steps)
     print(tou_tariff)
     print()
     

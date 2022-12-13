@@ -352,23 +352,41 @@ class MultiClusterSystem(object):
 
         """
         
-              
+        
         fig, ax = plt.subplots(len(self.clusters.keys()), 1,tight_layout=True,sharex=True,sharey=True)
         fig.suptitle("Power consumption of clusters")
         
-        n=0
-        for cc_id, cc in sorted(self.clusters.items()):
+        
+        if len(self.clusters.keys())==1:
+            
+            cc_id=list(self.clusters.keys())[0]
+            cc=self.clusters[cc_id]
+            
             profile = cc.analyze_consumption_profile(start,
                                                      end,
                                                      step).sum(axis=1)
-            profile.plot(ax=ax[n], title=cc_id,label="Net consumption",linewidth=2)
-            cc.upper_limit[start:end].plot(ax=ax[n], label="Upper Limit", linewidth=1, linestyle='--')
-            cc.lower_limit[start:end].plot(ax=ax[n], label="Lower Limit",linewidth=1, linestyle='--')
-            ax[n].set_ylabel("kW")
-            n+=1
+            profile.plot(ax=ax, title=cc_id,label="Net consumption",linewidth=2)
+            cc.upper_limit[start:end].plot(ax=ax, label="Upper Limit", linewidth=1, linestyle='--')
+            cc.lower_limit[start:end].plot(ax=ax, label="Lower Limit",linewidth=1, linestyle='--')
+            ax.set_ylabel("kW")
+            ax.legend(loc='best')
+            ax.set_xlabel("Time")
             
-        ax[n-1].legend(loc='best')
-        ax[n-1].set_xlabel("Time")
+        else:
+            
+            n=0
+            for cc_id, cc in sorted(self.clusters.items()):
+                profile = cc.analyze_consumption_profile(start,
+                                                         end,
+                                                         step).sum(axis=1)
+                profile.plot(ax=ax[n], title=cc_id,label="Net consumption",linewidth=2)
+                cc.upper_limit[start:end].plot(ax=ax[n], label="Upper Limit", linewidth=1, linestyle='--')
+                cc.lower_limit[start:end].plot(ax=ax[n], label="Lower Limit",linewidth=1, linestyle='--')
+                ax[n].set_ylabel("kW")
+                n+=1
+                
+            ax[n-1].legend(loc='best')
+            ax[n-1].set_xlabel("Time")
             
             
         return fig
@@ -401,16 +419,29 @@ class MultiClusterSystem(object):
         fig, ax = plt.subplots(len(self.clusters.keys()), 1,tight_layout=True,sharex=True,sharey=True)
         fig.suptitle("Occupation of clusters")
         
-        n=0
-        for cc_id, cc in sorted(self.clusters.items()):
+        
+        if len(self.clusters.keys())==1:
+            
+            cc_id=list(self.clusters.keys())[0]
+            cc=self.clusters[cc_id]
+            
             profile = cc.analyze_occupation_profile(start,
                                                      end,
                                                      step).sum(axis=1)
-            profile.plot(ax=ax[n], title=cc_id,linewidth=2)
-            ax[n].set_ylabel("#EV")
-            n+=1
-        
-        ax[n-1].set_xlabel("Time")
+            profile.plot(ax=ax, title=cc_id,linewidth=2)
+            ax.set_xlabel("Time")
+            
+        else:
+           
+            n=0
+            for cc_id, cc in sorted(self.clusters.items()):
+                profile = cc.analyze_occupation_profile(start,
+                                                         end,
+                                                         step).sum(axis=1)
+                profile.plot(ax=ax[n], title=cc_id,linewidth=2)
+                n+=1
+            
+            ax[n-1].set_xlabel("Time")
             
             
         return fig

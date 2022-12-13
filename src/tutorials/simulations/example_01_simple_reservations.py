@@ -133,6 +133,12 @@ def main():
     # Printing the results to excel files
     system.export_results_to_excel(sim_start, sim_end, sim_step, "results/example01_clusters.xlsx")
     fleet.export_results_to_excel(sim_start, sim_end, sim_step, "results/example01_fleet.xlsx")
+    
+    #Line charts to visualize cluster loading and occupation profiles
+    fig1=system.visualize_cluster_loading(sim_start, sim_end, sim_step)   
+    fig2=system.visualize_cluster_loading(sim_start, sim_end, sim_step)   
+    plt.show()
+
 
     ########################################################################################################################
     ########################################################################################################################

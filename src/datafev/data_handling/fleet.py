@@ -64,8 +64,8 @@ class EVFleet(object):
             # Initialization of an EV object
             evID = i["ev_id"]
             bcap = i["Battery Capacity (kWh)"]
-            p_max_ch = i["p_max_ch"]
-            p_max_ds = i["p_max_ds"]
+            p_max_ch = i["p_max_ch (kW)"]
+            p_max_ds = i["p_max_ds (kW)"]
             ev = ElectricVehicle(evID, bcap, p_max_ch, p_max_ds)
 
             # Assigning the scenario parameters
@@ -187,7 +187,7 @@ class EVFleet(object):
         """
         return self.outgoing_at[ts]
 
-    def export_results(self, start, end, step, xlfile):
+    def export_results_to_excel(self, start, end, step, xlfile):
         """
         This method is run after simulation to analyze the simulation results 
         related to the EV fleet. It exports simulation results to a xlsx file.

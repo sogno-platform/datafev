@@ -249,7 +249,7 @@ class MultiClusterSystem(object):
         for cc_id, cc in self.clusters.items():
             cc.uncontrolled_supply(ts, step)
 
-    def export_results(self, start, end, step, xlfile):
+    def export_results_to_excel(self, start, end, step, xlfile):
         """
         This method is run after simulation to analyze the simulation results 
         related to the multi-cluster system. It exports simulation results to 

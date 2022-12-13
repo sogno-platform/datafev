@@ -580,7 +580,7 @@ class ChargerCluster(object):
             ).fillna(0)
         return df
 
-    def export_results(self, start, end, step, xlfile):
+    def export_results_to_excel(self, start, end, step, xlfile):
         """
         This method is run after simulation to analyze the simulation results 
         related to the  cluster. It exports simulation results to an xlsx file.

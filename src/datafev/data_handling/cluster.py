@@ -96,8 +96,8 @@ class ChargerCluster(object):
         for _, i in topology_data.iterrows():
 
             cuID = i["cu_id"]
-            pch = i["cu_p_ch_max"]
-            pds = i["cu_p_ds_max"]
+            pch = i["cu_p_ch_max (kW)"]
+            pds = i["cu_p_ds_max (kW)"]
             eff = i["cu_eff"]
             cu = ChargingUnit(cuID, pch, pds, eff)
             self.add_cu(cu)
@@ -157,8 +157,8 @@ class ChargerCluster(object):
 
         roundedts = limits["TimeStep"].dt.round("S")
 
-        _lb = pd.Series(limits["LB"].values, index=roundedts)
-        _ub = pd.Series(limits["UB"].values, index=roundedts)
+        _lb = pd.Series(limits["LB (kW)"].values, index=roundedts)
+        _ub = pd.Series(limits["UB (kW)"].values, index=roundedts)
 
         n_of_steps = int((end - start) / step)
         timerange = [start + t * step for t in range(n_of_steps + 1)]

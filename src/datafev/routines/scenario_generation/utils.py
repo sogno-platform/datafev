@@ -161,7 +161,7 @@ def excel_to_sceneration_input_conditional_pdfs(file_path):
     ----------
     file_path : str
         File path of the Excel input file.
-        
+
     Returns
     -------
     times_dict : dict
@@ -296,7 +296,7 @@ def generate_datetime_list(sdate, edate, timedelta_in_min):
 def drange(x, y, jump):
     """
     Generate a range from x to y with jump spaces.
-    
+
     Parameters
     ----------
     x : numpy.float64
@@ -433,7 +433,7 @@ def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
     xlfile : str
         Desired name of the output excel file.
     dc_power : bool, optional
-        This parameter indicates whether dc or ac will be used as charging power in the simulation. 
+        This parameter indicates whether dc or ac will be used as charging power in the simulation.
         The default is False.
 
     Returns

@@ -32,6 +32,7 @@ from datafev.routines.simple_reservation.arrival import *
 from datafev.routines.departure import *
 from datafev.routines.charging_control.decentralized_llf import charging_routine
 
+
 def main():
     """
     This tutorial aims to show the use of datafev framework in an example scenario with
@@ -42,30 +43,33 @@ def main():
     ########################################################################################################################
     ########################################################################################################################
     # SIMULATION SET-UP
-    
+
     # Importing the simulation input inputs
-    input_file = pd.ExcelFile('inputs/example_02.xlsx')
+    input_file = pd.ExcelFile("inputs/example_02.xlsx")
     input_fleet = pd.read_excel(input_file, "Fleet")
     input_cluster1 = pd.read_excel(input_file, "Cluster1")
     input_capacity1 = pd.read_excel(input_file, "Capacity1")
     # Getting the path of the input excel file
     abs_path_input = os.path.abspath(input_file)
-    print("Scenario inputs are taken from the xlsx file:",abs_path_input)
+    print("Scenario inputs are taken from the xlsx file:", abs_path_input)
     print()
 
-
-    # Printing the input parameters of the charging infrastructure    
+    # Printing the input parameters of the charging infrastructure
     print("The system consists of one charger cluster with the following chargers:")
     print(input_cluster1)
     print()
-    
-    #Printing the input parameters related to power consumption limits
-    print("Net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)")
+
+    # Printing the input parameters related to power consumption limits
+    print(
+        "Net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)"
+    )
     print(input_capacity1)
     print()
 
-    #Printing the input parameters related to the EV fleet behavior
-    print("The reservation requests of the EVs (as declared in reservation) are given in the following:")
+    # Printing the input parameters related to the EV fleet behavior
+    print(
+        "The reservation requests of the EVs (as declared in reservation) are given in the following:"
+    )
     print(
         input_fleet[
             [
@@ -98,8 +102,7 @@ def main():
     print("...the arrival SOC would change by:", soc_dev["cluster1"])
     print()
 
-
-    #Simulation parameters
+    # Simulation parameters
     sim_start = datetime(2022, 1, 8, 7)
     sim_end = datetime(2022, 1, 8, 9)
     sim_length = sim_end - sim_start
@@ -110,27 +113,25 @@ def main():
     print("Length of one time step in simulation:", sim_step)
     print()
     print()
-    
-    ########################################################################################################################
-    ########################################################################################################################
 
+    ########################################################################################################################
+    ########################################################################################################################
 
     ########################################################################################################################
     ########################################################################################################################
     # INITIALIZATION OF THE SIMULATION
-    
+
     fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
     cluster1 = ChargerCluster("cluster1", input_cluster1)
     system = MultiClusterSystem("multicluster")
     system.add_cc(cluster1)
     cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
-    
+
     print("Simulation scenario has been initalized")
     print()
-    
-    ########################################################################################################################
-    ########################################################################################################################
 
+    ########################################################################################################################
+    ########################################################################################################################
 
     ########################################################################################################################
     ########################################################################################################################
@@ -173,8 +174,12 @@ def main():
     print()
 
     # Printing the results to excel files
-    system.export_results_to_excel(sim_start, sim_end, sim_step, "results/example02_clusters.xlsx")
-    fleet.export_results_to_excel(sim_start, sim_end, sim_step, "results/example02_fleet.xlsx")
+    system.export_results_to_excel(
+        sim_start, sim_end, sim_step, "results/example02_clusters.xlsx"
+    )
+    fleet.export_results_to_excel(
+        sim_start, sim_end, sim_step, "results/example02_fleet.xlsx"
+    )
     # Path of the output excel file
     abs_path_output_cluster = os.path.abspath("results/example02_clusters.xlsx")
     abs_path_output_fleet = os.path.abspath("results/example02_fleet.xlsx")
@@ -182,13 +187,12 @@ def main():
     print(abs_path_output_cluster)
     print(abs_path_output_fleet)
     print()
-    
-    #Line charts to visualize cluster loading and occupation profiles
-    fig1=system.visualize_cluster_loading(sim_start, sim_end, sim_step)   
-    fig2=system.visualize_cluster_occupation(sim_start, sim_end, sim_step)   
+
+    # Line charts to visualize cluster loading and occupation profiles
+    fig1 = system.visualize_cluster_loading(sim_start, sim_end, sim_step)
+    fig2 = system.visualize_cluster_occupation(sim_start, sim_end, sim_step)
     plt.show()
 
-    
     ########################################################################################################################
     ########################################################################################################################
 

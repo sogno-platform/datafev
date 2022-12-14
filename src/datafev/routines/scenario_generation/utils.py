@@ -454,7 +454,9 @@ def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
         ]
     )
 
-    sim_input_df["Battery Capacity (kWh)"] = sce_output_df["BatteryCapacity(kWh)"].values
+    sim_input_df["Battery Capacity (kWh)"] = sce_output_df[
+        "BatteryCapacity(kWh)"
+    ].values
     sim_input_df["Real Arrival Time"] = sce_output_df["ArrivalTime"].values
     sim_input_df["Real Arrival SOC"] = sce_output_df["ArrivalSoC"].values
     sim_input_df["Estimated Departure Time"] = sce_output_df["DepartureTime"].values

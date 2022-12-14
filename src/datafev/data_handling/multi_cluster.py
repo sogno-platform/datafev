@@ -327,8 +327,8 @@ class MultiClusterSystem(object):
 
             overall.loc["Total"] = overall.sum()
             overall.to_excel(writer, sheet_name="Overall")
-            
-    def visualize_cluster_loading(self,start, end, step):
+
+    def visualize_cluster_loading(self, start, end, step):
         """
         This method is run after simulation to plot the aggregate power
         consumption profiles of the clusters as well as the power consumption
@@ -351,48 +351,52 @@ class MultiClusterSystem(object):
             The figure containing the cluster load profiles in subplots.
 
         """
-        
-        
-        fig, ax = plt.subplots(len(self.clusters.keys()), 1,tight_layout=True,sharex=True,sharey=True)
+
+        fig, ax = plt.subplots(
+            len(self.clusters.keys()), 1, tight_layout=True, sharex=True, sharey=True
+        )
         fig.suptitle("Power consumption of clusters")
-        
-        
-        if len(self.clusters.keys())==1:
-            
-            cc_id=list(self.clusters.keys())[0]
-            cc=self.clusters[cc_id]
-            
-            profile = cc.analyze_consumption_profile(start,
-                                                     end,
-                                                     step).sum(axis=1)
-            profile.plot(ax=ax, title=cc_id,label="Net consumption",linewidth=2)
-            cc.upper_limit[start:end].plot(ax=ax, label="Upper Limit", linewidth=1, linestyle='--')
-            cc.lower_limit[start:end].plot(ax=ax, label="Lower Limit",linewidth=1, linestyle='--')
+
+        if len(self.clusters.keys()) == 1:
+
+            cc_id = list(self.clusters.keys())[0]
+            cc = self.clusters[cc_id]
+
+            profile = cc.analyze_consumption_profile(start, end, step).sum(axis=1)
+            profile.plot(ax=ax, title=cc_id, label="Net consumption", linewidth=2)
+            cc.upper_limit[start:end].plot(
+                ax=ax, label="Upper Limit", linewidth=1, linestyle="--"
+            )
+            cc.lower_limit[start:end].plot(
+                ax=ax, label="Lower Limit", linewidth=1, linestyle="--"
+            )
             ax.set_ylabel("kW")
-            ax.legend(loc='best')
+            ax.legend(loc="best")
             ax.set_xlabel("Time")
-            
+
         else:
-            
-            n=0
+
+            n = 0
             for cc_id, cc in sorted(self.clusters.items()):
-                profile = cc.analyze_consumption_profile(start,
-                                                         end,
-                                                         step).sum(axis=1)
-                profile.plot(ax=ax[n], title=cc_id,label="Net consumption",linewidth=2)
-                cc.upper_limit[start:end].plot(ax=ax[n], label="Upper Limit", linewidth=1, linestyle='--')
-                cc.lower_limit[start:end].plot(ax=ax[n], label="Lower Limit",linewidth=1, linestyle='--')
+                profile = cc.analyze_consumption_profile(start, end, step).sum(axis=1)
+                profile.plot(
+                    ax=ax[n], title=cc_id, label="Net consumption", linewidth=2
+                )
+                cc.upper_limit[start:end].plot(
+                    ax=ax[n], label="Upper Limit", linewidth=1, linestyle="--"
+                )
+                cc.lower_limit[start:end].plot(
+                    ax=ax[n], label="Lower Limit", linewidth=1, linestyle="--"
+                )
                 ax[n].set_ylabel("kW")
-                n+=1
-                
-            ax[n-1].legend(loc='best')
-            ax[n-1].set_xlabel("Time")
-            
-            
+                n += 1
+
+            ax[n - 1].legend(loc="best")
+            ax[n - 1].set_xlabel("Time")
+
         return fig
-    
-    
-    def visualize_cluster_occupation(self,start, end, step):
+
+    def visualize_cluster_occupation(self, start, end, step):
         """
         This method is run after simulation to plot the occupation profiles 
         of the clusters in the multi-cluster system.
@@ -414,40 +418,34 @@ class MultiClusterSystem(object):
             The figure containing the cluster occupation profiles in subplots.
 
         """
-        
-        
-        fig, ax = plt.subplots(len(self.clusters.keys()), 1,tight_layout=True,sharex=True,sharey=True)
-        fig.suptitle("Occupation of clusters")
-        
-        
-        if len(self.clusters.keys())==1:
-            
-            cc_id=list(self.clusters.keys())[0]
-            cc=self.clusters[cc_id]
-            
-            profile = cc.analyze_occupation_profile(start,
-                                                     end,
-                                                     step).sum(axis=1)
-            profile.plot(ax=ax, title=cc_id,linewidth=2)
-            ax.set_xlabel("Time")
-            
-        else:
-           
-            n=0
-            for cc_id, cc in sorted(self.clusters.items()):
-                profile = cc.analyze_occupation_profile(start,
-                                                         end,
-                                                         step).sum(axis=1)
-                profile.plot(ax=ax[n], title=cc_id,linewidth=2)
-                n+=1
-            
-            ax[n-1].set_xlabel("Time")
-            
-            
-        return fig
-            
 
-    def visualize_fulfillment_rates(self,fleet):
+        fig, ax = plt.subplots(
+            len(self.clusters.keys()), 1, tight_layout=True, sharex=True, sharey=True
+        )
+        fig.suptitle("Occupation of clusters")
+
+        if len(self.clusters.keys()) == 1:
+
+            cc_id = list(self.clusters.keys())[0]
+            cc = self.clusters[cc_id]
+
+            profile = cc.analyze_occupation_profile(start, end, step).sum(axis=1)
+            profile.plot(ax=ax, title=cc_id, linewidth=2)
+            ax.set_xlabel("Time")
+
+        else:
+
+            n = 0
+            for cc_id, cc in sorted(self.clusters.items()):
+                profile = cc.analyze_occupation_profile(start, end, step).sum(axis=1)
+                profile.plot(ax=ax[n], title=cc_id, linewidth=2)
+                n += 1
+
+            ax[n - 1].set_xlabel("Time")
+
+        return fig
+
+    def visualize_fulfillment_rates(self, fleet):
         """
         This method is run after simulation to plot the fulfillment rates in 
         three performance metrics.
@@ -467,59 +465,62 @@ class MultiClusterSystem(object):
             fulfillment metrics in each y-axis.
 
         """
-    
+
         cluster_datasets = []
-    
+
         for cc_id, cc in sorted(self.clusters.items()):
 
             clst_ds = cc.cc_dataset.copy()
-                   
-            ds=pd.DataFrame(columns=['Real/Scheduled Stay',
-                                     'Real/Scheduled G2V',
-                                     'Real/Scheduled V2G',
-                                     'Cluster'])
-            
-            for _,entry in clst_ds.iterrows():
-                
-                ev_id=entry['EV ID']
-                
-                ev=fleet.objects[ev_id]
-                
-                estimated_park_duration=ev.t_dep_est-ev.t_arr_est
+
+            ds = pd.DataFrame(
+                columns=[
+                    "Real/Scheduled Stay",
+                    "Real/Scheduled G2V",
+                    "Real/Scheduled V2G",
+                    "Cluster",
+                ]
+            )
+
+            for _, entry in clst_ds.iterrows():
+
+                ev_id = entry["EV ID"]
+
+                ev = fleet.objects[ev_id]
+
+                estimated_park_duration = ev.t_dep_est - ev.t_arr_est
                 if ev.admitted:
-                    real_park_duration=entry['Leave Time']-entry['Arrival Time']
-                else: 
-                    real_park_duration=0
-                fulfillment_park=real_park_duration/estimated_park_duration
-                
-                scheduled_g2v   = entry['Scheduled G2V [kWh]']
-                real_g2v        = entry['Net G2V [kWh]']
-                if scheduled_g2v>0:
-                    fulfillment_g2v = real_g2v/scheduled_g2v
+                    real_park_duration = entry["Leave Time"] - entry["Arrival Time"]
+                else:
+                    real_park_duration = 0
+                fulfillment_park = real_park_duration / estimated_park_duration
+
+                scheduled_g2v = entry["Scheduled G2V [kWh]"]
+                real_g2v = entry["Net G2V [kWh]"]
+                if scheduled_g2v > 0:
+                    fulfillment_g2v = real_g2v / scheduled_g2v
                 else:
                     fulfillment_g2v = 1.0
 
-                scheduled_v2g  = entry['Scheduled V2G [kWh]']
-                real_v2g       = entry['Total V2G [kWh]']
-                if scheduled_v2g>0:
-                    fulfillment_v2g = real_v2g/scheduled_v2g
+                scheduled_v2g = entry["Scheduled V2G [kWh]"]
+                real_v2g = entry["Total V2G [kWh]"]
+                if scheduled_v2g > 0:
+                    fulfillment_v2g = real_v2g / scheduled_v2g
                 else:
                     fulfillment_v2g = 1.0
-                
-                ds.loc[ev_id,'Real/Scheduled Stay']=fulfillment_park
-                ds.loc[ev_id,'Real/Scheduled G2V']=fulfillment_g2v
-                ds.loc[ev_id,'Real/Scheduled V2G']=fulfillment_v2g
-                ds.loc[ev_id,'Cluster']=cc_id
-            
-            cluster_datasets.append(ds)
-            
-        datasets = pd.concat(cluster_datasets)
-        
-        fig,ax=plt.subplots(1, 1,tight_layout=True)
-        fig.suptitle("Fulfillment rates")
-        
-        pd.plotting.parallel_coordinates(datasets,'Cluster',ax=ax)
-        ax.legend(loc='best')
 
+                ds.loc[ev_id, "Real/Scheduled Stay"] = fulfillment_park
+                ds.loc[ev_id, "Real/Scheduled G2V"] = fulfillment_g2v
+                ds.loc[ev_id, "Real/Scheduled V2G"] = fulfillment_v2g
+                ds.loc[ev_id, "Cluster"] = cc_id
+
+            cluster_datasets.append(ds)
+
+        datasets = pd.concat(cluster_datasets)
+
+        fig, ax = plt.subplots(1, 1, tight_layout=True)
+        fig.suptitle("Fulfillment rates")
+
+        pd.plotting.parallel_coordinates(datasets, "Cluster", ax=ax)
+        ax.legend(loc="best")
 
         return fig

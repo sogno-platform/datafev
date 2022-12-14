@@ -31,6 +31,7 @@ from datafev.routines.arrival import *
 from datafev.routines.departure import *
 from datafev.routines.charging_control.decentralized_fcfs import charging_routine
 
+
 def main():
     """
     This tutorial aims to show the use of datafev framework in a small example scenario
@@ -48,24 +49,29 @@ def main():
     input_capacity1 = pd.read_excel(input_file, "Capacity1")
     # Getting the path of the input excel file
     abs_path_input = os.path.abspath(input_file)
-    print("Scenario inputs are taken from the xlsx file:",abs_path_input)
+    print("Scenario inputs are taken from the xlsx file:", abs_path_input)
     print()
 
-
-    #Printing the input parameters related to the EV fleet 
-    print("The charging demands of the EVs in the simulation scenario are given in the following:")
-    print(input_fleet[["Battery Capacity (kWh)", "Real Arrival Time", "Real Arrival SOC"]])
+    # Printing the input parameters related to the EV fleet
+    print(
+        "The charging demands of the EVs in the simulation scenario are given in the following:"
+    )
+    print(
+        input_fleet[["Battery Capacity (kWh)", "Real Arrival Time", "Real Arrival SOC"]]
+    )
     print()
-    
+
     # Printing the input parameters of the charging infrastructure
     print("The system consists of one charger cluster with the following chargers:")
     print(input_cluster1)
     print()
-    print("Aggregate net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)")
+    print(
+        "Aggregate net consumption of the cluster is limited in the scenario (i.e., LB-UB indicating lower-upper bounds)"
+    )
     print(input_capacity1)
     print()
     print()
-    
+
     # Simulation parameters
     sim_start = datetime(2022, 1, 8, 7)
     sim_end = datetime(2022, 1, 8, 9)
@@ -77,28 +83,26 @@ def main():
     print("Length of one time step in simulation:", sim_step)
     print()
     print()
-    
+
     ########################################################################################################################
     ########################################################################################################################
-    
 
     ########################################################################################################################
     ########################################################################################################################
     # INITIALIZATION OF THE SIMULATION
-    
+
     cluster1 = ChargerCluster("cluster1", input_cluster1)
     system = MultiClusterSystem("multicluster")
     system.add_cc(cluster1)
     fleet = EVFleet("test_fleet", input_fleet, sim_horizon)
     cluster1.enter_power_limits(sim_start, sim_end, sim_step, input_capacity1)
-    
+
     print("Simulation scenario has been initalized")
     print()
-    
+
     ########################################################################################################################
     ########################################################################################################################
-    
-    
+
     ########################################################################################################################
     ########################################################################################################################
     # DYNAMIC SIMULATION
@@ -122,7 +126,6 @@ def main():
     print()
     ########################################################################################################################
     ########################################################################################################################
-    
 
     ########################################################################################################################
     ########################################################################################################################
@@ -134,8 +137,12 @@ def main():
     print()
 
     # Printing the results to excel files
-    system.export_results_to_excel(sim_start, sim_end, sim_step, "results/example01_clusters.xlsx")
-    fleet.export_results_to_excel(sim_start, sim_end, sim_step, "results/example01_fleet.xlsx")
+    system.export_results_to_excel(
+        sim_start, sim_end, sim_step, "results/example01_clusters.xlsx"
+    )
+    fleet.export_results_to_excel(
+        sim_start, sim_end, sim_step, "results/example01_fleet.xlsx"
+    )
     # Path of the output excel file
     abs_path_output_cluster = os.path.abspath("results/example01_clusters.xlsx")
     abs_path_output_fleet = os.path.abspath("results/example01_fleet.xlsx")
@@ -143,15 +150,15 @@ def main():
     print(abs_path_output_cluster)
     print(abs_path_output_fleet)
     print()
-    
-    #Line charts to visualize cluster loading and occupation profiles
-    fig1=system.visualize_cluster_loading(sim_start, sim_end, sim_step)   
-    fig2=system.visualize_cluster_occupation(sim_start, sim_end, sim_step)   
+
+    # Line charts to visualize cluster loading and occupation profiles
+    fig1 = system.visualize_cluster_loading(sim_start, sim_end, sim_step)
+    fig2 = system.visualize_cluster_occupation(sim_start, sim_end, sim_step)
     plt.show()
 
+    ########################################################################################################################
+    ########################################################################################################################
 
-    ########################################################################################################################
-    ########################################################################################################################
 
 if __name__ == "__main__":
     main()

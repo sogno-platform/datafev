@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Input parameters
-    solver = SolverFactory("cplex")
+    solver = SolverFactory("gurobi")
     opt_step = 300  # seconds
     opt_horizon = range(13)  # [0 1 2 3 4 .. 12]  == 1 hour for opt_step=300 seconds
     ecap = 50 * 3600  # kWs

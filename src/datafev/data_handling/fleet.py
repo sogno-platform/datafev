@@ -229,5 +229,5 @@ class EVFleet(object):
 
             soc.to_excel(writer, sheet_name="SOC Trajectory")
             g2v.to_excel(writer, sheet_name="G2V Charge")
-            g2v.to_excel(writer, sheet_name="V2G Discharge")
+            v2g.to_excel(writer, sheet_name="V2G Discharge")
             status.to_excel(writer, sheet_name="Admitted")

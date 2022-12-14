@@ -69,6 +69,7 @@ For further information, please also visit the [FEIN Aachen association website]
 ## Example usage
 
 ```python
+import os
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from pyomo.environ import SolverFactory
@@ -96,7 +97,9 @@ def main():
     input_fleet = pd.read_excel(input_file, "Fleet")
     input_cluster1 = pd.read_excel(input_file, "Cluster1")
     input_capacity1 = pd.read_excel(input_file, "Capacity1")
-    print("Scenario inputs  are taken from the xlsx file:",input_file)
+    # Getting the path of the input excel file
+    abs_path_input = os.path.abspath(input_file)
+    print("Scenario inputs are taken from the xlsx file:",abs_path_input)
     print()
 
 
@@ -184,6 +187,13 @@ def main():
     # Printing the results to excel files
     system.export_results_to_excel(sim_start, sim_end, sim_step, "results/example01_clusters.xlsx")
     fleet.export_results_to_excel(sim_start, sim_end, sim_step, "results/example01_fleet.xlsx")
+    # Path of the output excel file
+    abs_path_output_cluster = os.path.abspath("results/example01_clusters.xlsx")
+    abs_path_output_fleet = os.path.abspath("results/example01_fleet.xlsx")
+    print("Scenario results are saved to the following xlsx files:")
+    print(abs_path_output_cluster)
+    print(abs_path_output_fleet)
+    print()
     
     #Line charts to visualize cluster loading and occupation profiles
     fig1=system.visualize_cluster_loading(sim_start, sim_end, sim_step)   
@@ -197,7 +207,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
 
 ## License
 

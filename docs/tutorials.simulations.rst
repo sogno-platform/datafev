@@ -28,8 +28,6 @@ tutorials.simulations.simulation\_without\_reservations module
    :undoc-members:
    :show-inheritance:
 
-Module contents
----------------
 
 .. automodule:: src.tutorials.simulations
    :members:

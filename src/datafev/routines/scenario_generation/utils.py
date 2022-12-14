@@ -129,10 +129,10 @@ def excel_to_sceneration_input_simple_pdfs(file_path):
     dep_times_dict["Weekend"] = weekend_dep_times_df.to_dict(orient="index")
 
     # Convert percent SoCs to values between 0 and 1
-    arr_soc_df["SoCLowerBound"] = arr_soc_df["SoCLowerBound"].div(100)
-    arr_soc_df["SoCUpperBound"] = arr_soc_df["SoCUpperBound"].div(100)
-    dep_soc_df["SoCLowerBound"] = dep_soc_df["SoCLowerBound"].div(100)
-    dep_soc_df["SoCUpperBound"] = dep_soc_df["SoCUpperBound"].div(100)
+    arr_soc_df["SoCLowerBound(%)"] = arr_soc_df["SoCLowerBound(%)"].div(100)
+    arr_soc_df["SoCUpperBound(%)"] = arr_soc_df["SoCUpperBound(%)"].div(100)
+    dep_soc_df["SoCLowerBound(%)"] = dep_soc_df["SoCLowerBound(%)"].div(100)
+    dep_soc_df["SoCUpperBound(%)"] = dep_soc_df["SoCUpperBound(%)"].div(100)
 
     # SoC nested dictionaries for both arrival and departure
     # keys: SoC Identifier, values: SoC Lower Bounds, SOC Upper Bounds and their probabilities
@@ -207,8 +207,8 @@ def excel_to_sceneration_input_conditional_pdfs(file_path):
 
     soc_df = soc_df.set_index("SoCID")
     # Convert percent SoCs to values between 0 and 1
-    soc_df["SoCLowerBound"] = soc_df["SoCLowerBound"].div(100)
-    soc_df["SoCUpperBound"] = soc_df["SoCUpperBound"].div(100)
+    soc_df["SoCLowerBound(%)"] = soc_df["SoCLowerBound(%)"].div(100)
+    soc_df["SoCUpperBound(%)"] = soc_df["SoCUpperBound(%)"].div(100)
     soc_dict = soc_df.T.to_dict("list")
     soc_prob_df = soc_prob_df.set_index("SoCID")
     soc_prob_dict = {}
@@ -445,8 +445,8 @@ def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
     sim_input_df = pd.DataFrame(
         columns=[
             "Battery Capacity (kWh)",
-            "p_max_ch",
-            "p_max_ds",
+            "p_max_ch (kW)",
+            "p_max_ds (kW)",
             "Real Arrival Time",
             "Real Arrival SOC",
             "Estimated Departure Time",
@@ -454,7 +454,7 @@ def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
         ]
     )
 
-    sim_input_df["Battery Capacity (kWh)"] = sce_output_df["BatteryCapacity"].values
+    sim_input_df["Battery Capacity (kWh)"] = sce_output_df["BatteryCapacity(kWh)"].values
     sim_input_df["Real Arrival Time"] = sce_output_df["ArrivalTime"].values
     sim_input_df["Real Arrival SOC"] = sce_output_df["ArrivalSoC"].values
     sim_input_df["Estimated Departure Time"] = sce_output_df["DepartureTime"].values
@@ -462,10 +462,10 @@ def output_to_sim_input(sce_output_df, xlfile, dc_power=False):
         "DepartureSoC"
     ].values
     if dc_power is False:  # use AC-charging-powers
-        sim_input_df["p_max_ch"] = sce_output_df["MaxChargingPower"].values
-        sim_input_df["p_max_ds"] = sce_output_df["MaxChargingPower"].values
+        sim_input_df["p_max_ch (kW)"] = sce_output_df["MaxChargingPower(kW)"].values
+        sim_input_df["p_max_ds (kW)"] = sce_output_df["MaxChargingPower(kW)"].values
     else:  # use DC-fast-charging-powers
-        sim_input_df["p_max_ch"] = sce_output_df["MaxFastChargingPower"].values
-        sim_input_df["p_max_ds"] = sce_output_df["MaxFastChargingPower"].values
+        sim_input_df["p_max_ch (kW)"] = sce_output_df["MaxFastChargingPower(kW)"].values
+        sim_input_df["p_max_ds (kW)"] = sce_output_df["MaxFastChargingPower(kW)"].values
     # Simulation input dataframe to excel file
     sim_input_df.to_excel(xlfile)

@@ -18,6 +18,7 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import os
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from pyomo.environ import SolverFactory
@@ -51,7 +52,9 @@ def main():
     input_capacity2 = pd.read_excel(input_file, "Capacity2")
     input_cluster3 = pd.read_excel(input_file, "Cluster3")
     input_capacity3 = pd.read_excel(input_file, "Capacity3")
-    print("Scenario inputs  are taken from the xlsx file:",input_file)
+    # Getting the path of the input excel file
+    abs_path_input = os.path.abspath(input_file)
+    print("Scenario inputs are taken from the xlsx file:",abs_path_input)
     print()
 
     # Printing the input parameters of the charging infrastructure
@@ -103,7 +106,7 @@ def main():
     
 
     # Optimization parameters
-    solver = SolverFactory("cplex")  # Users have to declare an optimization solver that exists their file system
+    solver = SolverFactory("gurobi")  # Users have to declare an optimization solver that exists their file system
     print("The management strategy tested in this tutorial includes optimization algorithms")
     print("The solver to solve the optimization problems must be defined by the user. This test uses cplex.")
     print()
@@ -210,10 +213,17 @@ def main():
     ########################################################################################################################
     ########################################################################################################################
     # ANALYSIS OF THE SIMULATION RESULTS
-    
+
     #Print the cluster and fleet results to excel
     system.export_results_to_excel(sim_start, sim_end, sim_step, "results/example03_cluster.xlsx")
     fleet.export_results_to_excel(sim_start, sim_end, sim_step, "results/example03_fleet.xlsx")
+    # Path of the output excel file
+    abs_path_output_cluster = os.path.abspath("results/example03_cluster.xlsx")
+    abs_path_output_fleet = os.path.abspath("results/example03_fleet.xlsx")
+    print("Scenario results are saved to the following xlsx files:")
+    print(abs_path_output_cluster)
+    print(abs_path_output_fleet)
+    print()
 
     #Line charts to visualize cluster loading profiles
     fig1=system.visualize_cluster_loading(sim_start, sim_end, sim_step)   

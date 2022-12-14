@@ -249,20 +249,20 @@ def generate_fleet_from_simple_pdfs(
 
     # Arrival SoC probabilities
     arr_soc_df = pd.DataFrame(arr_soc_dict).T
-    arr_soc_lowerb_array = arr_soc_df["SoCLowerBound"].to_numpy()
+    arr_soc_lowerb_array = arr_soc_df["SoCLowerBound(%)"].to_numpy()
     arr_soc_prob_list = arr_soc_df["Probability"].tolist()
 
     # Departure SoC probabilities
     dep_soc_df = pd.DataFrame(dep_soc_dict).T
-    dep_soc_lowerb_array = dep_soc_df["SoCLowerBound"].to_numpy()
+    dep_soc_lowerb_array = dep_soc_df["SoCLowerBound(%)"].to_numpy()
     dep_soc_prob_list = dep_soc_df["Probability"].tolist()
 
     # Arrival and departure SoC bounds dictionary for future use
     arr_soc_bounds_dict = pd.Series(
-        arr_soc_df["SoCUpperBound"].values, index=arr_soc_df["SoCLowerBound"]
+        arr_soc_df["SoCUpperBound(%)"].values, index=arr_soc_df["SoCLowerBound(%)"]
     ).to_dict()
     dep_soc_bounds_dict = pd.Series(
-        dep_soc_df["SoCUpperBound"].values, index=dep_soc_df["SoCLowerBound"]
+        dep_soc_df["SoCUpperBound(%)"].values, index=dep_soc_df["SoCLowerBound(%)"]
     ).to_dict()
     for ev_id, row in gen_ev_df.iterrows():
         # Arrival SoCs
@@ -308,14 +308,14 @@ def generate_fleet_from_simple_pdfs(
     for ev_id, row in gen_ev_df.iterrows():
         chosen_model = np.random.choice(ev_model_array, 1, p=ev_prob_list)[0]
         gen_ev_df.at[ev_id, "Model"] = chosen_model
-        gen_ev_df.at[ev_id, "BatteryCapacity"] = ev_df.at[
-            chosen_model, "BatteryCapacity"
+        gen_ev_df.at[ev_id, "BatteryCapacity(kWh)"] = ev_df.at[
+            chosen_model, "BatteryCapacity(kWh)"
         ]
-        gen_ev_df.at[ev_id, "MaxChargingPower"] = ev_df.at[
-            chosen_model, "MaxChargingPower"
+        gen_ev_df.at[ev_id, "MaxChargingPower(kW)"] = ev_df.at[
+            chosen_model, "MaxChargingPower(kW)"
         ]
-        gen_ev_df.at[ev_id, "MaxFastChargingPower"] = ev_df.at[
-            chosen_model, "MaxFastChargingPower"
+        gen_ev_df.at[ev_id, "MaxFastChargingPower(kW)"] = ev_df.at[
+            chosen_model, "MaxFastChargingPower(kW)"
         ]
 
     ###################################################################################################################
@@ -518,14 +518,14 @@ def generate_fleet_from_conditional_pdfs(
     for ev_id, row in gen_ev_df.iterrows():
         chosen_model = np.random.choice(ev_model_array, 1, p=ev_prob_list)[0]
         gen_ev_df.at[ev_id, "Model"] = chosen_model
-        gen_ev_df.at[ev_id, "BatteryCapacity"] = ev_df.at[
-            chosen_model, "BatteryCapacity"
+        gen_ev_df.at[ev_id, "BatteryCapacity(kWh)"] = ev_df.at[
+            chosen_model, "BatteryCapacity(kWh)"
         ]
-        gen_ev_df.at[ev_id, "MaxChargingPower"] = ev_df.at[
-            chosen_model, "MaxChargingPower"
+        gen_ev_df.at[ev_id, "MaxChargingPower(kW)"] = ev_df.at[
+            chosen_model, "MaxChargingPower(kW)"
         ]
-        gen_ev_df.at[ev_id, "MaxFastChargingPower"] = ev_df.at[
-            chosen_model, "MaxFastChargingPower"
+        gen_ev_df.at[ev_id, "MaxFastChargingPower(kW)"] = ev_df.at[
+            chosen_model, "MaxFastChargingPower(kW)"
         ]
 
     ###################################################################################################################

@@ -18,7 +18,7 @@ Its target users are researchers in the field of smart grid applications and the
 
 ## Installation
 
-datafev requires at least the following Python packages:
+datafev requires the following Python packages:
 - matplotlib==3.5.1
 - numpy==1.21.5
 - openpyxl==3.0.9

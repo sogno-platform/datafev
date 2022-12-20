@@ -12,7 +12,7 @@ datafev.data_handling.charger module
    :undoc-members:
    :show-inheritance:
 
-datafev.datahandling.cluster module
+datafev.data_handling.cluster module
 -----------------------------------
 
 .. automodule:: src.datafev.data_handling.cluster
@@ -20,7 +20,7 @@ datafev.datahandling.cluster module
    :undoc-members:
    :show-inheritance:
 
-datafev.datahandling.fleet module
+datafev.data_handling.fleet module
 ---------------------------------
 
 .. automodule:: src.datafev.data_handling.fleet
@@ -36,7 +36,7 @@ datafev.data_handling.multi_cluster module
    :undoc-members:
    :show-inheritance:
 
-datafev.datahandling.vehicle module
+datafev.data_handling.vehicle module
 -----------------------------------
 
 .. automodule:: src.datafev.data_handling.vehicle

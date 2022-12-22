@@ -214,15 +214,15 @@ def main():
     for ts in sim_horizon:
         print("Simulating time step:", ts)
 
-        # The departure protocol for the EVs leaving the chargerg clusters
+        # The departure routine for the EVs leaving the chargerg clusters
         departure_routine(ts, fleet)
 
-        # The reservation protocol (including routing to a cluster in the multicluster system) for the EVs
+        # The reservation routine (including routing to a cluster in the multicluster system) for the EVs
         reservation_routine(
             ts, sim_step, system, fleet, solver, traffic_forecast, arbitrage_coeff=0.1
         )
 
-        # The arrival protocol for the EVs incoming to the charger clusters
+        # The arrival routine for the EVs incoming to the charger clusters
         arrival_routine(ts, sim_step, fleet)
 
         # Real-time charging control of the charger clusters is based on the decentralized MILP-based protocol

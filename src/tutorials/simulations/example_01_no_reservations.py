@@ -112,10 +112,10 @@ def main():
     for ts in sim_horizon:
         print("     Simulating time step:", ts)
 
-        # The departure protocol for the EVs leaving the charger clusters
+        # The departure routine for the EVs leaving the charger clusters
         departure_routine(ts, fleet)
 
-        # The arrival protocol for the EVs incoming to the charger clusters
+        # The arrival routine for the EVs incoming to the charger clusters
         arrival_routine(ts, sim_step, fleet, system)
 
         # Real-time charging control of the charger clusters

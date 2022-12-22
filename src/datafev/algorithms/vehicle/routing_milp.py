@@ -44,9 +44,8 @@ def smart_routing(
 ):
     """
     This function optimizes:
-        1) the allocation of an incoming EV to a cluster,
-        2) the charging schedule in the given parking duration
-    considering cluster differentiated dynamic price signals.
+        - the allocation of an incoming EV to a cluster,
+        - and the charging schedule in the given parking duration considering cluster differentiated dynamic price signals.
     
     Parameters
     ----------
@@ -60,9 +59,9 @@ def smart_routing(
         V2G allowance discharge (kWs).
     tarsoc : float
         Target final soc (0<inisoc<1).
-	minsoc : float
+    minsoc : float
         Minimum soc.
-    maxsoc : float 
+    maxsoc : float
         Maximum soc.
     crtsoc : float
         Target soc at crttime.

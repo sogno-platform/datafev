@@ -39,9 +39,9 @@ def reservation_routine(
     This routine is executed to reserve chargers for the EVs approaching a multi-cluster system.
 
     The smart reservations specify:
-        1) Which cluster and which charger the approaching EVs must connect to
-        2) Optimal charging schedule of EVs
-        3) Payment for agreed charging service
+        - which cluster and which charger the approaching EVs must connect to,
+        - optimal charging schedule of EVs,
+        - and the payment for agreed charging service.
 
     Parameters
     ----------

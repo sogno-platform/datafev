@@ -55,10 +55,10 @@ def reschedule(
     """
     This function reschedules the charging operations of all clusters in 
     a multicluster system by considering:
-        1) upper-lower limits of aggregate consumption of the multi-cluster system,
-        2) upper-lower limits of aggregate consumption of individual clusters,
-        3) inter-cluster unbalances between aggregate power consumption of clusters,
-        4) pre-defined reference schedules of the individual EVs in the system.
+        - upper-lower limits of aggregate consumption of the multi-cluster system,
+        - upper-lower limits of aggregate consumption of individual clusters,
+        - inter-cluster unbalances between aggregate power consumption of clusters,
+        - pre-defined reference schedules of the individual EVs in the system.
     This is run typically when some events require deviations from previously 
     determined schedules.
     

@@ -43,10 +43,10 @@ class ChargerCluster(object):
             String identifier of the cluster.
         topology_data : pandas.DataFrame
             A table containing:
-                1) string identifiers,
-                2) maximum charge powers,
-                3) maximum discharge powers,
-                4) power conversion efficiencies of
+                - string identifiers,
+                - maximum charge powers,
+                - maximum discharge powers,
+                - power conversion efficiencies of
             charging units in the cluster.
 
         Returns

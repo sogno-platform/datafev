@@ -21,7 +21,7 @@ datafev.routines.charging_control.decentralized\_fcfs module
    :show-inheritance:
 
 datafev.protocols.charging_control.decentralized\_llf module
------------------------------------------------------------
+------------------------------------------------------------
 
 .. automodule:: src.datafev.routines.charging_control.decentralized_llf
    :members:

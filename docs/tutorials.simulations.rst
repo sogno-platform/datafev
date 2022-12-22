@@ -4,26 +4,26 @@ tutorials.simulations package
 Submodules
 ----------
 
-tutorials.simulations.simulation\_simple\_reservations module
--------------------------------------------------------------
-
-.. automodule:: src.tutorials.simulations.simulation_simple_reservations
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tutorials.simulations.simulation\_smart\_reservations module
-------------------------------------------------------------
-
-.. automodule:: src.tutorials.simulations.simulation_smart_reservations
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tutorials.simulations.simulation\_without\_reservations module
+tutorials.simulations.example\_02\_simple\_reservations module
 --------------------------------------------------------------
 
-.. automodule:: src.tutorials.simulations.simulation_without_reservations
+.. automodule:: src.tutorials.simulations.example_02_simple_reservations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tutorials.simulations.example\_03\_smart\_reservations module
+-------------------------------------------------------------
+
+.. automodule:: src.tutorials.simulations.example_03_smart_reservations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tutorials.simulations.example\_01\_no\_reservations module
+----------------------------------------------------------
+
+.. automodule:: src.tutorials.simulations.example_01_no_reservations
    :members:
    :undoc-members:
    :show-inheritance:

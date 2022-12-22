@@ -29,8 +29,8 @@ def idp(schedule, upper_bound, lower_bound, tou_tariff, f_discount, f_markup):
     in IEEE Transactions on Transportation Electrification, 2022, doi: 10.1109/TTE.2022.3208627.
 
     This function compares the commitments with the desired power consumption range of the cluster to:
-        1) increase the charging price for time steps where the schedule exceeds the upper bound of the desired range,
-        2) decrease the charging price for time steps where the schedule is below the lower bound of the desired range.
+        - increase the charging price for time steps where the schedule exceeds the upper bound of the desired range,
+        - and decrease the charging price for time steps where the schedule is below the lower bound of the desired range.
     
     Parameters
     ----------

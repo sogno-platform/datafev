@@ -36,7 +36,7 @@ def excel_to_sceneration_input_simple_pdfs(file_path):
     generate_fleet_from_simple_pdfs function under sceneration.py.
 
     Excel file structure, especially Sheet and Column names should be
-    as it's in the 'tutorials/scenario_generation/input_generator_simple_pdfs.xlsx'
+    as it's in the 'tutorials/scenario_generation/input_generator_simple_pdfs.xlsx'.
 
     Parameters
     ----------
@@ -155,7 +155,7 @@ def excel_to_sceneration_input_conditional_pdfs(file_path):
     generate_fleet_from_conditional_pdfs function under sceneration.py.
 
     Excel file structure, especially Sheet and Column names should be
-    as it's in the 'tutorials/scenario_generation/input_generator_conditional_pdfs.xlsx'
+    as it's in the 'tutorials/scenario_generation/input_generator_conditional_pdfs.xlsx'.
 
     Parameters
     ----------
@@ -380,45 +380,6 @@ def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
     plt.savefig(plot_path)
     # Clear memory
     plt.clf()
-
-    """
-def visualize_statistical_generation(file_path, gen_ev_df, timedelta_in_min=15):
-    times_df = gen_ev_df.filter(['ArrivalTime', 'DepartureTime'])
-    print(times_df)
-    plot_name = "times"
-    fig, ax = plt.subplots()
-
-    # Create times dicts for arrival and departure Keys: All possible time assignments, Values: number of assigned EVs
-    current = dt.datetime(2022, 1, 1)  # arbitrary day
-    datetime_lst = [
-        current + timedelta(minutes=m) for m in range(0, 24 * 60, timedelta_in_min)
-    ]
-    times_plot_df = pd.DataFrame()
-    for ev_id, row in gen_ev_df.iterrows():
-        for time in datetime_lst:
-            if time.strftime("%H:%M") == gen_ev_df.at[ev_id, "ArrivalTime"].strftime("%H:%M"):
-                times_plot_df.at[ev_id, 'ArrivalTime'] = time.strftime("%H:%M")
-        for time in datetime_lst:
-            if time.strftime("%H:%M") == gen_ev_df.at[ev_id, "DepartureTime"].strftime("%H:%M"):
-                times_plot_df.at[ev_id, 'DepartureTime'] = time.strftime("%H:%M")
-
-    #times_df = times_df.apply(pd.to_numeric)
-    #times_plot_df.astype(np.int64).plot(kind='hist', alpha=0.5, ax=ax)
-    print(times_plot_df)
-    times_plot_df.plot()
-
-    #labels = ax.get_xticks().tolist()
-    #labels = pd.to_datetime(labels)
-    #ax.set_xticklabels(labels)
-    plot_path = os.path.join(file_path, plot_name)
-    plt.savefig(plot_path)
-
-    soc_df = gen_ev_df.filter(['ArrivalSoC', 'DepartureSoC'])
-    plot_name = "socs"
-    soc_df.plot(kind='hist', alpha=0.5)
-    plot_path = os.path.join(file_path, plot_name)
-    plt.savefig(plot_path)
-    """
 
 
 def output_to_sim_input(sce_output_df, xlfile, dc_power=False):

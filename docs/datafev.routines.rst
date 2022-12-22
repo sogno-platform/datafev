@@ -1,5 +1,5 @@
 datafev.routines package
-=========================
+========================
 
 Subpackages
 -----------
@@ -16,7 +16,7 @@ Submodules
 ----------
 
 datafev.routines.arrival module
---------------------------------
+-------------------------------
 
 .. automodule:: src.datafev.routines.arrival
    :members:
@@ -24,7 +24,7 @@ datafev.routines.arrival module
    :show-inheritance:
 
 datafev.routines.departure module
-----------------------------------
+---------------------------------
 
 .. automodule:: src.datafev.routines.departure
    :members:

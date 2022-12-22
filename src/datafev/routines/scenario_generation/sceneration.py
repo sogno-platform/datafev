@@ -360,10 +360,8 @@ def generate_fleet_from_conditional_pdfs(
         keys: EV models, values: their data and probability.
     number_of_evs : int
         This parameter has different description for the two situations:
-            1. If user is using independent arrival and departure times:
-                Number of desired EVs per day for the simulation
-            2. If the user is using dependent arrival and departure times:
-                Number of desired EVs for the simulation
+            - If user is using independent arrival and departure times: Number of desired EVs per day for the simulation.
+            - If the user is using dependent arrival and departure times: Number of desired EVs for the simulation.
     endtime : datetime.datetime
         The last timestamp of the simulation.
     timedelta_in_min : int

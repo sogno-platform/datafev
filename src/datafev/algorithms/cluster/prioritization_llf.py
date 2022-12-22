@@ -29,7 +29,6 @@ def leastlaxityfirst(
     This is a control algorithm that manages the real-time charging rates of
     the EV chargers in a cluster under given power limits. The control is 
     based on the least-laxity-first rule prioritizing urgent demands.
-    
 
     Parameters
     ----------

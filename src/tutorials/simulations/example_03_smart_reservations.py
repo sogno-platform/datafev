@@ -35,9 +35,9 @@ from datafev.routines.charging_control.decentralized_milp import charging_routin
 
 def main():
     """
-    This tutorial aims to show the use of datafev framework in an example scenario with
-        -smart reservations where EVs routing to clusters are managed
-        -smart charging where clusters' power consumption profiles are optimized.
+    This tutorial aims to show the use of datafev framework in an example scenario with:
+        - smart reservations where EVs routing to clusters are managed,
+        - and smart charging where clusters' power consumption profiles are optimized.
     """
 
     ########################################################################################################################

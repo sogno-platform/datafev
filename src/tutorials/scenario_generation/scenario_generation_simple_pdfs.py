@@ -29,15 +29,11 @@ def main():
     Example script for the usage of simple pdfs scenario generator.
 
     In this tutorial, these operations are carried out in this order:
-        1)The data from Excel input file 'tutorials/scenario_generation/input_generator_simple_pdfs.xlsx' is read.
-        2)The data provided by Excel is converted to dictionary datatype with
-        'utils.excel_to_sceneration_input_simple_pdfs' function.
-        3) Electric Vehicle Dataframe, which is an electric vehicle fleet scenario, is generated via
-        'sceneration.generate_fleet_from_simple_pdfs' function with in 2) converted dictionary inputs
-        4) The statistical distribution of generated arrival and departure times and SoCs are visualized via
-        'utils.visualize_statistical_generation' function under '/results'.
-        5) Generated statistical output dataframe is converted into an input dataframe for simulators, which are
-        explained under 'tutorials/simulations'.
+        - The data from Excel input file 'tutorials/scenario_generation/input_generator_simple_pdfs.xlsx' is read.
+        - The data provided by Excel is converted to dictionary datatype with 'utils.excel_to_sceneration_input_simple_pdfs' function.
+        - Electric Vehicle Dataframe, which is an electric vehicle fleet scenario, is generated via 'sceneration.generate_fleet_from_simple_pdfs' function with converted dictionary inputs
+        - The statistical distribution of generated arrival and departure times and SoCs are visualized via 'utils.visualize_statistical_generation' function under '/results'.
+        - Generated statistical output dataframe is converted into an input dataframe for simulators, which are explained under 'tutorials/simulations'.
 
     The statistical data for both arrival and departure times are based on a research Takahashi, Tamura, et al.,
     'Day-Ahead Planning for EV Aggregators Based on Statistical Analysis of Road Traffic Data in Japan'

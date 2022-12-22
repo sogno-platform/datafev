@@ -6,24 +6,24 @@ Its target users are researchers in the field of smart grid applications and the
 
 ## Contribution
 
-1. Clone repository via SSH (`git clone git@git.rwth-aachen.de:acs/public/automation/datafev.git`) or clone repository via HTTPS (`git clone https://git.rwth-aachen.de/acs/public/automation/datafev.git`)
-2. Open an issue at [https://git.rwth-aachen.de/acs/public/automation/datafev/-/issues](https://git.rwth-aachen.de/acs/public/automation/datafev/-/issues)
+1. Clone repository via SSH (`git clone git@github.com:erdemgumrukcu/datafev.git`) or clone repository via HTTPS (`git clone https://github.com/erdemgumrukcu/datafev.git`)
+2. Open an issue at [https://github.com/erdemgumrukcu/datafev/issues](https://github.com/erdemgumrukcu/datafev/issues)
 3. Checkout the development branch: `git checkout development` 
 4. Update your local development branch (if necessary): `git pull origin development`
 5. Create your feature/issue branch: `git checkout -b issueXY_explanation`
 6. Commit your changes: `git commit -m "Add feature #XY"`
 7. Push to the branch: `git push origin issueXY_explanation`
-8. Submit a merge request from issueXY_explanation to development branch via [https://git.rwth-aachen.de/acs/public/automation/datafev/-/merge_requests](https://git.rwth-aachen.de/acs/public/automation/datafev/-/merge_requests)
+8. Submit a pull request from issueXY_explanation to development branch via [https://github.com/erdemgumrukcu/datafev/pulls](https://github.com/erdemgumrukcu/datafev/pulls)
 9. Wait for approval or revision of the new implementations.
 
 ## Installation
 
-datafev requires the following Python packages:
-- matplotlib==3.5.1
-- numpy==1.21.5
-- openpyxl==3.0.9
-- pandas==1.4.2
-- pyomo==6.4.1
+datafev requires at least the following Python packages:
+- matplotlib>=3.5.1
+- numpy>=1.21.5
+- openpyxl>=3.0.9
+- pandas>=1.4.2
+- pyomo>=6.4.1
 
 as well as the installation of at least one mathematical programming solver for convex and/or non-convex problems, which is supported by the [Pyomo](http://www.pyomo.org/) optimisation modelling library.
 We recommend one of the following solvers:
@@ -61,9 +61,9 @@ This import should be possible without any errors.
 
 ## Documentation
 
-The documentation for the latest datafev release can be found in folder ./docs and on [this](https://acs.pages.rwth-aachen.de/public/simulation/pycity_scheduling/) GitLab page.
+The documentation for the latest datafev release can be found in folder ./docs and on [this](https://datafev.fein-aachen.org//) GitHub page.
 
-For further information, please also visit the [FEIN Aachen association website](https://fein-aachen.org/en/projects/pycity_scheduling/).
+For further information, please also visit the [FEIN Aachen association website](https://fein-aachen.org/en/projects/datafev/).
 
 
 ## Example usage

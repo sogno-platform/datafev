@@ -114,9 +114,9 @@ class MultiClusterSystem(object):
             Time resolution of the target period.
         limits : pandas.DataFrame
             Time indexed table indicating the lower and upper limits:
-                index --> Identifier of time steps,
-                LB --> Lower bound of consumption limit at a particular time step,
-                UB --> Upper bound of consumption limit at a particular time step.
+                - index --> Identifier of time steps,
+                - LB --> Lower bound of consumption limit at a particular time step,
+                - UB --> Upper bound of consumption limit at a particular time step.
 
         Returns
         -------
@@ -447,11 +447,10 @@ class MultiClusterSystem(object):
 
     def visualize_fulfillment_rates(self, fleet):
         """
-        This method is run after simulation to plot the fulfillment rates in 
-        three performance metrics.
-            1- Real/scheduled parking duration
-            2- Real/scheduled G2V supply
-            3- Real/scheduled V2G supply
+        This method is run after simulation to plot the fulfillment rates in three performance metrics:
+            - Real/scheduled parking duration,
+            - real/scheduled G2V supply.
+            - and real/scheduled V2G supply.
 
         Parameters
         ----------

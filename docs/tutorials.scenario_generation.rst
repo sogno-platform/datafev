@@ -1,21 +1,21 @@
 tutorials.scenario_generation package
-====================================
+=====================================
 
 Submodules
 ----------
 
-tutorials.scenario_generation.scenario\_generation\_dependent\_times module
---------------------------------------------------------------------------
+tutorials.scenario_generation.scenario\_generation\_conditional\_pdfs module
+----------------------------------------------------------------------------
 
-.. automodule:: src.tutorials.scenario_generation.scenario_generation_dependent_times
+.. automodule:: src.tutorials.scenario_generation.scenario_generation_conditional_pdfs
    :members:
    :undoc-members:
    :show-inheritance:
 
-tutorials.scenario_generation.scenario\_generation\_independent\_times module
-----------------------------------------------------------------------------
+tutorials.scenario_generation.scenario\_generation\_simple\_pdfs module
+-----------------------------------------------------------------------
 
-.. automodule:: src.tutorials.scenario_generation.scenario_generation_independent_times
+.. automodule:: src.tutorials.scenario_generation.scenario_generation_simple_pdfs
    :members:
    :undoc-members:
    :show-inheritance:

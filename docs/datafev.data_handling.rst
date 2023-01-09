@@ -1,11 +1,11 @@
 datafev.data_handling package
-============================
+=============================
 
 Submodules
 ----------
 
 datafev.data_handling.charger module
------------------------------------
+------------------------------------
 
 .. automodule:: src.datafev.data_handling.charger
    :members:
@@ -13,7 +13,7 @@ datafev.data_handling.charger module
    :show-inheritance:
 
 datafev.data_handling.cluster module
------------------------------------
+------------------------------------
 
 .. automodule:: src.datafev.data_handling.cluster
    :members:
@@ -21,7 +21,7 @@ datafev.data_handling.cluster module
    :show-inheritance:
 
 datafev.data_handling.fleet module
----------------------------------
+------------------------------------
 
 .. automodule:: src.datafev.data_handling.fleet
    :members:
@@ -29,7 +29,7 @@ datafev.data_handling.fleet module
    :show-inheritance:
 
 datafev.data_handling.multi_cluster module
-----------------------------------------
+------------------------------------------
 
 .. automodule:: src.datafev.data_handling.multi_cluster
    :members:
@@ -37,7 +37,7 @@ datafev.data_handling.multi_cluster module
    :show-inheritance:
 
 datafev.data_handling.vehicle module
------------------------------------
+------------------------------------
 
 .. automodule:: src.datafev.data_handling.vehicle
    :members:

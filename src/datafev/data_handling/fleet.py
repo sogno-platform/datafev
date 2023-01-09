@@ -117,13 +117,12 @@ class EVFleet(object):
         Parameters
         ----------
         table : pandas.DataFrame
-            This table contains all EVs SOC dependency data.
-            Each EV's data has the following parameters:
-                index --> Identifier of the SOC range,
-                SOC_LB --> Lower bound of a particular SOC range,
-                SOC_UB --> Upper bound of a particular SOC range,
-                P_LB --> Lower bound of power capability in a particular SOC range,
-                P_UB --> Upper bound of power capability in a particular SOC range.
+            This table contains all EVs SOC dependency data. Each EV's data has the following parameters:
+                - index --> Identifier of the SOC range,
+                - SOC_LB --> Lower bound of a particular SOC range,
+                - SOC_UB --> Upper bound of a particular SOC range,
+                - P_LB --> Lower bound of power capability in a particular SOC range,
+                - P_UB --> Upper bound of power capability in a particular SOC range.
 
         Returns
         -------

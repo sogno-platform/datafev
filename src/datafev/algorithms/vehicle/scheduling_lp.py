@@ -60,7 +60,7 @@ def minimize_cost(
     crtsoc : float
         Target soc at crttime.
     crttime : int
-        Critical time s.t. s(srttime)> crtsoc.
+        Critical time s.t. s(srttime) > crtsoc.
     inisoc : dict of float
         Initial soc \in [0,1).
     p_ch : dict of float

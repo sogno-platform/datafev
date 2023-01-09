@@ -45,11 +45,11 @@ def reschedule(
 ):
     """
     This function reschedules the charging operations of a cluster by considering:
-        1) upper-lower limits of aggregate power consumption of the cluster,
-        2) pre-defined reference schedules of the individual EVs in the system.
+        - upper-lower limits of aggregate power consumption of the cluster,
+        - and pre-defined reference schedules of the individual EVs in the system.
+
     This is run typically when some events require deviations from previously
     determined schedules.
-    
 
     Parameters
     ----------
@@ -59,9 +59,9 @@ def reschedule(
         Size of one time step in the optimization (seconds).
     opt_horizon : list of integers
         Time step identifiers in the optimization horizon.
-    upperlimit :  dict of float
+    upperlimit : dict of float
         Soft upper limit of cluster power consumption (kW).
-    lowerlimit :  dict of float
+    lowerlimit : dict of float
         Soft lower limit of cluster power consumption (kW).
     tolerance : float
         Maximum allowed violation of upper-lower limits (kW).

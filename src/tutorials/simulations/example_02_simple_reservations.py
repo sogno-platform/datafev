@@ -35,9 +35,9 @@ from datafev.routines.charging_control.decentralized_llf import charging_routine
 
 def main():
     """
-    This tutorial aims to show the use of datafev framework in an example scenario with
-        -simple reservations where EVs reserve chargers before their arrival to clusters
-        -smart charging where clusters' power consumption profiles are controlled based on least-laxity-first algorithm.
+    This tutorial aims to show the use of datafev framework in an example scenario with:
+        - simple reservations where EVs reserve chargers before their arrival to clusters,
+        - and smart charging where clusters' power consumption profiles are controlled based on least-laxity-first algorithm.
     """
 
     ########################################################################################################################

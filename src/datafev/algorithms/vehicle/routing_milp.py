@@ -192,7 +192,7 @@ def smart_routing(
         if model.t_arr[c] <= t < model.t_dep[c]:
             return model.pc_pos[c, t] <= model.P_CH[c] * model.xc[c]
         else:
-            return model.pc_neg[c, t] == 0
+            return model.pc_pos[c, t] == 0
 
     model.comb12const = Constraint(model.C, model.T, rule=combinatorics12)
 
@@ -269,11 +269,12 @@ if __name__ == "__main__":
 
     import pandas as pd
     import numpy as np
-    from pyomo.environ import SolverFactory
+    from pyomo.environ import *
+    from pyomo.opt import SolverFactory
 
     ###########################################################################
     # Input parameters
-    solver = SolverFactory("gurobi")
+    solver = SolverFactory("cplex")
     opt_step = 300  # seconds
     opt_horizon = range(13)  # [0 1 2 3 4 .. 12]  == 1 hour for opt_step=300 seconds
     ecap = 50 * 3600  # kWs

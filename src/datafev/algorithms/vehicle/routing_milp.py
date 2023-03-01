@@ -348,7 +348,7 @@ if __name__ == "__main__":
     print("And charge with the profile is printed in table")
     print("SOC (%): SOC trajectory in optimized schedule")
     print("P (kW): Power supply to the EV in optimized schedule")
-    results = pd.DataFrame(columns=["P", "SOC (%)"], index=sorted(s.keys()))
+    results = pd.DataFrame(columns=["P (kW)", "SOC (%)"], index=sorted(s.keys()))
     results["P (kW)"] = pd.Series(p)
     results["SOC (%)"] = pd.Series(s) * 100
     print(results)

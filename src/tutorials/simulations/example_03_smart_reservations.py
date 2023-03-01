@@ -116,7 +116,7 @@ def main():
 
     # Optimization parameters
     solver = SolverFactory(
-        "gurobi"
+        "cplex"
     )  # Users have to declare an optimization solver that exists their file system
     print(
         "The management strategy tested in this tutorial includes optimization algorithms"
@@ -213,7 +213,7 @@ def main():
 
     for ts in sim_horizon:
         print("Simulating time step:", ts)
-
+        
         # The departure routine for the EVs leaving the chargerg clusters
         departure_routine(ts, fleet)
 

@@ -31,8 +31,8 @@ def reservation_routine(
     fleet,
     solver,
     traffic_forecast,
-    f_discount=0.05,
-    f_markup=0.05,
+    f_discount=0.001,
+    f_markup=0.001,
     arbitrage_coeff=0.0,
 ):
     """
@@ -73,6 +73,8 @@ def reservation_routine(
     reserving_vehicles = fleet.reserving_vehicles_at(ts)
 
     for ev in reserving_vehicles:
+        
+        #print(ev.vehicle_id)
 
         ############################################################################
         ############################################################################
@@ -111,9 +113,7 @@ def reservation_routine(
                 p_ch = min(ch_rate, ev.p_max_ch)
                 p_ds = min(ds_rate, ev.p_max_ds)
                 arrsoc = ev.soc_arr_est + traffic_forecast["soc_dec"][cc_id]
-                pardur = (ev.t_dep_est + traffic_forecast["dep_del"][cc_id]) - (
-                    ev.t_arr_est + traffic_forecast["arr_del"][cc_id]
-                )
+                pardur = (ev.t_dep_est + traffic_forecast["dep_del"][cc_id]) - (ev.t_arr_est + traffic_forecast["arr_del"][cc_id])
                 soc_max = min(1, arrsoc + (p_ch * pardur.seconds) / ev.bCapacity)
                 tarsoc = min(soc_max, ev.soc_tar_at_t_dep_est)
 
@@ -121,34 +121,40 @@ def reservation_routine(
                 candidate_chargers_dc[cu_id]["max p_ds"] = p_ds
                 candidate_chargers_dc[cu_id]["arrsoc"] = arrsoc
                 candidate_chargers_dc[cu_id]["tarsoc"] = tarsoc
-                candidate_chargers_dc[cu_id]["arrtime"] = int(
-                    traffic_forecast["arr_del"][cc_id] / tdelta
-                )
-                candidate_chargers_dc[cu_id]["deptime"] = int(pardur / tdelta)
+                candidate_chargers_dc[cu_id]["arrtime"] = int((ev.t_arr_est+traffic_forecast["arr_del"][cc_id]-ts)/tdelta)
+                candidate_chargers_dc[cu_id]["deptime"] = int((ev.t_dep_est+traffic_forecast["dep_del"][cc_id]-ts)/tdelta)
 
             candidate_chargers = pd.DataFrame(candidate_chargers_dc).T
             #########################################################################
 
             ############################################################################
-            # Step 2.2: Execute dynamic pricing algorithm for clusters having candidate chargers
+            # Step 2.2: Clusters designing their offers
             g2v_dps = {}
             v2g_dps = {}
-            deptime_max = ts + candidate_chargers["deptime"].max() * tdelta
+            arrtime_min = ev.t_arr_est + candidate_chargers["arrtime"].min() * tdelta
+            deptime_max = ev.t_arr_est + candidate_chargers["deptime"].max() * tdelta
             for cu_id in candidate_chargers.index:
 
                 cc_id = candidate_chargers.loc[cu_id, "cluster"]
                 cc = system.clusters[cc_id]
-                cc_power_ub = dict(enumerate(cc.upper_limit[ts:deptime_max].values))
-                cc_power_lb = dict(enumerate(cc.lower_limit[ts:deptime_max].values))
-                cc_schedule = dict(
-                    enumerate(
-                        (cc.query_actual_schedule(ts, deptime_max, tdelta)).values
-                    )
-                )
-                tou_tariff = dict(
-                    enumerate((system.tou_price.loc[ts:deptime_max]).values)
-                )
+                cc_power_ub = dict(enumerate(cc.upper_limit[arrtime_min:deptime_max].values))
+                cc_power_lb = dict(enumerate(cc.lower_limit[arrtime_min:deptime_max].values))
+                cc_schedule = dict(enumerate((cc.query_actual_schedule(arrtime_min, deptime_max, tdelta)).values))
+                tou_tariff = dict(enumerate((system.tou_price.loc[arrtime_min:deptime_max]).values))
+                           
+                # Step 2.2.1: Estimate the clusters' margins for additional charging load
+                delta_soc=0.0
+                for t in cc_schedule.keys():
+                    
+                    if candidate_chargers_dc[cu_id]["arrtime"]<=t<candidate_chargers_dc[cu_id]["deptime"]:
+                                       
+                        delta_soc+=min(max(0.0,cc_power_ub[t]-cc_schedule[t]),candidate_chargers.loc[cu_id,"max p_ch"])*tdelta.seconds/ev.bCapacity
+                
+                candidate_chargers.loc[cu_id,"tarsoc"]=min(candidate_chargers.loc[cu_id,"tarsoc"],
+                                                            candidate_chargers.loc[cu_id,"arrsoc"]+delta_soc)
 
+                
+                #Step 2.2.2 Execute dynamic pricing algorithm
                 dlp = idp(
                     cc_schedule,
                     cc_power_ub,
@@ -158,13 +164,17 @@ def reservation_routine(
                     f_markup,
                 )
                 g2v_dps[cu_id] = dlp
-                v2g_dps[cu_id] = dict(
-                    [(k, dlp[k] * (1 - arbitrage_coeff)) for k in sorted(dlp.keys())]
-                )
+                v2g_dps[cu_id] = dict([(k, dlp[k] * (1 - arbitrage_coeff)) for k in sorted(dlp.keys())])
+                
+             
             ############################################################################
+            # Step 2.3: Remove the offers with insufficent energy offering and unnecessarily high power chargers
+            candidate_chargers=candidate_chargers[candidate_chargers['tarsoc']==candidate_chargers["tarsoc"].max()]
+            candidate_chargers=candidate_chargers[candidate_chargers['max p_ch']==candidate_chargers["max p_ch"].min()]
+            ############################################################################  
 
             ############################################################################
-            # Step 2.3: Execute smart routing algorithm to find optimal cluster and schedules
+            # Step 2.4: Execute smart routing algorithm to find optimal cluster and schedules
             opt_horizon = list(range(int(candidate_chargers["deptime"].max()) + 1))
             opt_step = tdelta.seconds
             ecap = ev.bCapacity
@@ -200,6 +210,9 @@ def reservation_routine(
                 v2g_dps,
             )
             ############################################################################
+            
+            if all(value == 0 for value in p.values()):
+                print()
 
             # Outputs of Step 2
             selected_cluster_id = candidate_chargers.loc[selected_charger_id, "cluster"]
@@ -226,14 +239,18 @@ def reservation_routine(
             contract["V2G Price"] = {}
             contract["Resolution"] = opt_step
             for t in opt_horizon:
-                contract["P Schedule"][ts + t * tdelta] = p[t]
+                    
+                contract["P Schedule"][ts+ t * tdelta] = p[t]
                 contract["S Schedule"][ts + t * tdelta] = s[t]
-                contract["G2V Price"][ts + t * tdelta] = g2v_dps[selected_charger_id][t]
-                contract["V2G Price"][ts + t * tdelta] = v2g_dps[selected_charger_id][t]
-
-            selected_cluster.reserve(
-                res_at, res_from, res_until, ev, selected_charger, contract
-            )
+                
+                if t<opt_horizon[-1]:
+                    contract["G2V Price"][ts + t * tdelta] = g2v_dps[selected_charger_id][t]
+                    contract["V2G Price"][ts + t * tdelta] = v2g_dps[selected_charger_id][t]
+                
+                
+            selected_cluster.reserve(res_at, res_from, res_until, ev, selected_charger, contract)
+            
+            ev.contract = contract
             ev.reserved = True
             ############################################################################
             ############################################################################
@@ -241,4 +258,4 @@ def reservation_routine(
         ############################################################################
         ############################################################################
         ############################################################################
-        # End reservation protccol
+        # End reservation protcol

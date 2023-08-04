@@ -39,12 +39,8 @@ def calculate_G2V_potential(
     deptime,
 ):
     """
-    This function reschedules the charging operations of a cluster by considering:
-        - upper-lower limits of aggregate power consumption of the cluster,
-        - and pre-defined reference schedules of the individual EVs in the system.
-
-    This is run typically when some events require deviations from previously
-    determined schedules.
+    This function is used to calculate the V2G potential of a cluster for a 
+    particular time window.
 
     Parameters
     ----------

@@ -80,10 +80,10 @@ def charging_routine(ts, t_delta, horizon, system, solver, penalty_parameters):
             tolerance = cluster.violation_tolerance
 
             # Cost parameter penalizing deviation from individual optimal charging schedules of EVs
-            rho_y = penalty_parameters["rho_y"][cc_id]
+            rho_y = 1.0
 
             # Cost parameter penalizing violation of (soft) power consumption constraints of clusters
-            rho_eps = penalty_parameters["rho_eps"][cc_id]
+            rho_eps = 0.0
 
             # Dictionary containing EV charging demand parameters
             pmax_pos = {}  # Will contain the maximum power that can be withdrawn by the EVs

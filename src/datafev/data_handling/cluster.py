@@ -206,6 +206,7 @@ class ChargerCluster(object):
         ev.reservation_id = reservation_id
         ev.reserved_cluster = self
         ev.reserved_charger = cu
+        cu.reserved_ev=ev
 
         # TODO: Add check for overlap
         self.re_dataset.loc[reservation_id, "Active"] = True
@@ -391,11 +392,11 @@ class ChargerCluster(object):
         """
 
         time_index = pd.date_range(start=start, end=end, freq=step)
-        cu_sch_df = pd.DataFrame(index=time_index)
+        cu_sch_df = pd.DataFrame(index=time_index,columns=self.chargers.keys())
 
         for cu in self.chargers.values():
 
-            if cu.connected_ev == None:
+            if cu.connected_ev == None:             #TODO: This must consider the reservation as well
                 cu_sch = pd.Series(0, index=time_index)
             else:
                 sch_inst = cu.active_schedule_instance
@@ -542,7 +543,7 @@ class ChargerCluster(object):
 
         """
 
-        df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step))
+        df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step),columns=list(self.chargers.keys()))
         for cu_id, cu in self.chargers.items():
             df[cu_id] = (cu.consumed_power.reindex(df.index)).fillna(0)
         return df
@@ -573,7 +574,7 @@ class ChargerCluster(object):
 
         """
 
-        df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step))
+        df = pd.DataFrame(index=pd.date_range(start=start, end=end, freq=step),columns=list(self.chargers.keys()))
         for cu_id, cu in self.chargers.items():
             df[cu_id] = (
                 cu.occupation_record(start, end, step).reindex(df.index)

@@ -21,9 +21,8 @@
 
 import pandas as pd
 import numpy as np
-from datetime import timedelta
 import datetime as dt
-import datafev.routines.scenario_generation.utils as ut
+import itertools
 
 
 def generate_fleet_from_simple_pdfs(
@@ -86,158 +85,100 @@ def generate_fleet_from_simple_pdfs(
     # Create date list
     date_list = pd.date_range(startdate, enddate, freq="d")
 
-    # Convert date to datetime format for future use
+    # Convert input types to numpy for future use
     temp_time = dt.datetime.min.time()
-    endtime = dt.datetime.combine(enddate + timedelta(days=1), temp_time)
+    endtime = np.datetime64(dt.datetime.combine(enddate + dt.timedelta(days=1), temp_time))
+    timedelta = np.timedelta64(timedelta_in_min, 'm')
+    diff_arr_dep = np.timedelta64(diff_arr_dep_in_min, 'm')
 
     ###################################################################################################################
     # Generating arrival and departure times
     ###################################################################################################################
 
-    # Time lowerbound arrays to be used in random choice method
-    arr_times_weekday_df = pd.DataFrame(arr_times_dict["Weekday"]).T
-    arr_times_weekend_df = pd.DataFrame(arr_times_dict["Weekend"]).T
-    arr_time_lowerb_array = arr_times_weekday_df["TimeLowerBound"].to_numpy()
-    dep_times_weekday_df = pd.DataFrame(dep_times_dict["Weekday"]).T
-    dep_times_weekend_df = pd.DataFrame(dep_times_dict["Weekend"]).T
-    dep_time_lowerb_array = dep_times_weekday_df["TimeLowerBound"].to_numpy()
-
-    # Arrival/departure probability lists
-    weekday_arr_prob_list = arr_times_weekday_df["Probability"].to_list()
-    weekend_arr_prob_list = arr_times_weekend_df["Probability"].to_list()
-    weekday_dep_prob_list = dep_times_weekday_df["Probability"].to_list()
-    weekend_dep_prob_list = dep_times_weekend_df["Probability"].to_list()
-
-    # Arrival and departure time bounds dictionary for future use
-    arr_time_bounds_dict = pd.Series(
-        arr_times_weekday_df["TimeUpperBound"].values,
-        index=arr_times_weekday_df["TimeLowerBound"],
-    ).to_dict()
-    dep_time_bounds_dict = pd.Series(
-        dep_times_weekday_df["TimeUpperBound"].values,
-        index=dep_times_weekday_df["TimeLowerBound"],
-    ).to_dict()
-
-    # Dictionary -- keys: dates, values: assigned arrival time intervals
-    pre_arr_assignment = {}
-    # Loop through dates and assign generated datetimes
-    # Create given number of EVs per each simulation day
-    for date in date_list:
-        # If date is weekday
-        if date.weekday() <= 4:
-            pre_arr_assignment[date] = np.random.choice(
-                arr_time_lowerb_array, number_of_evs_per_day, p=weekday_arr_prob_list
-            )
+    gen_ev_dfs = []
+    weekday_filter = date_list.weekday <= 4
+    for date_key in ("Weekday", "Weekend"):
+        # create a filter for weekdays and weekends concerning the date_list
+        if date_key == "Weekday":
+            day_filter = weekday_filter
         else:
-            pre_arr_assignment[date] = np.random.choice(
-                arr_time_lowerb_array, number_of_evs_per_day, p=weekend_arr_prob_list
+            day_filter = ~weekday_filter
+        if not day_filter.any():
+            continue
+
+        arr_times_df = pd.DataFrame.from_dict(arr_times_dict[date_key], orient="index")
+        dep_times_df = pd.DataFrame.from_dict(dep_times_dict[date_key], orient="index")
+
+        # create an array with dates for each ev arrival and departure from the date_list
+        day_array = np.repeat(date_list[day_filter].values, number_of_evs_per_day)[:, np.newaxis]
+
+        # convert input datetime.Time to pd.Timedelta arrays
+        arr_times_input = arr_times_df[["TimeLowerBound", "TimeUpperBound"]].map(
+                lambda x: pd.Timedelta(hours=x.hour, minutes=x.minute, seconds=x.second, microseconds=x.microsecond)
+            ).values
+        dep_times_input = dep_times_df[["TimeLowerBound", "TimeUpperBound"]].map(
+                lambda x: pd.Timedelta(hours=x.hour, minutes=x.minute, seconds=x.second, microseconds=x.microsecond)
+            ).values
+
+        # randomly choose an index for arrival paris
+        ev_arr_time_idx = np.random.choice(
+            np.arange(len(arr_times_df)), sum(day_filter)*number_of_evs_per_day,
+            p=arr_times_df["Probability"].values
+        )
+
+        # add date information to selected arrival time pairs
+        ev_arr_time_pairs = arr_times_input[ev_arr_time_idx, :]
+        ev_arr_time_pairs = day_array + ev_arr_time_pairs
+        ev_arr_time_pairs[:, 1][ev_arr_time_pairs[:, 1] < ev_arr_time_pairs[:, 0]] += np.timedelta64(1, 'D')
+
+        # ensure time pair stops before endtime
+        ev_arr_time_pairs[:, 1].clip(max=endtime - timedelta)
+
+        # calculate possible time steps in arrival period with more than one timedelta gap before endtime
+        arr_time_delta = ev_arr_time_pairs[:, 1] - ev_arr_time_pairs[:, 0]
+        arrival_possibility_filter = np.logical_and(arr_time_delta % timedelta == 0,
+                                                    ev_arr_time_pairs[:, 1] == endtime - timedelta)
+        arr_time_delta = (arr_time_delta / timedelta).astype(int)
+        arr_time_delta[arrival_possibility_filter] -= 1
+
+        # choose the exact arrival times
+        arr_time_steps = np.random.randint(0, arr_time_delta)
+        arr_times = ev_arr_time_pairs[:, 0] + arr_time_steps * timedelta
+
+        # Assign possible departures from statistic input data
+        # Find a datetime which satisfies following conditions
+        # 1. departure after arrival
+        # 2. there must be at least two hours difference between arrival and departure
+        # 3. ...
+        dep_times = np.zeros_like(arr_times)
+
+        # keep a list of entries that do not fulfill criteria
+        remaining_pairs = np.ones((dep_times.shape[0]), dtype=bool)
+
+        # re-roll entries that didn't fulfill criteria
+        while remaining_pairs.any():
+            # choose departure time pair
+            ev_dep_time_idx = np.random.choice(
+                np.arange(len(dep_times_df)), remaining_pairs.sum(),
+                p=dep_times_df["Probability"].values
             )
+            # add date information
+            new_ev_time_paris = dep_times_input[ev_dep_time_idx, :]
+            new_ev_time_paris = day_array[remaining_pairs, :] + new_ev_time_paris
+            new_ev_time_paris[:, 1][new_ev_time_paris[:, 1] < new_ev_time_paris[:, 0]] += np.timedelta64(1, 'D')
+            # select a departure timestep
+            dep_time_steps = ((new_ev_time_paris[:, 1] - new_ev_time_paris[:, 0])/timedelta).astype(int)
+            new_ev_dep_times = new_ev_time_paris[:, 0] + np.random.randint(0, dep_time_steps) * timedelta
+            new_ev_dep_times[new_ev_dep_times < arr_times[remaining_pairs]] += np.timedelta64(1, 'D')
+            # set new departure times
+            dep_times[remaining_pairs] = new_ev_dep_times
+            # check if criteria is fulfilled and update entries to redo
+            arr_dep_filter = new_ev_dep_times > arr_times[remaining_pairs] + diff_arr_dep
+            remaining_pairs[remaining_pairs] ^= arr_dep_filter
 
-    # Dictionary -- keys: dates, values: assigned arrival time stamp
-    # Assign possible arrival datetimes
-    # Find a datetime which satisfies following conditions
-    # 1. arrival at least one timedelta earlier than end time
-    # 2. ...
-    arr_assignment = {}
-    ev_id = 0
-    # Dictionary, keys: EV ids, values: assigned arrival lower bounds
-    # This dictionary will be used when calculating the arrival-dependent departure times
-    ev_arr_time_lowerbs = {}
-    for day, pre_assingment in pre_arr_assignment.items():
-        for arr_time_lowerb in pre_assingment:
-            # datetime.time objects to datetime.datetime
-            arr_datetime_lowerb = dt.datetime.combine(day, arr_time_lowerb)
-            arr_datetime_upperb = dt.datetime.combine(
-                day, arr_time_bounds_dict[arr_time_lowerb]
-            )
-            if arr_datetime_upperb < arr_datetime_lowerb:
-                arr_datetime_upperb += dt.timedelta(days=1)
-            while True:
-                time_lst = ut.generate_time_list(
-                    arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min, day
-                )
-                arrival_possibility = np.random.choice(time_lst, 1)[0]
-                if arrival_possibility < endtime - timedelta(minutes=timedelta_in_min):
-                    arr_assignment[ev_id] = arrival_possibility
-                    ev_arr_time_lowerbs[ev_id] = arr_datetime_upperb
-                    ev_id += 1
-                    break
+        gen_ev_dfs.append(pd.DataFrame({"ArrivalTime": arr_times, "DepartureTime": dep_times}))
 
-    # Assign possible departures from statistic input data
-    # Find a datetime which satisfies following conditions
-    # 1. departure after arrival
-    # 2. there must be at least two hours difference between arrival and departure
-    # 3. ...
-    dep_assignment = {}
-    for ev_id, arrival_dt in arr_assignment.items():
-        # If date is weekday
-        if arrival_dt.weekday() <= 4:
-            while True:
-                dep_time_lowerb = np.random.choice(
-                    dep_time_lowerb_array, 1, p=weekday_dep_prob_list
-                )[0]
-                dep_datetime_lowerb = dt.datetime.combine(arrival_dt, dep_time_lowerb)
-                dep_datetime_upperb = dt.datetime.combine(
-                    arrival_dt, dep_time_bounds_dict[dep_time_lowerb]
-                )
-                if dep_datetime_upperb < dep_datetime_lowerb:
-                    dep_datetime_upperb += dt.timedelta(days=1)
-                time_lst = ut.generate_time_list(
-                    dep_datetime_lowerb,
-                    dep_datetime_upperb,
-                    timedelta_in_min,
-                    arrival_dt,
-                )
-                departure_possibility = np.random.choice(time_lst, 1)[0]
-                if departure_possibility > arrival_dt + dt.timedelta(
-                    minutes=diff_arr_dep_in_min
-                ):
-                    if departure_possibility > arrival_dt:
-                        dep_assignment[ev_id] = departure_possibility
-                        break
-                    else:
-                        departure_possibility = arrival_dt + dt.timedelta(days=1)
-                        dep_assignment[ev_id] = departure_possibility
-                        break
-        else:
-            while True:
-                dep_time_lowerb = np.random.choice(
-                    dep_time_lowerb_array, 1, p=weekend_dep_prob_list
-                )[0]
-                dep_datetime_lowerb = dt.datetime.combine(arrival_dt, dep_time_lowerb)
-                dep_datetime_upperb = dt.datetime.combine(
-                    arrival_dt, dep_time_bounds_dict[dep_time_lowerb]
-                )
-                if dep_datetime_upperb < dep_datetime_lowerb:
-                    dep_datetime_upperb += dt.timedelta(days=1)
-                time_lst = ut.generate_time_list(
-                    dep_datetime_lowerb,
-                    dep_datetime_upperb,
-                    timedelta_in_min,
-                    arrival_dt,
-                )
-                departure_possibility = np.random.choice(time_lst, 1)[0]
-                if departure_possibility > arrival_dt + dt.timedelta(
-                    minutes=diff_arr_dep_in_min
-                ):
-                    if departure_possibility > arrival_dt:
-                        dep_assignment[ev_id] = departure_possibility
-                        break
-                    else:
-                        departure_possibility = arrival_dt + dt.timedelta(days=1)
-                        dep_assignment[ev_id] = departure_possibility
-                        break
-
-    # Merge arrival and departure assignments into a pandas dataframe
-    ev_assigned_times_dict = {}
-    for ev_id in arr_assignment.keys() | dep_assignment.keys():
-        if ev_id in arr_assignment:
-            ev_assigned_times_dict.setdefault(ev_id, []).append(arr_assignment[ev_id])
-        if ev_id in dep_assignment:
-            ev_assigned_times_dict.setdefault(ev_id, []).append(dep_assignment[ev_id])
-    gen_ev_df = pd.DataFrame.from_dict(
-        ev_assigned_times_dict, orient="index", columns=["ArrivalTime", "DepartureTime"]
-    )
+    gen_ev_df = pd.concat(gen_ev_dfs)
 
     # Localize time entries
     gen_ev_df["ArrivalTime"] = gen_ev_df["ArrivalTime"].dt.tz_localize(tz="GMT+0")
@@ -249,51 +190,49 @@ def generate_fleet_from_simple_pdfs(
 
     # Arrival SoC probabilities
     arr_soc_df = pd.DataFrame(arr_soc_dict).T
-    arr_soc_lowerb_array = arr_soc_df["SoCLowerBound(%)"].to_numpy()
-    arr_soc_prob_list = arr_soc_df["Probability"].tolist()
 
     # Departure SoC probabilities
     dep_soc_df = pd.DataFrame(dep_soc_dict).T
-    dep_soc_lowerb_array = dep_soc_df["SoCLowerBound(%)"].to_numpy()
-    dep_soc_prob_list = dep_soc_df["Probability"].tolist()
 
-    # Arrival and departure SoC bounds dictionary for future use
-    arr_soc_bounds_dict = pd.Series(
-        arr_soc_df["SoCUpperBound(%)"].values, index=arr_soc_df["SoCLowerBound(%)"]
-    ).to_dict()
-    dep_soc_bounds_dict = pd.Series(
-        dep_soc_df["SoCUpperBound(%)"].values, index=dep_soc_df["SoCLowerBound(%)"]
-    ).to_dict()
-    for ev_id, row in gen_ev_df.iterrows():
-        # Arrival SoCs
-        ev_arr_soc_lowerb = np.random.choice(
-            arr_soc_lowerb_array, 1, p=arr_soc_prob_list
-        )[0]
-        ev_arr_soc_possibilities = list(
-            ut.drange(
-                ev_arr_soc_lowerb, arr_soc_bounds_dict[ev_arr_soc_lowerb], "0.001"
-            )
+    # Select a arrival soc pair
+    ev_arr_socs_idx = np.random.choice(
+            np.arange(len(arr_soc_df)), len(gen_ev_df), p=arr_soc_df["Probability"].values
+    )
+
+    # choose an exact arrival soc
+    ev_arr_soc_pairs = arr_soc_df[["SoCLowerBound(%)", "SoCUpperBound(%)"]].values[ev_arr_socs_idx, :]
+    ev_arr_soc_pairs = (ev_arr_soc_pairs * 1000).astype(int)
+
+    ev_arr_socs = np.random.randint(ev_arr_soc_pairs[:, 0], ev_arr_soc_pairs[:, 1], len(ev_arr_socs_idx))
+
+    # choose a departure soc pair
+    dep_soc_df.sort_values(by="SoCLowerBound(%)", ascending=True, inplace=True)
+    ev_dep_soc_pairs_pre = dep_soc_df[["SoCLowerBound(%)", "SoCUpperBound(%)"]]
+    ev_dep_soc_pairs_pre = (ev_dep_soc_pairs_pre.values * 1000).astype(int)
+
+    # search what departure soc index is required so the departure pair is larger than the chosen arrival soc
+    ev_dep_first_allowed_soc_idx = np.searchsorted(ev_dep_soc_pairs_pre[:, 0], ev_arr_socs, side="right")
+
+    # calculate departure pairs for each possible sublist
+    unique_idx, unique_inverse_idx = np.unique(ev_dep_first_allowed_soc_idx, return_inverse=True)
+    ev_dep_socs_idx = np.zeros_like(ev_dep_first_allowed_soc_idx)
+
+    for i, idx in enumerate(unique_idx):
+        idx_filter = unique_inverse_idx == i
+        probability_slice = dep_soc_df["Probability"].values[idx:]
+        probability_slice /= np.sum(probability_slice)
+        # set chosen departure soc pair index regarding sublist
+        ev_dep_socs_idx[idx_filter] = np.random.choice(
+            np.arange(idx, len(ev_dep_soc_pairs_pre)), idx_filter.sum(),
+            p=probability_slice
         )
-        ev_arr_soc = np.random.choice(ev_arr_soc_possibilities, 1)[0]
-        gen_ev_df.at[ev_id, "ArrivalSoC"] = ev_arr_soc
-        # Departure SoCs
-        while True:
-            # Be sure that departure SoC is higher than arrival
-            ev_dep_soc_lowerb = np.random.choice(
-                dep_soc_lowerb_array, 1, p=dep_soc_prob_list
-            )[0]
-            if ev_dep_soc_lowerb > ev_arr_soc:
-                ev_dep_soc_possibilities = list(
-                    ut.drange(
-                        ev_dep_soc_lowerb,
-                        dep_soc_bounds_dict[ev_dep_soc_lowerb],
-                        "0.001",
-                    )
-                )
-                gen_ev_df.at[ev_id, "DepartureSoC"] = np.random.choice(
-                    ev_dep_soc_possibilities, 1
-                )[0]
-                break
+
+    # select specific departure soc
+    ev_dep_soc_paris_post = ev_dep_soc_pairs_pre[ev_dep_socs_idx]
+    ev_dep_socs = np.random.randint(ev_dep_soc_paris_post[:, 0], ev_dep_soc_paris_post[:, 1], len(ev_arr_socs))
+
+    gen_ev_df["ArrivalSoC"] = ev_arr_socs / 1000
+    gen_ev_df["DepartureSoC"] = ev_dep_socs / 1000
 
     ###################################################################################################################
     # Generating EV Data
@@ -301,26 +240,16 @@ def generate_fleet_from_simple_pdfs(
 
     # EV dictionary to Dataframe
     ev_df = pd.DataFrame(ev_dict).T
-    ev_prob_array = ev_df["Probability"].to_numpy()
+    ev_prob_array = ev_df["Probability"].values
     ev_model_array = ev_df.index.to_numpy()
-    ev_prob_list = ev_prob_array.tolist()
 
-    for ev_id, row in gen_ev_df.iterrows():
-        chosen_model = np.random.choice(ev_model_array, 1, p=ev_prob_list)[0]
-        gen_ev_df.at[ev_id, "Model"] = chosen_model
-        gen_ev_df.at[ev_id, "BatteryCapacity(kWh)"] = ev_df.at[
-            chosen_model, "BatteryCapacity(kWh)"
-        ]
-        gen_ev_df.at[ev_id, "MaxChargingPower(kW)"] = ev_df.at[
-            chosen_model, "MaxChargingPower(kW)"
-        ]
-        gen_ev_df.at[ev_id, "MaxFastChargingPower(kW)"] = ev_df.at[
-            chosen_model, "MaxFastChargingPower(kW)"
-        ]
+    gen_ev_df["Model"] = np.random.choice(ev_model_array, len(gen_ev_df), p=ev_prob_array)
+    gen_ev_df["BatteryCapacity(kWh)"] = (ev_df["BatteryCapacity(kWh)"].loc[gen_ev_df["Model"]]).values
+    gen_ev_df["MaxChargingPower(kW)"] = (ev_df["MaxChargingPower(kW)"].loc[gen_ev_df["Model"]]).values
+    gen_ev_df["MaxFastChargingPower(kW)"] = (ev_df["MaxFastChargingPower(kW)"].loc[gen_ev_df["Model"]]).values
 
     ###################################################################################################################
     return gen_ev_df
-
 
 def generate_fleet_from_conditional_pdfs(
     times_dict,
@@ -380,77 +309,53 @@ def generate_fleet_from_conditional_pdfs(
     # Generating arrival and departure times
     ###################################################################################################################
 
-    times_prob_list = list(times_prob_dict.values())
+    # prepare numpy time objects
+    timedelta = np.timedelta64(timedelta_in_min, 'm')
+    diff_arr_dep = np.timedelta64(diff_arr_dep_in_min, 'm')
+    endtime = np.datetime64(endtime)
 
-    # Time pairs dictionary, keys: keys to be used in choice function, values: arr/dep timeID pairs
-    time_pairs_dict = {}
-    for index, value in enumerate(list(times_prob_dict.keys())):
-        time_pairs_dict[index] = value
+    # prepare arrays for time ids, probabilities and pairs
+    times_keys = np.fromiter(times_dict.keys(), count=len(times_dict), dtype=int)
+    times_probs = np.empty(shape=(len(times_keys) ** 2,), dtype=float)
+    for i, (k1, k2) in enumerate(itertools.product(times_keys, times_keys)):
+        times_probs[i] = times_prob_dict[k1, k2]
 
-    # Pre assignment list, consist of assigned time pair's ID
-    times_pre_assignment = list(
-        np.random.choice(list(time_pairs_dict.keys()), number_of_evs, p=times_prob_list)
-    )
+    times_pairs = np.empty(shape=(len(times_keys), 2), dtype='datetime64[s]')
+    for i, k in enumerate(times_keys):
+        time_pair = times_dict[k]
+        times_pairs[i, 0] = np.datetime64(time_pair[0])
+        times_pairs[i, 1] = np.datetime64(time_pair[1])
 
-    # Assign possible arrival datetimes
-    # Find a datetime which satisfies following conditions
-    # 1. arrival at least one timedelta earlier than end time
-    # 2. ...
-    arr_assignment = {}
-    dep_assignment = {}
-    ev_id = 0
+    # Pre assignment arrays, consist of assigned time pair's indices
+    times_pre_assignment = np.random.choice(np.arange(len(times_probs)), number_of_evs, p=times_probs)
 
-    # Dictionary, keys: EV ids, values: assigned arrival lower bounds
-    ev_arr_time_lowerbs = {}
-    for time_pair_id in times_pre_assignment:
-        time_pair = time_pairs_dict[time_pair_id]
-        # Arrival time
-        arr_datetime_lowerb = times_dict[time_pair[0]][0]
-        arr_datetime_upperb = times_dict[time_pair[0]][1]
-        # Departure time
-        dep_datetime_lowerb = times_dict[time_pair[1]][0]
-        dep_datetime_upperb = times_dict[time_pair[1]][1]
+    # select corresponding time pairs
+    arr_time_pairs = times_pairs[times_pre_assignment // len(times_keys), :]
+    dep_time_pairs = times_pairs[times_pre_assignment % len(times_keys), :]
 
-        # Arrival time
-        arr_time_lst = ut.generate_datetime_list(
-            arr_datetime_lowerb, arr_datetime_upperb, timedelta_in_min
-        )
+    # select specific arrival time
+    arr_time_pairs[:, 1] = arr_time_pairs[:, 1].clip(max=endtime - timedelta)
+    arr_time_steps = np.random.randint(0, ((arr_time_pairs[:, 1] - arr_time_pairs[:, 0]) / timedelta).astype(int))
+    arr_times = arr_time_pairs[:, 0] + timedelta * arr_time_steps
 
-        # Assign generated departure time if:
-        # 1. time difference between arrival and departure is satisfied
-        # 2. ...
-        while True:
-            arrival_possibility = np.random.choice(arr_time_lst, 1)[0]
-            if arrival_possibility < endtime - timedelta(minutes=timedelta_in_min):
-                arr_assignment[ev_id] = arrival_possibility
-                ev_arr_time_lowerbs[ev_id] = arr_datetime_upperb
-                # Departure time
-                dep_time_lst = ut.generate_datetime_list(
-                    dep_datetime_lowerb, dep_datetime_upperb, timedelta_in_min
-                )
-            while True:
-                departure_possibility = np.random.choice(dep_time_lst, 1)[0]
-                # Departure must be after arrival
-                if departure_possibility < arr_assignment[ev_id]:
-                    departure_possibility += dt.timedelta(days=1)
-                if departure_possibility > arrival_possibility + dt.timedelta(
-                    minutes=diff_arr_dep_in_min
-                ):
-                    dep_assignment[ev_id] = departure_possibility
-                    break
-            ev_id += 1
-            break
+    # calculate possible departure steps
+    possible_dep_steps = ((dep_time_pairs[:, 1] - dep_time_pairs[:, 0]) / timedelta).astype(int)
 
-    # Merge arrival and departure assignments into EV pandas dataframe
-    ev_assigned_times_dict = {}
-    for ev_id in arr_assignment.keys() | dep_assignment.keys():
-        if ev_id in arr_assignment:
-            ev_assigned_times_dict.setdefault(ev_id, []).append(arr_assignment[ev_id])
-        if ev_id in dep_assignment:
-            ev_assigned_times_dict.setdefault(ev_id, []).append(dep_assignment[ev_id])
-    gen_ev_df = pd.DataFrame.from_dict(
-        ev_assigned_times_dict, orient="index", columns=["ArrivalTime", "DepartureTime"]
-    )
+    # reduce steps according to diff_arr_dep
+    dep_start = np.maximum(arr_times, dep_time_pairs[:, 0])
+    reduced_steps = np.minimum(((dep_start - arr_times - diff_arr_dep) / timedelta).astype(int), 0)
+    possible_dep_steps += reduced_steps
+
+    # select specific departure steps
+    dep_time_steps = np.random.randint(0, possible_dep_steps)
+    dep_times = dep_time_pairs[:, 0] + timedelta * dep_time_steps
+    dep_times[dep_times < arr_times] += np.timedelta64(24, 'h')
+
+    # readjust from reduced steps
+    dep_times[dep_times < arr_times + diff_arr_dep] += diff_arr_dep
+
+    gen_ev_df = pd.DataFrame(data=arr_times, columns=["ArrivalTime"])
+    gen_ev_df["DepartureTime"] = dep_times
     # Localize time entries
     gen_ev_df["ArrivalTime"] = gen_ev_df["ArrivalTime"].dt.tz_localize(tz="GMT+0")
     gen_ev_df["DepartureTime"] = gen_ev_df["DepartureTime"].dt.tz_localize(tz="GMT+0")
@@ -459,49 +364,29 @@ def generate_fleet_from_conditional_pdfs(
     # Generating arrival and departure SoCs
     ###################################################################################################################
 
-    soc_prob_list = list(soc_prob_dict.values())
-    # SoC pairs dictionary, keys: keys to be used in choice function, values: arr/dep SoCID pairs
-    soc_pairs_dict = {}
-    for index, value in enumerate(list(soc_prob_dict.keys())):
-        soc_pairs_dict[index] = value
+    # prepare arrays for soc ids, probabilities and pairs
+    soc_keys = np.fromiter(soc_dict.keys(), count=len(soc_dict), dtype=int)
+    soc_pair_probs = np.empty(shape=(len(soc_dict) ** 2,), dtype=float)
+    for i, (k1, k2) in enumerate(itertools.product(soc_keys, soc_keys)):
+        soc_pair_probs[i] = soc_prob_dict[(k1, k2)]
+
+    soc_pairs = np.empty(shape=(len(soc_keys), 2), dtype=int)
+    for i, k in enumerate(soc_keys):
+        soc_pairs[i, 0] = soc_dict[k][0] * 1000
+        soc_pairs[i, 1] = soc_dict[k][1] * 1000
+
     # Pre assignment list, consist of assigned time pair's ID
-    soc_pre_assignment = list(
-        np.random.choice(list(soc_pairs_dict.keys()), number_of_evs, p=soc_prob_list)
-    )
+    soc_pre_assignment = np.random.choice(np.arange(len(soc_pair_probs)), number_of_evs, p=soc_pair_probs)
 
+    pre_assignment_arr_socs = soc_pairs[soc_pre_assignment // len(soc_keys), :]
     # Assign possible arrival SoCs
-    arr_soc_assignment = {}
-    dep_soc_assignment = {}
-    ev_id = 0
-    for soc_pair_id in soc_pre_assignment:
-        soc_pair = soc_pairs_dict[soc_pair_id]
-        # Arrival SoC
-        arr_soc_lowerb = soc_dict[soc_pair[0]][0]
-        arr_soc_upperb = soc_dict[soc_pair[0]][1]
-        ev_arr_soc_possibilities = list(
-            ut.drange(arr_soc_lowerb, arr_soc_upperb, "0.001")
-        )
-        ev_arr_soc = np.random.choice(ev_arr_soc_possibilities, 1)[0]
-        arr_soc_assignment[ev_id] = ev_arr_soc
-        # Departure SoC
-        dep_soc_lowerb = soc_dict[soc_pair[1]][0]
-        dep_soc_upperb = soc_dict[soc_pair[1]][1]
-        ev_dep_soc_possibilities = list(
-            ut.drange(dep_soc_lowerb, dep_soc_upperb, "0.001")
-        )
-        ev_dep_soc = np.random.choice(ev_dep_soc_possibilities, 1)[0]
-        dep_soc_assignment[ev_id] = ev_dep_soc
-        ev_id += 1
+    ev_arr_socs = np.random.randint(pre_assignment_arr_socs[:, 0], pre_assignment_arr_socs[:, 1])
+    gen_ev_df["ArrivalSoC"] = ev_arr_socs / 1000
 
-    # Merge arrival and departure assignments into EV pandas dataframe
-    for id, arr_soc in arr_soc_assignment.items():
-        for ev_id, row in gen_ev_df.iterrows():
-            if ev_id == id:
-                gen_ev_df.at[ev_id, "ArrivalSoC"] = arr_soc
-    for id, dep_soc in dep_soc_assignment.items():
-        for ev_id, row in gen_ev_df.iterrows():
-            if ev_id == id:
-                gen_ev_df.at[ev_id, "DepartureSoC"] = dep_soc
+    # assign departure socs
+    pre_assignment_dst_socs = soc_pairs[soc_pre_assignment % len(soc_keys), :]
+    ev_dep_socs = np.random.randint(pre_assignment_dst_socs[:, 0], pre_assignment_dst_socs[:, 1])
+    gen_ev_df["DepartureSoC"] = ev_dep_socs / 1000
 
     ###################################################################################################################
     # Generating EV Data
@@ -509,22 +394,13 @@ def generate_fleet_from_conditional_pdfs(
 
     # EV dictionary to Dataframe
     ev_df = pd.DataFrame(ev_dict).T
-    ev_prob_array = ev_df["Probability"].to_numpy()
+    ev_prob_array = ev_df["Probability"].values
     ev_model_array = ev_df.index.to_numpy()
-    ev_prob_list = ev_prob_array.tolist()
 
-    for ev_id, row in gen_ev_df.iterrows():
-        chosen_model = np.random.choice(ev_model_array, 1, p=ev_prob_list)[0]
-        gen_ev_df.at[ev_id, "Model"] = chosen_model
-        gen_ev_df.at[ev_id, "BatteryCapacity(kWh)"] = ev_df.at[
-            chosen_model, "BatteryCapacity(kWh)"
-        ]
-        gen_ev_df.at[ev_id, "MaxChargingPower(kW)"] = ev_df.at[
-            chosen_model, "MaxChargingPower(kW)"
-        ]
-        gen_ev_df.at[ev_id, "MaxFastChargingPower(kW)"] = ev_df.at[
-            chosen_model, "MaxFastChargingPower(kW)"
-        ]
+    gen_ev_df["Model"] = np.random.choice(ev_model_array, len(gen_ev_df), p=ev_prob_array)
+    gen_ev_df["BatteryCapacity(kWh)"] = (ev_df["BatteryCapacity(kWh)"].loc[gen_ev_df["Model"]]).values
+    gen_ev_df["MaxChargingPower(kW)"] = (ev_df["MaxChargingPower(kW)"].loc[gen_ev_df["Model"]]).values
+    gen_ev_df["MaxFastChargingPower(kW)"] = (ev_df["MaxFastChargingPower(kW)"].loc[gen_ev_df["Model"]]).values
 
     ###################################################################################################################
     return gen_ev_df
